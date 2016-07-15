@@ -67,11 +67,10 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 @Controller
 @RequestMapping(value = "/router")
 public class SearchRoutingController {
-    public static final String CONTENTTYPE_JSON = "application/json";
 
-    protected BoundaryTypeService boundaryTypeService;
+    private BoundaryTypeService boundaryTypeService;
 
-    protected ComplaintRouterService complaintRouterService;
+    private ComplaintRouterService complaintRouterService;
 
     @Autowired
     public SearchRoutingController(final BoundaryTypeService boundaryTypeService,
@@ -105,7 +104,10 @@ public class SearchRoutingController {
     @RequestMapping(value = "/resultList-update", method = RequestMethod.GET)
     public @ResponseBody void springPaginationDataTablesUpdate(final HttpServletRequest request,
             final HttpServletResponse response) throws IOException {
+        getPaginationTable(request, response);
+    }
 
+    private void getPaginationTable(HttpServletRequest request, HttpServletResponse response) throws IOException {
         final Long boundaryTypeId = Long.valueOf(request.getParameter("boundaryTypeId"));
         final Long complaintTypeId = Long.valueOf(request.getParameter("complaintTypeId"));
         final Long boundaryId = Long.valueOf(request.getParameter("boundaryId"));
@@ -118,17 +120,10 @@ public class SearchRoutingController {
     @RequestMapping(value = "/resultList-view", method = RequestMethod.GET)
     public @ResponseBody void springPaginationDataTablesView(final HttpServletRequest request,
             final HttpServletResponse response) throws IOException {
-
-        final Long boundaryTypeId = Long.valueOf(request.getParameter("boundaryTypeId"));
-        final Long complaintTypeId = Long.valueOf(request.getParameter("complaintTypeId"));
-        final Long boundaryId = Long.valueOf(request.getParameter("boundaryId"));
-
-        final String complaintRouterJSONData = commonSearchResult(boundaryTypeId, complaintTypeId, boundaryId);
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        IOUtils.write(complaintRouterJSONData, response.getWriter());
+        getPaginationTable(request, response);
     }
 
-    public String commonSearchResult(final Long boundaryTypeId, final Long complaintTypeId, final Long boundaryId) {
+    private String commonSearchResult(final Long boundaryTypeId, final Long complaintTypeId, final Long boundaryId) {
         final List<ComplaintRouter> pageOfRouters = complaintRouterService.getPageOfRouters(boundaryTypeId,
                 complaintTypeId, boundaryId);
         return new StringBuilder("{ \"data\":").append(toJSON(pageOfRouters)).append("}").toString();

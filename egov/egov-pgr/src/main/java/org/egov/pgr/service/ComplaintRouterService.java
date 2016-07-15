@@ -63,7 +63,7 @@ public class ComplaintRouterService {
 
     @Autowired
     public ComplaintRouterService(final ComplaintRouterRepository complaintRouterRepository,
-            final BoundaryService boundaryService) {
+                                  final BoundaryService boundaryService) {
         this.complaintRouterRepository = complaintRouterRepository;
         this.boundaryService = boundaryService;
     }
@@ -165,66 +165,11 @@ public class ComplaintRouterService {
     }
 
     public List<ComplaintRouter> getPageOfRouters(final Long boundaryTypeId, final Long complaintTypeId,
-            final Long boundaryId) {
-        if (boundaryId != 0 && complaintTypeId != 0 && boundaryTypeId != 0)
-            return complaintRouterRepository.findRoutersByComplaintTypeAndBoundaryTypeAndBoundary(complaintTypeId,
-                    boundaryTypeId, boundaryId);
-        else if (boundaryTypeId != 0 && boundaryId == 0 && complaintTypeId != 0)
-            return complaintRouterRepository.findRoutersByComplaintTypeAndBoundaryType(complaintTypeId, boundaryTypeId);
-        else if (boundaryTypeId != 0 && boundaryId != 0 && complaintTypeId == 0)
-            return complaintRouterRepository.findRoutersByBoundaryAndBoundaryType(boundaryTypeId, boundaryId);
-        else if (boundaryTypeId != 0 && boundaryId == 0 && complaintTypeId == 0)
-            return complaintRouterRepository.findRoutersByBoundaryType(boundaryTypeId);
-        else if (boundaryTypeId == 0 && boundaryId == 0 && complaintTypeId != 0)
-            return complaintRouterRepository.findRoutersByComplaintType(complaintTypeId);
+                                                  final Long boundaryId) {
+        if (boundaryId == 0 && complaintTypeId == 0 && boundaryTypeId == 0)
+            return complaintRouterRepository.findRoutersByAll();
         else
-            return complaintRouterRepository.findRoutersByAll();
-    }
-
-    public List<ComplaintRouter> getPageOfRouters(final Long complaintTypeId, final Long boundaryTypeId,
-            final Long boundaryId, final Long positionId) {
-
-        if (complaintTypeId != 0) {
-            if (boundaryId != 0 && boundaryTypeId != 0 && positionId != 0)
-                return complaintRouterRepository.findRoutersByComplaintTypeAndBoundaryTypeAndBoundaryAndPosition(
-                        complaintTypeId, boundaryTypeId, boundaryId, positionId);
-            else if (boundaryId == 0 && boundaryTypeId != 0 && positionId != 0)
-                return complaintRouterRepository.findRoutersByComplaintTypeAndBoundaryTypeAndPosition(complaintTypeId,
-                        boundaryTypeId, positionId);
-            else if (boundaryId == 0 && boundaryTypeId == 0 && positionId != 0)
-                return complaintRouterRepository.findRoutersByComplaintTypeAndPosition(complaintTypeId, positionId);
-            else if (boundaryId == 0 && boundaryTypeId == 0 && positionId == 0)
-                return complaintRouterRepository.findRoutersByComplaintType(complaintTypeId);
-            else if (boundaryId != 0 && boundaryTypeId == 0 && positionId != 0)
-                return complaintRouterRepository.findRoutersByComplaintTypeAndBoundaryAndPosition(complaintTypeId,
-                        boundaryId, positionId);
-            else if (boundaryId != 0 && boundaryTypeId == 0 && positionId == 0)
-                return complaintRouterRepository.findRoutersByComplaintTypeAndBoundary(complaintTypeId, boundaryId);
-            else if (boundaryId != 0 && boundaryTypeId != 0 && positionId == 0)
-                return complaintRouterRepository.findRoutersByComplaintTypeAndBoundaryTypeAndBoundary(complaintTypeId,
-                        boundaryTypeId, boundaryId);
-            else if (boundaryId == 0 && boundaryTypeId != 0 && positionId == 0)
-                return complaintRouterRepository.findRoutersByComplaintTypeAndBoundaryType(complaintTypeId,
-                        boundaryTypeId);
-        } else if (boundaryId != 0 && boundaryTypeId != 0 && positionId != 0)
-            return complaintRouterRepository.findRoutersByBoundaryTypeAndBoundaryAndPosition(boundaryTypeId, boundaryId,
-                    positionId);
-        else if (boundaryId == 0 && boundaryTypeId != 0 && positionId != 0)
-            return complaintRouterRepository.findRoutersByBoundaryTypeAndPosition(boundaryTypeId, positionId);
-        else if (boundaryId == 0 && boundaryTypeId == 0 && positionId != 0)
-            return complaintRouterRepository.findRoutersByPosition(positionId);
-        else if (boundaryId != 0 && boundaryTypeId == 0 && positionId != 0)
-            return complaintRouterRepository.findRoutersByBoundaryAndPosition(boundaryId, positionId);
-        else if (boundaryId != 0 && boundaryTypeId == 0 && positionId == 0)
-            return complaintRouterRepository.findRoutersByBoundary(boundaryId);
-        else if (boundaryId != 0 && boundaryTypeId != 0 && positionId == 0)
-            return complaintRouterRepository.findRoutersByBoundaryTypeAndBoundary(boundaryTypeId, boundaryId);
-        else if (boundaryId == 0 && boundaryTypeId != 0 && positionId == 0)
-            return complaintRouterRepository.findRoutersByBoundaryType(boundaryTypeId);
-        else if (boundaryId == 0 && boundaryTypeId == 0 && positionId == 0)
-            return complaintRouterRepository.findRoutersByAll();
-        return null;
-
+            return complaintRouterRepository.findRouters(complaintTypeId, boundaryTypeId, boundaryId);
     }
 
     public void getParentBoundaries(final Long bndryId, final List<Boundary> boundaryList) {
@@ -237,7 +182,7 @@ public class ComplaintRouterService {
     }
 
     public List<ComplaintRouter> getRoutersByComplaintTypeBoundary(final List<ComplaintType> complaintTypes,
-            final List<Boundary> boundaries) {
+                                                                   final List<Boundary> boundaries) {
         return complaintRouterRepository.findRoutersByComplaintTypesBoundaries(complaintTypes, boundaries);
     }
 }
