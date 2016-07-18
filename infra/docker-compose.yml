@@ -22,13 +22,10 @@ services:
     ports:
       - "5601:5601"
   egov-app:
-    build: ./app
-    image: egov-app
+    image: egovernments/egov
     ports:
       - "8080:8080"
-    links:
+    depends_on:
       - db
-      - elasticsearch
       - redis
-    volumes:
-      - ../egov/egov-ear/egov-ear/target:/opt/jboss/wildfly/standalone/deployments
+      - elasticsearch

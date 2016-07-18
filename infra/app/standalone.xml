@@ -134,7 +134,7 @@
         <subsystem xmlns="urn:jboss:domain:datasources:4.0">
             <datasources>
                 <datasource jta="false" jndi-name="java:/ezgovDatabasePoolNoTX" pool-name="noTxnDsPool" enabled="true" use-java-context="true" use-ccm="false">
-                    <connection-url>jdbc:postgresql://localhost:5432/egov</connection-url>
+                    <connection-url>jdbc:postgresql://db:5432/egov</connection-url>
                     <driver>postgres</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
                     <pool>
@@ -154,7 +154,7 @@
                     </timeout>
                 </datasource>
                 <datasource jta="true" jndi-name="java:/ezgovDatabasePool" pool-name="txnDsPool" enabled="true" use-java-context="true" use-ccm="true">
-                    <connection-url>jdbc:postgresql://localhost:5432/egov</connection-url>
+                    <connection-url>jdbc:postgresql://db:5432/egov</connection-url>
                     <driver>postgres</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
                     <pool>
