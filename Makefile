@@ -4,3 +4,6 @@ build:
 
 run:
 	cd infra;docker-compose up
+
+dev:
+	cd infra; docker-compose -f dev.yml up
