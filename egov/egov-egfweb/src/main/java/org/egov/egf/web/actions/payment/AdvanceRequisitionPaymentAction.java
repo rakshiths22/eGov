@@ -58,6 +58,7 @@ import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infra.workflow.service.SimpleWorkflowService;
 import org.egov.infstr.utils.EgovMasterDataCaching;
 import org.egov.model.advance.EgAdvanceReqPayeeDetails;
@@ -91,7 +92,7 @@ public class AdvanceRequisitionPaymentAction extends BaseVoucherAction {
     private static final Logger LOGGER = Logger.getLogger(AdvanceRequisitionPaymentAction.class);
     private Bankaccount bankaccount = new Bankaccount();
     private PaymentService paymentService;
-    private SimpleWorkflowService<Paymentheader> paymentWorkflowService;
+   
     private Paymentheader paymentheader;
     private Date voucherDate = new Date();
     private Map<String, String> modeOfCollectionMap = new HashMap<String, String>();
@@ -152,7 +153,7 @@ public class AdvanceRequisitionPaymentAction extends BaseVoucherAction {
             parameters.put("grandTotal", new String[] { advanceRequisition.getAdvanceRequisitionAmount().toPlainString() });
             paymentheader = paymentService.createPayment(parameters, headerdetails, accountcodedetails, subledgerdetails,
                     bankaccount);
-            paymentheader.start().withOwner(paymentService.getPosition()).withComments(narration);
+            //paymentheader.start().withOwner(paymentService.getPosition()).withComments(narration);
             Integer userId = null;
             if (null != parameters.get("approverUserId") && Integer.valueOf(parameters.get("approverUserId")[0]) != -1)
                 userId = Integer.valueOf(parameters.get("approverUserId")[0]);
@@ -353,7 +354,7 @@ public class AdvanceRequisitionPaymentAction extends BaseVoucherAction {
     }
 
     @Override
-    public StateAware getModel() {
+    public WorkflowEntity getModel() {
         return voucherHeader;
     }
 
@@ -382,9 +383,7 @@ public class AdvanceRequisitionPaymentAction extends BaseVoucherAction {
         this.paymentService = paymentService;
     }
 
-    public void setPaymentWorkflowService(final SimpleWorkflowService<Paymentheader> paymentWorkflowService) {
-        this.paymentWorkflowService = paymentWorkflowService;
-    }
+    
 
     public void setVoucherDate(final Date voucherdate) {
         voucherDate = voucherdate;

@@ -107,7 +107,7 @@ public class State extends AbstractAuditable {
     @JoinColumn(name = "INITIATOR_POS")
     private Position initiatorPosition;
 
-    protected State() {
+    public State() {
     }
 
     @Override
@@ -116,7 +116,7 @@ public class State extends AbstractAuditable {
     }
 
     @Override
-    protected void setId(final Long id) {
+    public void setId(final Long id) {
         this.id = id;
     }
 
@@ -124,7 +124,7 @@ public class State extends AbstractAuditable {
         return type;
     }
 
-    protected void setType(final String type) {
+    public void setType(final String type) {
         this.type = type;
     }
 
@@ -132,7 +132,7 @@ public class State extends AbstractAuditable {
         return value;
     }
 
-    protected void setValue(final String value) {
+    public void setValue(final String value) {
         this.value = value;
     }
 
@@ -140,7 +140,7 @@ public class State extends AbstractAuditable {
         return ownerPosition;
     }
 
-    protected void setOwnerPosition(final Position ownerPosition) {
+    public void setOwnerPosition(final Position ownerPosition) {
         this.ownerPosition = ownerPosition;
     }
 
@@ -148,7 +148,7 @@ public class State extends AbstractAuditable {
         return ownerUser;
     }
 
-    protected void setOwnerUser(final User ownerUser) {
+    public void setOwnerUser(final User ownerUser) {
         this.ownerUser = ownerUser;
     }
 
@@ -156,11 +156,11 @@ public class State extends AbstractAuditable {
         return history;
     }
 
-    protected void setHistory(final Set<StateHistory> history) {
+    public void setHistory(final Set<StateHistory> history) {
         this.history = history;
     }
 
-    protected void addStateHistory(final StateHistory history) {
+    public void addStateHistory(final StateHistory history) {
         getHistory().add(history);
     }
 
@@ -168,7 +168,7 @@ public class State extends AbstractAuditable {
         return senderName;
     }
 
-    protected void setSenderName(final String senderName) {
+    public void setSenderName(final String senderName) {
         this.senderName = senderName;
     }
 
@@ -176,7 +176,7 @@ public class State extends AbstractAuditable {
         return nextAction;
     }
 
-    protected void setNextAction(final String nextAction) {
+    public void setNextAction(final String nextAction) {
         this.nextAction = nextAction;
     }
 
@@ -184,7 +184,7 @@ public class State extends AbstractAuditable {
         return comments;
     }
 
-    protected void setComments(final String comments) {
+    public void setComments(final String comments) {
         this.comments = comments;
     }
 
@@ -200,7 +200,7 @@ public class State extends AbstractAuditable {
         return extraInfo;
     }
 
-    protected void setExtraInfo(final String extraInfo) {
+    public void setExtraInfo(final String extraInfo) {
         this.extraInfo = extraInfo;
     }
 
@@ -208,7 +208,7 @@ public class State extends AbstractAuditable {
         return dateInfo;
     }
 
-    protected void setDateInfo(final Date dateInfo) {
+    public void setDateInfo(final Date dateInfo) {
         this.dateInfo = dateInfo;
     }
 
@@ -216,15 +216,15 @@ public class State extends AbstractAuditable {
         return extraDateInfo;
     }
 
-    protected void setExtraDateInfo(final Date extraDateInfo) {
+    public void setExtraDateInfo(final Date extraDateInfo) {
         this.extraDateInfo = extraDateInfo;
     }
 
-    protected StateStatus getStatus() {
+    public StateStatus getStatus() {
         return status;
     }
 
-    protected void setStatus(final StateStatus status) {
+    public void setStatus(final StateStatus status) {
         this.status = status;
     }
 

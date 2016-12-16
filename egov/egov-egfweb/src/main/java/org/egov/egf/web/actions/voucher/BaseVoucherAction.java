@@ -42,7 +42,17 @@
  */
 package org.egov.egf.web.actions.voucher;
 
-import com.exilant.eGov.src.transactions.VoucherTypeForULB;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -62,7 +72,6 @@ import org.egov.commons.SubScheme;
 import org.egov.commons.Vouchermis;
 import org.egov.eis.service.AssignmentService;
 import org.egov.eis.web.actions.workflow.GenericWorkFlowAction;
-import org.egov.infra.admin.master.entity.AppConfig;
 import org.egov.infra.admin.master.entity.AppConfigValues;
 import org.egov.infra.admin.master.entity.Boundary;
 import org.egov.infra.admin.master.entity.Department;
@@ -74,7 +83,8 @@ import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.workflow.entity.State;
-import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlowAction;
 import org.egov.infstr.utils.EgovMasterDataCaching;
 import org.egov.model.contra.ContraBean;
 import org.egov.model.voucher.VoucherDetails;
@@ -88,19 +98,9 @@ import org.egov.utils.VoucherHelper;
 import org.hibernate.HibernateException;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import com.exilant.eGov.src.transactions.VoucherTypeForULB;
 
-public class BaseVoucherAction extends GenericWorkFlowAction {
+public class BaseVoucherAction extends BaseWorkFlowAction {
     private static final long serialVersionUID = 1L;
     protected final String INVALIDPAGE = "invalidPage";
     private static final String FAILED = "Transaction failed";
@@ -150,7 +150,7 @@ public class BaseVoucherAction extends GenericWorkFlowAction {
     }
 
     @Override
-    public StateAware getModel() {
+    public WorkflowEntity getModel() {
 
         return voucherHeader;
     }

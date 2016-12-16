@@ -39,22 +39,6 @@
  */
 package org.egov.egf.web.actions.voucher;
 
-import org.apache.log4j.Logger;
-import org.egov.billsaccounting.services.CreateVoucher;
-import org.egov.commons.CVoucherHeader;
-import org.egov.infra.admin.master.entity.AppConfig;
-import org.egov.infra.admin.master.entity.AppConfigValues;
-import org.egov.infra.admin.master.service.AppConfigValueService;
-import org.egov.infra.validation.exception.ValidationError;
-import org.egov.infra.validation.exception.ValidationException;
-import org.egov.infra.web.struts.annotation.ValidationErrorPage;
-import org.egov.infra.workflow.entity.StateAware;
-import org.egov.model.voucher.VoucherDetails;
-import org.egov.services.voucher.VoucherService;
-import org.egov.utils.Constants;
-import org.egov.utils.FinancialConstants;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -63,6 +47,21 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.log4j.Logger;
+import org.egov.billsaccounting.services.CreateVoucher;
+import org.egov.commons.CVoucherHeader;
+import org.egov.infra.admin.master.entity.AppConfigValues;
+import org.egov.infra.admin.master.service.AppConfigValueService;
+import org.egov.infra.validation.exception.ValidationError;
+import org.egov.infra.validation.exception.ValidationException;
+import org.egov.infra.web.struts.annotation.ValidationErrorPage;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
+import org.egov.model.voucher.VoucherDetails;
+import org.egov.services.voucher.VoucherService;
+import org.egov.utils.Constants;
+import org.egov.utils.FinancialConstants;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 
@@ -219,7 +218,7 @@ public class JournalVoucherReverseAction extends BaseVoucherAction {
     }
 
     @Override
-    public StateAware getModel() {
+    public WorkflowEntity getModel() {
         return voucherHeader;
     }
 

@@ -107,7 +107,7 @@ public class BudgetReAppropriationModifyAction extends BaseFormAction {
     BudgetDetailHelper budgetDetailHelper;
     BudgetDetailService budgetDetailService;
     BudgetReAppropriationService budgetReAppropriationService;
-    WorkflowService<BudgetReAppropriation> budgetReAppropriationWorkflowService;
+   
     CFinancialYear financialYear;
     BudgetService budgetService;
     String isBeRe = Constants.BE;
@@ -119,7 +119,6 @@ public class BudgetReAppropriationModifyAction extends BaseFormAction {
     BudgetReAppropriation budgetReAppropriation;
     EisCommonService eisCommonService;
     Long miscId;
-    WorkflowService<BudgetReAppropriationMisc> miscWorkflowService;
     private List<Action> validActions = new ArrayList<Action>();
     private String comment = "";
     private BudgetReAppropriationMisc workFlowItem;
@@ -132,9 +131,7 @@ public class BudgetReAppropriationModifyAction extends BaseFormAction {
     @Autowired
     private EgovMasterDataCaching masterDataCache;
 
-    public void setMiscWorkflowService(final WorkflowService<BudgetReAppropriationMisc> miscWorkflowService) {
-        this.miscWorkflowService = miscWorkflowService;
-    }
+     
 
     public Long getMiscId() {
         return miscId;
@@ -392,11 +389,10 @@ public class BudgetReAppropriationModifyAction extends BaseFormAction {
         miscId = budgetReAppropriation.getReAppropriationMisc().getId();
         final BudgetReAppropriationMisc misc = (BudgetReAppropriationMisc) persistenceService.find(
                 "from BudgetReAppropriationMisc where id=?", budgetReAppropriation.getReAppropriationMisc().getId());
-        if (!validateOwner(misc.getState()))
-            throw new ApplicationRuntimeException("Invalid Access");
+       
         workFlowItem = misc;
         setEnablingAmounts(misc);
-        comment = misc.getCurrentState().getComments();
+        comment = misc.getCurrentTask().getComments();
         // This fix is for Phoenix Migration.setValidActions(miscWorkflowService.getValidActions(misc));
         final List<BudgetReAppropriation> nonApprovedReAppropriations = misc.getNonApprovedReAppropriations();
         for (final BudgetReAppropriation row : nonApprovedReAppropriations) {
@@ -483,7 +479,7 @@ public class BudgetReAppropriationModifyAction extends BaseFormAction {
                     addActionMessage(getText("budget.reapp.saved"));
                 }
             }
-            if ("END".equalsIgnoreCase(misc.getCurrentState().getValue()))
+            if ("END".equalsIgnoreCase(misc.getCurrentTask().getStatus()))
                 for (final BudgetReAppropriation entry : misc.getBudgetReAppropriations())
                     budgetReAppropriationService.updatePlanningBudget(entry);
         }
@@ -528,23 +524,23 @@ public class BudgetReAppropriationModifyAction extends BaseFormAction {
     private BudgetReAppropriationMisc approve(BudgetReAppropriationMisc misc, final List<BudgetReAppropriation> reApps) {
         final Integer userId = fetchUserId();
         for (final BudgetReAppropriation detail : reApps)
-            budgetReAppropriationWorkflowService.transition(actionName + "|" + userId, detail, comment);
+           // budgetReAppropriationWorkflowService.transition(actionName + "|" + userId, detail, comment);
         misc = transformAndSetActionMessage(misc, userId);
         return misc;
     }
 
     private BudgetReAppropriationMisc approveReApp(BudgetReAppropriationMisc misc, final BudgetReAppropriation reApp) {
         final Integer userId = fetchUserId();
-        budgetReAppropriationWorkflowService.transition(actionName + "|" + userId, reApp, comment);
+       // budgetReAppropriationWorkflowService.transition(actionName + "|" + userId, reApp, comment);
         misc = transformAndSetActionMessage(misc, userId);
         return misc;
     }
 
     private BudgetReAppropriationMisc transformAndSetActionMessage(BudgetReAppropriationMisc misc, final Integer userId) {
         misc = budgetReAppropriationService.performActionOnMisc(actionName + "|" + userId, misc, comment);
-        final Position owner = misc.getState().getOwnerPosition();
+        final Position owner = misc.getCurrentTask().getOwnerPosition();
         if (actionName.contains("approv")) {
-            if ("END".equalsIgnoreCase(misc.getCurrentState().getValue()))
+            if ("END".equalsIgnoreCase(misc.getCurrentTask().getStatus()))
                 addActionMessage(getText("budget.reapp.approved.end"));
             else
                 addActionMessage(
@@ -634,11 +630,7 @@ public class BudgetReAppropriationModifyAction extends BaseFormAction {
         this.eisService = eisService;
     }
 
-    public void setBudgetReAppropriationWorkflowService(
-            final WorkflowService<BudgetReAppropriation> budgetReAppropriationWorkflowService) {
-        this.budgetReAppropriationWorkflowService = budgetReAppropriationWorkflowService;
-    }
-
+   
     public ScriptService getScriptService() {
         return scriptService;
     }

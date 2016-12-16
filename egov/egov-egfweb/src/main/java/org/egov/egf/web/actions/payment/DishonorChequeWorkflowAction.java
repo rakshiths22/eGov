@@ -115,7 +115,7 @@ public class DishonorChequeWorkflowAction extends BaseFormAction {
     public PersistenceService<InstrumentHeader, Long> instrumentHeaderService;
     private EisUtilService eisService;
     private DishonorChequeService finDishonorChequeService;
-    private SimpleWorkflowService<DishonorCheque> dishonorChequeWorkflowService;
+  
     @Autowired
     private EgwStatusHibernateDAO egwStatusDAO;
     private InstrumentService instrumentService;
@@ -198,8 +198,8 @@ public class DishonorChequeWorkflowAction extends BaseFormAction {
         else {
             final String validAction = (String) persistenceService.find(
                     "select validActions from WorkFlowMatrix where objectType=? " +
-                            "and currentState =?", dishonorChequeView.getStateType(), dishonorChequeView.getCurrentState()
-                            .getValue());
+                            "and currentState =?", dishonorChequeView.getProcessInstance().getBusinessKey(), dishonorChequeView.getCurrentTask()
+                            .getStatus());
             if (null != validAction) {
                 final StringTokenizer strToken = new StringTokenizer(validAction, ",");
                 tempValidAction = null;
@@ -221,7 +221,7 @@ public class DishonorChequeWorkflowAction extends BaseFormAction {
         String nextActionTemp = "";
         if (null != dishonorChequeView && null != dishonorChequeView.getId())
             nextActionTemp = (String) persistenceService.find("select nextAction from WorkFlowMatrix where objectType=? " +
-                    " and currentState=?", dishonorChequeView.getStateType(), dishonorChequeView.getCurrentState().getValue());
+                    " and currentState=?", dishonorChequeView.getProcessInstance().getBusinessKey(), dishonorChequeView.getCurrentTask().getStatus());
         return nextActionTemp;
 
     }
@@ -769,16 +769,16 @@ public class DishonorChequeWorkflowAction extends BaseFormAction {
     {
         // Get cheque creator details
 
-        if (null == dishonorCheque.getState()) {
+        if (null == dishonorCheque.getCurrentTask()) {
             final Position pos = eisService.getPrimaryPositionForUser(null/* phoenix dishonorCheque.getApproverPositionId() */,
                     new Date());
-            dishonorCheque.start().withOwner(pos).withComments("DishonorCheque Work flow started");
-            dishonorChequeWorkflowService.transition("forward", dishonorCheque, "Created by SM");
+            //dishonorCheque.start().withOwner(pos).withComments("DishonorCheque Work flow started");
+            //dishonorChequeWorkflowService.transition("forward", dishonorCheque, "Created by SM");
         }
 
         if (null != workFlowAction && !"".equals(workFlowAction)) {
             final String comments = null == approverComments || "".equals(approverComments.trim()) ? "" : approverComments;
-            dishonorChequeWorkflowService.transition(workFlowAction.toLowerCase(), dishonorCheque, comments);
+            //dishonorChequeWorkflowService.transition(workFlowAction.toLowerCase(), dishonorCheque, comments);
         }
     }
 
@@ -980,14 +980,7 @@ public class DishonorChequeWorkflowAction extends BaseFormAction {
         this.approverDesignation = approverDesignation;
     }
 
-    public SimpleWorkflowService<DishonorCheque> getDishonorChequeWorkflowService() {
-        return dishonorChequeWorkflowService;
-    }
-
-    public void setDishonorChequeWorkflowService(
-            final SimpleWorkflowService<DishonorCheque> dishonorChequeWorkflowService) {
-        this.dishonorChequeWorkflowService = dishonorChequeWorkflowService;
-    }
+    
 
     public String getMode() {
         return mode;

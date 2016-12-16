@@ -77,6 +77,7 @@ import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlowAction;
 import org.egov.infra.workflow.service.WorkflowService;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.infstr.utils.EgovMasterDataCaching;
@@ -99,7 +100,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import com.opensymphony.xwork2.ActionContext;
 import com.opensymphony.xwork2.util.ValueStack;
 
-public abstract class BaseBudgetDetailAction extends GenericWorkFlowAction {
+public abstract class BaseBudgetDetailAction extends BaseWorkFlowAction {
     private static final String EGF_BUDGET_GROUP = "egf-budgetGroup";
     private static final String EGI_FUNCTIONARY = "egi-functionary";
     private static final String EGI_FUNCTION = "egi-function";
@@ -122,8 +123,7 @@ public abstract class BaseBudgetDetailAction extends GenericWorkFlowAction {
     protected List<String> gridFields = new ArrayList<String>();
     protected List<String> mandatoryFields = new ArrayList<String>();
     public WorkflowBean workflowBean = new WorkflowBean();
-    protected WorkflowService<Budget> budgetWorkflowService;
-    protected WorkflowService<BudgetDetail> budgetDetailWorkflowService;
+   
     protected boolean headerDisabled = false;
     protected List<BudgetAmountView> budgetAmountView = new ArrayList<BudgetAmountView>();
     protected String currentYearRange;
@@ -542,14 +542,7 @@ public abstract class BaseBudgetDetailAction extends GenericWorkFlowAction {
         return headerFields;
     }
 
-    public void setBudgetDetailWorkflowService(final WorkflowService<BudgetDetail> budgetDetailWorkflowService) {
-        this.budgetDetailWorkflowService = budgetDetailWorkflowService;
-    }
-
-    @Override
-    public StateAware getModel() {
-        return budgetDetail;
-    }
+    
 
     public BudgetDetail getBudgetDetail() {
         return budgetDetail;
@@ -826,10 +819,7 @@ public abstract class BaseBudgetDetailAction extends GenericWorkFlowAction {
         return budgetList;
     }
 
-    public void setBudgetWorkflowService(final WorkflowService<Budget> budgetWorkflowService) {
-        this.budgetWorkflowService = budgetWorkflowService;
-    }
-
+   
     public void removeEmptyBudgetDetails(final List<BudgetDetail> budgetDetailList) {
         int i = 0;
         for (final Iterator<BudgetDetail> detail = budgetDetailList.iterator(); detail.hasNext();) {

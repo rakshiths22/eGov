@@ -225,8 +225,8 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
         paramMap.put("voucherNumber", getVoucherNumber());
         paramMap.put("voucherDate", getVoucherDate());
         paramMap.put("voucherDescription", getVoucherDescription());
-        if (voucher != null && voucher.getState() != null)
-            loadInboxHistoryData(voucher.getStateHistory(), paramMap);
+      /*  if (voucher != null && voucher.getCurrentTask() != null)
+            loadInboxHistoryData(voucher.getStateHistory(), paramMap);*/
         if (billRegistermis != null) {
             paramMap.put("billDate", Constants.DDMMYYYYFORMAT2.format(billRegistermis.getEgBillregister().getBilldate()));
             paramMap.put("partyBillNumber", billRegistermis.getPartyBillNumber());
@@ -269,7 +269,7 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
                 .getVoucherDate());
     }
 
-    void loadInboxHistoryData(final List<StateHistory> stateHistory, final Map<String, Object> paramMap) throws ApplicationRuntimeException {
+   /* void loadInboxHistoryData(final List<StateHistory> stateHistory, final Map<String, Object> paramMap) throws ApplicationRuntimeException {
         final List<String> history = new ArrayList<String>();
         final List<String> workFlowDate = new ArrayList<String>();
         for (final StateHistory historyState : stateHistory)
@@ -281,6 +281,6 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
             paramMap.put("workFlow_" + i, history.get(i));
             paramMap.put("workFlowDate_" + i, workFlowDate.get(i));
         }
-    }
+    }*/
 
 }

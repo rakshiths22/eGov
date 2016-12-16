@@ -215,7 +215,7 @@ public class FinancialUtils {
         return approverPosition;
     }
 
-    public boolean isBillEditable(final State state) {
+   /* public boolean isBillEditable(final State state) {
         boolean isEditable = false;
         if (state.getOwnerPosition() != null && state.getOwnerPosition().getDeptDesig() != null
                 && state.getOwnerPosition().getDeptDesig().getDesignation() != null) {
@@ -228,7 +228,7 @@ public class FinancialUtils {
         }
         return isEditable;
     }
-
+*/
     public List<HashMap<String, Object>> getHistory(final State state, final List<StateHistory> history) {
         User user = null;
         final List<HashMap<String, Object>> historyTable = new ArrayList<>();

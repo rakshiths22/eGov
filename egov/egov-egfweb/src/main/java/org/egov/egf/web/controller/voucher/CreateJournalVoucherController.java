@@ -104,7 +104,7 @@ public class CreateJournalVoucherController extends BaseVoucherController {
         voucherHeader.setType(FinancialConstants.STANDARD_VOUCHER_TYPE_JOURNAL);
         setDropDownValues(model);
         model.addAttribute(STATE_TYPE, voucherHeader.getClass().getSimpleName());
-        prepareWorkflow(model, voucherHeader, new WorkflowContainer());
+        prepareWorkflow(model, voucherHeader, null);
         prepareValidActionListByCutOffDate(model);
         voucherHeader.setVoucherDate(new Date());
         model.addAttribute(VOUCHER_NUMBER_GENERATION_AUTO, isVoucherNumberGenerationAuto(voucherHeader));
@@ -125,7 +125,7 @@ public class CreateJournalVoucherController extends BaseVoucherController {
         if (resultBinder.hasErrors()) {
             setDropDownValues(model);
             model.addAttribute(STATE_TYPE, voucherHeader.getClass().getSimpleName());
-            prepareWorkflow(model, voucherHeader, new WorkflowContainer());
+            prepareWorkflow(model, voucherHeader, null);
             prepareValidActionListByCutOffDate(model);
             voucherHeader.setVoucherDate(new Date());
             model.addAttribute(VOUCHER_NUMBER_GENERATION_AUTO, isVoucherNumberGenerationAuto(voucherHeader));
@@ -145,7 +145,7 @@ public class CreateJournalVoucherController extends BaseVoucherController {
             } catch (final ValidationException e) {
                 setDropDownValues(model);
                 model.addAttribute(STATE_TYPE, voucherHeader.getClass().getSimpleName());
-                prepareWorkflow(model, voucherHeader, new WorkflowContainer());
+                prepareWorkflow(model, voucherHeader, null);
                 prepareValidActionListByCutOffDate(model);
                 voucherHeader.setVoucherDate(new Date());
                 model.addAttribute(VOUCHER_NUMBER_GENERATION_AUTO, isVoucherNumberGenerationAuto(voucherHeader));
@@ -153,9 +153,9 @@ public class CreateJournalVoucherController extends BaseVoucherController {
                 return JOURNALVOUCHER_FORM;
             }
 
-            final String approverDetails = financialUtils.getApproverDetails(workFlowAction,
-                    savedVoucherHeader.getState(), savedVoucherHeader.getId(), approvalPosition);
-
+            final String approverDetails = null;/*//financialUtils.getApproverDetails(workFlowAction,
+                    savedVoucherHeader.getCurrentTask(), savedVoucherHeader.getId(), approvalPosition);
+*/
             return "redirect:/journalvoucher/success?approverDetails= " + approverDetails + "&voucherNumber="
                     + savedVoucherHeader.getVoucherNumber() + "&workFlowAction=" + workFlowAction;
 

@@ -53,6 +53,7 @@ import org.egov.eis.web.contract.WorkflowContainer;
 import org.egov.infra.admin.master.service.AppConfigValueService;
 import org.egov.infra.exception.ApplicationException;
 import org.egov.infra.validation.exception.ValidationException;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infstr.models.EgChecklists;
 import org.egov.model.bills.EgBilldetails;
 import org.egov.model.bills.EgBillregister;
@@ -113,12 +114,12 @@ public class UpdateExpenseBillController extends BaseBillController {
         final EgBillregister egBillregister = expenseBillService.getById(Long.parseLong(billId));
         setDropDownValues(model);
         model.addAttribute("stateType", egBillregister.getClass().getSimpleName());
-        if (egBillregister.getState() != null)
-            model.addAttribute("currentState", egBillregister.getState().getValue());
-        model.addAttribute("workflowHistory",
-                financialUtils.getHistory(egBillregister.getState(), egBillregister.getStateHistory()));
+        if (egBillregister.getCurrentTask() != null)
+            model.addAttribute("currentState", egBillregister.getCurrentTask().getStatus());
+       /* model.addAttribute("workflowHistory",
+                financialUtils.getHistory(egBillregister.getCurrentTask(), egBillregister.getStateHistory()));*/
 
-        prepareWorkflow(model, egBillregister, new WorkflowContainer());
+        prepareWorkflow(model, egBillregister, null);
         egBillregister.getBillDetails().addAll(egBillregister.getEgBilldetailes());
         prepareBillDetailsForView(egBillregister);
         final List<CChartOfAccounts> expensePayableAccountList = chartOfAccountsService
@@ -131,9 +132,9 @@ public class UpdateExpenseBillController extends BaseBillController {
             }
         prepareCheckListForEdit(egBillregister, model);
         model.addAttribute(EG_BILLREGISTER, egBillregister);
-        if (egBillregister.getState() != null
-                && (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(egBillregister.getState().getValue())
-                        || financialUtils.isBillEditable(egBillregister.getState()))) {
+        if (egBillregister.getCurrentTask() != null
+                && (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(egBillregister.getCurrentTask().getStatus())
+                        )) {
             model.addAttribute("mode", "edit");
             return "expensebill-update";
         } else {
@@ -168,9 +169,9 @@ public class UpdateExpenseBillController extends BaseBillController {
                 && !request.getParameter(APPROVAL_POSITION).isEmpty())
             approvalPosition = Long.valueOf(request.getParameter(APPROVAL_POSITION));
 
-        if (egBillregister.getState() != null
-                && (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(egBillregister.getState().getValue())
-                        || financialUtils.isBillEditable(egBillregister.getState()))) {
+        if (egBillregister.getCurrentTask() != null
+                && (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(egBillregister.getCurrentTask().getStatus())
+                       )) {
             populateBillDetails(egBillregister);
             validateBillNumber(egBillregister, resultBinder);
             validateLedgerAndSubledger(egBillregister, resultBinder);
@@ -178,15 +179,15 @@ public class UpdateExpenseBillController extends BaseBillController {
         if (resultBinder.hasErrors()) {
             setDropDownValues(model);
             model.addAttribute("stateType", egBillregister.getClass().getSimpleName());
-            prepareWorkflow(model, egBillregister, new WorkflowContainer());
+            prepareWorkflow(model,(WorkflowEntity) egBillregister,null);
             model.addAttribute(APPROVAL_DESIGNATION, request.getParameter(APPROVAL_DESIGNATION));
             model.addAttribute(APPROVAL_POSITION, request.getParameter(APPROVAL_POSITION));
             model.addAttribute(NET_PAYABLE_ID, request.getParameter(NET_PAYABLE_ID));
             model.addAttribute(NET_PAYABLE_AMOUNT, request.getParameter(NET_PAYABLE_AMOUNT));
             model.addAttribute("designation", request.getParameter("designation"));
-            if (egBillregister.getState() != null
-                    && (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(egBillregister.getState().getValue())
-                            || financialUtils.isBillEditable(egBillregister.getState()))) {
+            if (egBillregister.getCurrentTask() != null
+                    && (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(egBillregister.getCurrentTask().getStatus())
+                   )) {
                 prepareValidActionListByCutOffDate(model);
                 model.addAttribute("mode", "edit");
                 return "expensebill-update";
@@ -202,15 +203,15 @@ public class UpdateExpenseBillController extends BaseBillController {
             } catch (final ValidationException e) {
                 setDropDownValues(model);
                 model.addAttribute("stateType", egBillregister.getClass().getSimpleName());
-                prepareWorkflow(model, egBillregister, new WorkflowContainer());
+                prepareWorkflow(model, egBillregister,null);
                 model.addAttribute(APPROVAL_DESIGNATION, request.getParameter(APPROVAL_DESIGNATION));
                 model.addAttribute(APPROVAL_POSITION, request.getParameter(APPROVAL_POSITION));
                 model.addAttribute(NET_PAYABLE_ID, request.getParameter(NET_PAYABLE_ID));
                 model.addAttribute(NET_PAYABLE_AMOUNT, request.getParameter(NET_PAYABLE_AMOUNT));
                 model.addAttribute("designation", request.getParameter("designation"));
-                if (egBillregister.getState() != null
-                        && (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(egBillregister.getState().getValue())
-                                || financialUtils.isBillEditable(egBillregister.getState()))) {
+                if (egBillregister.getCurrentTask() != null
+                        && (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(egBillregister.getCurrentTask().getStatus())
+                                )) {
                     prepareValidActionListByCutOffDate(model);
                     model.addAttribute("mode", "edit");
                     return "expensebill-update";
@@ -227,8 +228,8 @@ public class UpdateExpenseBillController extends BaseBillController {
                 approvalPosition = expenseBillService.getApprovalPositionByMatrixDesignation(
                         egBillregister, null, mode, workFlowAction);
 
-            final String approverDetails = financialUtils.getApproverDetails(workFlowAction,
-                    updatedEgBillregister.getState(), updatedEgBillregister.getId(), approvalPosition);
+            final String approverDetails = null;/*//financialUtils.getApproverDetails(workFlowAction,
+                    updatedEgBillregister.getCurrentTask(), updatedEgBillregister.getId(), approvalPosition);*/
 
             return "redirect:/expensebill/success?approverDetails= " + approverDetails + "&billNumber="
                     + updatedEgBillregister.getBillnumber();

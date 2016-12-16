@@ -39,6 +39,11 @@
  */
 package org.egov.egf.web.actions.payment;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.ParentPackage;
@@ -53,7 +58,7 @@ import org.egov.commons.dao.BankaccountHibernateDAO;
 import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
-import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.model.voucher.BankEntriesNotInBankBook;
 import org.egov.services.instrument.BankEntriesService;
 import org.egov.services.voucher.BankEntriesNotInBankBookActionHelper;
@@ -67,11 +72,6 @@ import org.hibernate.type.LongType;
 import org.hibernate.type.StringType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 @ParentPackage("egov")
 @Results({
@@ -111,7 +111,7 @@ public class BankEntriesNotInBankBookAction extends BasePaymentAction {
     private String mode;
 
     @Override
-    public StateAware getModel() {
+    public WorkflowEntity getModel() {
         voucherHeader = (CVoucherHeader) super.getModel();
         return voucherHeader;
 

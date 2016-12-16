@@ -54,7 +54,7 @@ import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.actions.BaseFormAction;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
-import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.services.pea.TransferClosingBalanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -76,7 +76,7 @@ public class TransferClosingBalanceAction extends BaseFormAction {
 	private Long financialYear;
 
 	@Override
-	public StateAware getModel() {
+	public WorkflowEntity getModel() {
 		return null;
 
 	}

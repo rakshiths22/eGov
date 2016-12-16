@@ -66,7 +66,7 @@ import javax.validation.constraints.NotNull;
 
 import org.egov.commons.EgwStatus;
 import org.egov.infra.admin.master.entity.User;
-import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infstr.models.EgChecklists;
 import org.hibernate.validator.constraints.Length;
 
@@ -74,7 +74,7 @@ import org.hibernate.validator.constraints.Length;
 @Table(name = "EG_BILLREGISTER")
 @Inheritance(strategy = InheritanceType.JOINED)
 @SequenceGenerator(name = EgBillregister.SEQ_EG_BILLREGISTER, sequenceName = EgBillregister.SEQ_EG_BILLREGISTER, allocationSize = 1)
-public class EgBillregister extends StateAware implements java.io.Serializable {
+public class EgBillregister extends WorkflowEntity implements java.io.Serializable {
 
     public enum BillStatus {
         CREATED, APPROVED, REJECTED, CANCELLED
@@ -401,7 +401,7 @@ public class EgBillregister extends StateAware implements java.io.Serializable {
 
     @Override
     public String getStateDetails() {
-        return getState().getComments().isEmpty() ? billnumber : billnumber + "-" + getState().getComments();
+        return getCurrentTask().getComments().isEmpty() ? billnumber : billnumber + "-" + getCurrentTask().getComments();
     }
 
     public User getApprover() {

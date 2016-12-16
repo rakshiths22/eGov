@@ -80,12 +80,12 @@ public class BudgetReAppropriationService extends PersistenceService<BudgetReApp
 
     private static final Logger LOGGER = Logger.getLogger(BudgetReAppropriationService.class);
 
-    WorkflowService<BudgetReAppropriationMisc> miscWorkflowService;
+    
     @Autowired
     @Qualifier("budgetDetailService")
     private BudgetDetailService budgetDetailService;
 
-    protected WorkflowService<BudgetDetail> budgetDetailWorkflowService;
+   
     @Autowired
     private BudgetDetailConfig budgetDetailConfig;
     @Autowired
@@ -125,10 +125,7 @@ public class BudgetReAppropriationService extends PersistenceService<BudgetReApp
         this.sequenceGenerator = sequenceGenerator;
     }
 
-    public void setBudgetDetailWorkflowService(
-            final WorkflowService<BudgetDetail> budgetDetailWorkflowService) {
-        this.budgetDetailWorkflowService = budgetDetailWorkflowService;
-    }
+    
 
     public void setBudgetDetailService(final BudgetDetailService budgetDetailService) {
         this.budgetDetailService = budgetDetailService;
@@ -138,9 +135,7 @@ public class BudgetReAppropriationService extends PersistenceService<BudgetReApp
         this.persistenceService = persistenceService;
     }
 
-    public void setMiscWorkflowService(final WorkflowService<BudgetReAppropriationMisc> miscWorkflowService) {
-        this.miscWorkflowService = miscWorkflowService;
-    }
+   
 
     public boolean checkRowEmpty(final BudgetReAppropriationView appropriation) {
         if ((appropriation.getBudget() == null || appropriation.getBudget().getId() == 0)
@@ -388,7 +383,7 @@ public class BudgetReAppropriationService extends PersistenceService<BudgetReApp
 
     public BudgetReAppropriationMisc performActionOnMisc(final String action, final BudgetReAppropriationMisc reApp,
             final String comment) {
-        final BudgetReAppropriationMisc misc = miscWorkflowService.transition(action, reApp, comment);
+        final BudgetReAppropriationMisc misc = null;//miscWorkflowService.transition(action, reApp, comment);
         getSession().flush();
         return misc;
     }

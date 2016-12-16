@@ -100,14 +100,14 @@ public class PreApprovedActionHelper {
     {
         try {
             if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())
-                    && voucherHeader.getState() == null)
+                    && voucherHeader.getCurrentTask() == null)
             {
                 voucherHeader.setStatus(FinancialConstants.CREATEDVOUCHERSTATUS);
             }
             else
             {
                 voucherHeader = journalVoucherActionHelper.transitionWorkFlow(voucherHeader, workflowBean);
-                voucherService.applyAuditing(voucherHeader.getState());
+               
             }
             voucherService.persist(voucherHeader);
 

@@ -56,6 +56,7 @@ import org.egov.eis.web.controller.workflow.GenericWorkFlowController;
 import org.egov.infra.admin.master.entity.AppConfigValues;
 import org.egov.infra.admin.master.service.AppConfigValueService;
 import org.egov.infra.utils.DateUtils;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.infstr.utils.EgovMasterDataCaching;
 import org.egov.utils.FinancialConstants;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,7 +72,7 @@ import com.exilant.eGov.src.transactions.VoucherTypeForULB;
  */
 
 @Controller
-public abstract class BaseVoucherController extends GenericWorkFlowController {
+public abstract class BaseVoucherController extends BaseWorkFlow {
 
     protected List<String> headerFields = new ArrayList<String>();
     protected List<String> mandatoryFields = new ArrayList<String>();

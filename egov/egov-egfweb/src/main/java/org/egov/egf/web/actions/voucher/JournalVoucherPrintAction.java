@@ -231,8 +231,8 @@ public class JournalVoucherPrintAction extends BaseFormAction {
         paramMap.put("voucherNumber", getVoucherNumber());
         paramMap.put("voucherDate", getVoucherDate());
         paramMap.put("voucherDescription", getVoucherDescription());
-        if (voucher != null && voucher.getState() != null)
-            loadInboxHistoryData(voucher.getStateHistory());
+        if (voucher != null && voucher.getCurrentTask() != null)
+          //  loadInboxHistoryData(voucher.getStateHistory());
         paramMap.put("workFlowHistory", inboxHistory);
         paramMap.put("workFlowJasper",
                 reportHelper.getClass().getResourceAsStream("/reports/templates/workFlowHistoryReport.jasper"));

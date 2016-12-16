@@ -302,20 +302,20 @@ public class VoucherSearchAction extends BaseFormAction
         } else
             for (final CVoucherHeader voucherheader : list)
             {
-                if (voucherheader.getState() != null) {
+                if (voucherheader.getCurrentTask() != null) {
                     final EgBillregistermis billMis = (EgBillregistermis) persistenceService.find(
                             "from EgBillregistermis where voucherHeader.id=?", voucherheader.getId());
                     if (billMis != null) {
                         /*
                          * bill state will be null if created from create JV screen and voucher is in end state
                          */
-                        if (billMis.getEgBillregister().getState() == null && voucherheader.getState().getValue().contains("END"))
+                        if (billMis.getEgBillregister().getCurrentTask() == null && voucherheader.getCurrentTask().getStatus().contains("END"))
                             ismodifyJv = true;
                         else
                             ismodifyJv = false;
                     }
                     else if (voucherheader.getName().equalsIgnoreCase(FinancialConstants.JOURNALVOUCHER_NAME_GENERAL) &&
-                            voucherheader.getState().getValue().contains("END"))
+                            voucherheader.getCurrentTask().getStatus().contains("END"))
                         ismodifyJv = true;
                 } else
                     ismodifyJv = true;

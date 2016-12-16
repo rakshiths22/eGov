@@ -49,6 +49,7 @@ import org.egov.infra.admin.master.entity.Boundary;
 import org.egov.infra.admin.master.entity.Department;
 import org.egov.infra.workflow.entity.State;
 import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.CascadeType;
@@ -77,7 +78,7 @@ import static org.egov.model.budget.BudgetDetail.SEQ_BUDGETDETAIL;
 @Entity
 @Table(name = "EGF_BUDGETDETAIL")
 @SequenceGenerator(name = SEQ_BUDGETDETAIL, sequenceName = SEQ_BUDGETDETAIL, allocationSize = 1)
-public class BudgetDetail extends StateAware {
+public class BudgetDetail extends WorkflowEntity {
     public static final String SEQ_BUDGETDETAIL = "SEQ_EGF_BUDGETDETAIL";
     private static final long serialVersionUID = 5908792258911500512L;
     @Id
@@ -470,7 +471,7 @@ public class BudgetDetail extends StateAware {
     }
 
     public void setWfState(final State state) {
-        setState(state);
+       
     }
 
     public EgwStatus getStatus() {

@@ -42,10 +42,10 @@ package org.egov.model.contra;
 import org.egov.commons.Bankaccount;
 import org.egov.commons.CVoucherHeader;
 import org.egov.infra.persistence.entity.Auditable;
-import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.model.instrument.InstrumentHeader;
 
-public class ContraJournalVoucher extends StateAware  implements Auditable{
+public class ContraJournalVoucher extends WorkflowEntity  implements Auditable{
 
     private static final long serialVersionUID = 8375001509911609969L;
 

@@ -154,10 +154,7 @@ public class JournalVoucherService {
     @Autowired
     private FiscalPeriodHibernateDAO fiscalPeriodHibernateDAO;
 
-    @Autowired
-    @Qualifier("workflowService")
-    private SimpleWorkflowService<CVoucherHeader> cvoucherHeaderRegisterWorkflowService;
-
+    
     @Autowired
     private FundService fundService;
 
@@ -226,8 +223,8 @@ public class JournalVoucherService {
             voucherHeader.setStatus(FinancialConstants.CREATEDVOUCHERSTATUS);
         else {
             voucherHeader.setStatus(FinancialConstants.PREAPPROVEDVOUCHERSTATUS);
-            createVoucherHeaderRegisterWorkflowTransition(savedVoucherHeader, approvalPosition, approvalComent, additionalRule,
-                    workFlowAction);
+          /*  createVoucherHeaderRegisterWorkflowTransition(savedVoucherHeader, approvalPosition, approvalComent, additionalRule,
+                    workFlowAction);*/
         }
 
         return journalVoucherRepository.save(savedVoucherHeader);
@@ -348,85 +345,12 @@ public class JournalVoucherService {
         }
     }
 
-    public void createVoucherHeaderRegisterWorkflowTransition(final CVoucherHeader voucherHeader,
-                                                              final Long approvalPosition, final String approvalComent, final String additionalRule,
-                                                              final String workFlowAction) {
-        if (LOG.isDebugEnabled())
-            LOG.debug(" Create WorkFlow Transition Started  ...");
-        final User user = securityUtils.getCurrentUser();
-        final DateTime currentDate = new DateTime();
-        Position pos = null;
-        Assignment wfInitiator = null;
-        final String currState = "";
-        if (null != voucherHeader.getId())
-            wfInitiator = assignmentService.getPrimaryAssignmentForUser(voucherHeader.getCreatedBy().getId());
-        if (FinancialConstants.BUTTONREJECT.toString().equalsIgnoreCase(workFlowAction)) {
-            final String stateValue = FinancialConstants.WORKFLOW_STATE_REJECTED;
-            voucherHeader.transition(true).withSenderName(user.getUsername() + "::" + user.getName())
-                    .withComments(approvalComent)
-                    .withStateValue(stateValue).withDateInfo(currentDate.toDate())
-                    .withOwner(wfInitiator.getPosition())
-                    .withNextAction("")
-                    .withNatureOfTask(FinancialConstants.WORKFLOWTYPE_VOUCHER_DISPLAYNAME);
-        } else {
-            if (null != approvalPosition && approvalPosition != -1 && !approvalPosition.equals(Long.valueOf(0)))
-                pos = positionMasterService.getPositionById(approvalPosition);
-            WorkFlowMatrix wfmatrix;
-            if (null == voucherHeader.getState()) {
-                wfmatrix = cvoucherHeaderRegisterWorkflowService.getWfMatrix(voucherHeader.getStateType(), null,
-                        null, additionalRule, currState, null);
-                voucherHeader.transition().start().withSenderName(user.getUsername() + "::" + user.getName())
-                        .withComments(approvalComent)
-                        .withStateValue(wfmatrix.getNextState()).withDateInfo(new Date()).withOwner(pos)
-                        .withNextAction(wfmatrix.getNextAction())
-                        .withNatureOfTask(FinancialConstants.WORKFLOWTYPE_VOUCHER_DISPLAYNAME);
-            } else if (FinancialConstants.BUTTONAPPROVE.toString().equalsIgnoreCase(workFlowAction)) {
-                final String stateValue = FinancialConstants.WORKFLOW_STATE_APPROVED;
-                voucherHeader.setStatus(FinancialConstants.CREATEDVOUCHERSTATUS);
-                wfmatrix = cvoucherHeaderRegisterWorkflowService.getWfMatrix(voucherHeader.getStateType(), null,
-                        null, additionalRule, voucherHeader.getCurrentState().getValue(), null);
-                voucherHeader.transition(true).withSenderName(user.getUsername() + "::" + user.getName())
-                        .withComments(approvalComent)
-                        .withStateValue(stateValue).withDateInfo(currentDate.toDate()).withOwner(pos)
-                        .withNextAction("")
-                        .withNatureOfTask(FinancialConstants.WORKFLOWTYPE_VOUCHER_DISPLAYNAME);
-            } else if (FinancialConstants.BUTTONCANCEL.toString().equalsIgnoreCase(workFlowAction)) {
-                final String stateValue = FinancialConstants.WORKFLOW_STATE_CANCELLED;
-                voucherHeader.setStatus(FinancialConstants.CANCELLEDVOUCHERSTATUS);
-                wfmatrix = cvoucherHeaderRegisterWorkflowService.getWfMatrix(voucherHeader.getStateType(), null,
-                        null, additionalRule, voucherHeader.getCurrentState().getValue(), null);
-                voucherHeader.transition(true).withSenderName(user.getUsername() + "::" + user.getName())
-                        .withComments(approvalComent)
-                        .withStateValue(stateValue).withDateInfo(currentDate.toDate()).withOwner(pos)
-                        .withNextAction("")
-                        .withNatureOfTask(FinancialConstants.WORKFLOWTYPE_VOUCHER_DISPLAYNAME);
-            } else {
-                wfmatrix = cvoucherHeaderRegisterWorkflowService.getWfMatrix(voucherHeader.getStateType(), null,
-                        null, additionalRule, voucherHeader.getCurrentState().getValue(), null);
-                voucherHeader.transition(true).withSenderName(user.getUsername() + "::" + user.getName())
-                        .withComments(approvalComent)
-                        .withStateValue(wfmatrix.getNextState()).withDateInfo(new Date()).withOwner(pos)
-                        .withNextAction(wfmatrix.getNextAction())
-                        .withNatureOfTask(FinancialConstants.WORKFLOWTYPE_VOUCHER_DISPLAYNAME);
-            }
-        }
-        if (LOG.isDebugEnabled())
-            LOG.debug(" WorkFlow Transition Completed  ...");
-    }
+  
 
     public Long getApprovalPositionByMatrixDesignation(final CVoucherHeader voucherHeader,
                                                        final String additionalRule, final String mode, final String workFlowAction) {
         Long approvalPosition = null;
-        final WorkFlowMatrix wfmatrix = cvoucherHeaderRegisterWorkflowService.getWfMatrix(voucherHeader
-                .getStateType(), null, null, additionalRule, voucherHeader.getCurrentState().getValue(), null);
-        if (voucherHeader.getState() != null && !voucherHeader.getState().getHistory().isEmpty()
-                && voucherHeader.getState().getOwnerPosition() != null)
-            approvalPosition = voucherHeader.getState().getOwnerPosition().getId();
-        else if (wfmatrix != null)
-            approvalPosition = financialUtils.getApproverPosition(wfmatrix.getNextDesignation(),
-                    voucherHeader.getState(), voucherHeader.getCreatedBy().getId());
-        if (workFlowAction.equals(FinancialConstants.BUTTONCANCEL))
-            approvalPosition = null;
+       
 
         return approvalPosition;
     }

@@ -84,8 +84,8 @@ import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infra.workflow.entity.State;
-import org.egov.infra.workflow.entity.StateAware;
 import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.model.advance.EgAdvanceRequisition;
 import org.egov.model.bills.EgBillregister;
 import org.egov.model.bills.Miscbilldetail;
@@ -339,7 +339,7 @@ public class PaymentAction extends BasePaymentAction {
     }
 
     @Override
-    public StateAware getModel() {
+    public WorkflowEntity getModel() {
         voucherHeader = (CVoucherHeader) super.getModel();
         voucherHeader.setType("Payment");
         return voucherHeader;
@@ -982,7 +982,7 @@ public class PaymentAction extends BasePaymentAction {
                         .getVoucherNumber() }));
                 if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
                     addActionMessage(getMessage("payment.voucher.approved",
-                            new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getState()
+                            new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask()
                                     .getOwnerPosition()) }));
 
             }
@@ -1026,18 +1026,18 @@ public class PaymentAction extends BasePaymentAction {
         paymentActionHelper.getPaymentBills(paymentheader);
         if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
             addActionMessage(getText("payment.voucher.rejected",
-                    new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getState().getOwnerPosition()) }));
+                    new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
         if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
             addActionMessage(getMessage("payment.voucher.approved",
-                    new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getState().getOwnerPosition()) }));
+                    new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
         if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
             addActionMessage(getText("payment.voucher.cancelled"));
         else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-            if ("Closed".equals(paymentheader.getState().getValue()))
+            if ("Closed".equals(paymentheader.getCurrentTask().getStatus()))
                 addActionMessage(getMessage("payment.voucher.final.approval"));
             else
                 addActionMessage(getMessage("payment.voucher.approved",
-                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getState().getOwnerPosition()) }));
+                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
         }
         if (Constants.ADVANCE_PAYMENT.equalsIgnoreCase(paymentheader.getVoucherheader().getName())) {
             advanceRequisitionList.addAll(paymentActionHelper.getAdvanceRequisitionDetails(paymentheader));
@@ -1064,8 +1064,8 @@ public class PaymentAction extends BasePaymentAction {
             LOGGER.debug("Starting view...");
         paymentheader = getPayment();
         /*
-         * if (paymentheader.getState().getValue() != null && !paymentheader.getState().getValue().isEmpty() &&
-         * paymentheader.getState().getValue().contains("Rejected")) { if (LOGGER.isDebugEnabled())
+         * if (paymentheader.getCurrentTask().getStatus() != null && !paymentheader.getCurrentTask().getStatus().isEmpty() &&
+         * paymentheader.getCurrentTask().getStatus().contains("Rejected")) { if (LOGGER.isDebugEnabled())
          * LOGGER.debug("Completed view."); return modify(); }
          */
         miscBillList = paymentActionHelper.getPaymentBills(paymentheader);
@@ -1086,8 +1086,8 @@ public class PaymentAction extends BasePaymentAction {
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("Starting advanceView...");
         paymentheader = getPayment();
-        if (paymentheader.getState().getValue() != null && !paymentheader.getState().getValue().isEmpty()
-                && paymentheader.getState().getValue().contains("Rejected")) {
+        if (paymentheader.getCurrentTask().getStatus() != null && !paymentheader.getCurrentTask().getStatus().isEmpty()
+                && paymentheader.getCurrentTask().getStatus().contains("Rejected")) {
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Completed advanceView.");
             return modifyAdvancePayment();
@@ -1352,7 +1352,7 @@ public class PaymentAction extends BasePaymentAction {
         voucherHeader = paymentheader.getVoucherheader();
         voucherHeader.setStatus(FinancialConstants.CANCELLEDVOUCHERSTATUS);
         // persistenceService.setType(CVoucherHeader.class);
-        paymentheader.transition(true).end();
+     //   paymentheader.transition(true).end();
         persistenceService.persist(voucherHeader);
         addActionMessage(getMessage("payment.cancel.success"));
         action = parameters.get(ACTIONNAME)[0];
@@ -1440,7 +1440,7 @@ public class PaymentAction extends BasePaymentAction {
                  * paymentheader.getVoucherheader().getDescription());
                  */
                 addActionMessage(getMessage("payment.voucher.approved",
-                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getState().getOwnerPosition()) }));
+                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
             } else {
                 if (LOGGER.isDebugEnabled())
                     LOGGER.debug("Completed updateAdvancePayment.");
@@ -1610,13 +1610,13 @@ public class PaymentAction extends BasePaymentAction {
         if (cutOffDateconfigValue != null && !cutOffDateconfigValue.isEmpty())
         {
             if (null == paymentheader || null == paymentheader.getId()
-                    || paymentheader.getCurrentState().getValue().endsWith("NEW")) {
+                    || paymentheader.getCurrentTask().getStatus().endsWith("NEW")) {
                 validActions = Arrays.asList(FORWARD, FinancialConstants.CREATEANDAPPROVE);
             } else {
-                if (paymentheader.getCurrentState() != null) {
+                if (paymentheader.getCurrentTask() != null) {
                     validActions = this.customizedWorkFlowService.getNextValidActions(paymentheader
-                            .getStateType(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), paymentheader.getCurrentState().getValue(),
+                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
+                            getAdditionalRule(), paymentheader.getCurrentTask().getStatus(),
                             getPendingActions(), paymentheader.getCreatedDate());
                 }
             }
@@ -1624,13 +1624,13 @@ public class PaymentAction extends BasePaymentAction {
         else
         {
             if (null == paymentheader || null == paymentheader.getId()
-                    || paymentheader.getCurrentState().getValue().endsWith("NEW")) {
+                    || paymentheader.getCurrentTask().getStatus().endsWith("NEW")) {
                 validActions = Arrays.asList(FORWARD);
             } else {
-                if (paymentheader.getCurrentState() != null) {
+                if (paymentheader.getCurrentTask() != null) {
                     validActions = this.customizedWorkFlowService.getNextValidActions(paymentheader
-                            .getStateType(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), paymentheader.getCurrentState().getValue(),
+                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
+                            getAdditionalRule(), paymentheader.getCurrentTask().getStatus(),
                             getPendingActions(), paymentheader.getCreatedDate());
                 }
             }
@@ -1641,13 +1641,13 @@ public class PaymentAction extends BasePaymentAction {
     public String getNextAction() {
         WorkFlowMatrix wfMatrix = null;
         if (paymentheader.getId() != null) {
-            if (paymentheader.getCurrentState() != null) {
-                wfMatrix = this.customizedWorkFlowService.getWfMatrix(paymentheader.getStateType(),
+            if (paymentheader.getCurrentTask() != null) {
+                wfMatrix = this.customizedWorkFlowService.getWfMatrix(paymentheader.getProcessInstance().getBusinessKey(),
                         getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(), paymentheader
-                                .getCurrentState().getValue(), getPendingActions(), paymentheader
+                                .getCurrentTask().getStatus(), getPendingActions(), paymentheader
                                 .getCreatedDate());
             } else {
-                wfMatrix = this.customizedWorkFlowService.getWfMatrix(paymentheader.getStateType(),
+                wfMatrix = this.customizedWorkFlowService.getWfMatrix(paymentheader.getProcessInstance().getBusinessKey(),
                         getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(),
                         State.DEFAULT_STATE_VALUE_CREATED, getPendingActions(), paymentheader
                                 .getCreatedDate());
@@ -2215,8 +2215,8 @@ public class PaymentAction extends BasePaymentAction {
         this.workflowBean = workflowBean;
     }
 
-    public String getCurrentState() {
-        return paymentheader.getState().getValue();
+    public String getCurrentTask() {
+        return paymentheader.getCurrentTask().getStatus();
     }
 
     public String getCutOffDate() {

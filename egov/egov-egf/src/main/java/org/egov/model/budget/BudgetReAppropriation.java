@@ -39,13 +39,13 @@
  */
 package org.egov.model.budget;
 
-import org.egov.commons.EgwStatus;
-import org.egov.infra.workflow.entity.StateAware;
-
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class BudgetReAppropriation extends StateAware {
+import org.egov.commons.EgwStatus;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
+
+public class BudgetReAppropriation extends WorkflowEntity {
     /**
      *
      */

@@ -118,9 +118,7 @@ public class PaymentActionHelper {
     @Autowired
     protected AssignmentService assignmentService;
 
-    @Autowired
-    @Qualifier("workflowService")
-    private SimpleWorkflowService<Paymentheader> paymentHeaderWorkflowService;
+    
 
     @Autowired
     @Qualifier("createVoucher")
@@ -265,15 +263,15 @@ public class PaymentActionHelper {
     public Paymentheader sendForApproval(Paymentheader paymentheader, WorkflowBean workflowBean) {
 
         if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())
-                && paymentheader.getState() == null)
+                && paymentheader.getCurrentTask() == null)
         {
             paymentheader.getVoucherheader().setStatus(
                     FinancialConstants.CREATEDVOUCHERSTATUS);
         }
         else
         {
-            paymentService.transitionWorkFlow(paymentheader, workflowBean);
-            paymentService.applyAuditing(paymentheader.getState());
+           // paymentService.transitionWorkFlow(paymentheader, workflowBean);
+           // paymentService.applyAuditing(paymentheader.getCurrentTask());
         }
         paymentService.persist(paymentheader);
         return paymentheader;
@@ -364,61 +362,7 @@ public class PaymentActionHelper {
 
     }
 
-    @Transactional
-    public void transitionWorkFlow(final Paymentheader paymentheader, WorkflowBean workflowBean) {
-        final DateTime currentDate = new DateTime();
-        final User user = securityUtils.getCurrentUser();
-        final Assignment userAssignment = assignmentService.getPrimaryAssignmentForUser(user.getId());
-        Position pos = null;
-        Assignment wfInitiator = null;
-
-        if (null != paymentheader.getId())
-            wfInitiator = getWorkflowInitiator(paymentheader);
-
-        if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-            if (wfInitiator.equals(userAssignment)) {
-                paymentheader.transition(true).end().withSenderName(user.getName())
-                        .withComments(workflowBean.getApproverComments())
-                        .withDateInfo(currentDate.toDate());
-            } else {
-                final String stateValue = FinancialConstants.WORKFLOW_STATE_REJECTED;
-                paymentheader.transition(true).withSenderName(user.getName()).withComments(workflowBean.getApproverComments())
-                        .withStateValue(stateValue).withDateInfo(currentDate.toDate())
-                        .withOwner(wfInitiator.getPosition()).withNextAction(FinancialConstants.WF_STATE_EOA_Approval_Pending);
-            }
-
-        } else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-            paymentheader.getVoucherheader().setStatus(FinancialConstants.CREATEDVOUCHERSTATUS);
-            paymentheader.transition(true).end().withSenderName(user.getName()).withComments(workflowBean.getApproverComments())
-                    .withDateInfo(currentDate.toDate());
-        } else if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-            paymentheader.getVoucherheader().setStatus(FinancialConstants.CANCELLEDVOUCHERSTATUS);
-            paymentheader.transition(true).end().withStateValue(FinancialConstants.WORKFLOW_STATE_CANCELLED)
-                    .withSenderName(user.getName()).withComments(workflowBean.getApproverComments())
-                    .withDateInfo(currentDate.toDate());
-        } else {
-            if (null != workflowBean.getApproverPositionId() && workflowBean.getApproverPositionId() != -1)
-                pos = (Position) persistenceService.find("from Position where id=?", workflowBean.getApproverPositionId());
-            if (null == paymentheader.getState()) {
-                final WorkFlowMatrix wfmatrix = paymentHeaderWorkflowService.getWfMatrix(paymentheader.getStateType(), null,
-                        null, null, workflowBean.getCurrentState(), null);
-                paymentheader.transition().start().withSenderName(user.getName())
-                        .withComments(workflowBean.getApproverComments())
-                        .withStateValue(wfmatrix.getNextState()).withDateInfo(currentDate.toDate()).withOwner(pos)
-                        .withNextAction(wfmatrix.getNextAction());
-            } else if (paymentheader.getCurrentState().getNextAction().equalsIgnoreCase("END"))
-                paymentheader.transition(true).end().withSenderName(user.getName())
-                        .withComments(workflowBean.getApproverComments())
-                        .withDateInfo(currentDate.toDate());
-            else {
-                final WorkFlowMatrix wfmatrix = paymentHeaderWorkflowService.getWfMatrix(paymentheader.getStateType(), null,
-                        null, null, paymentheader.getCurrentState().getValue(), null);
-                paymentheader.transition(true).withSenderName(user.getName()).withComments(workflowBean.getApproverComments())
-                        .withStateValue(wfmatrix.getNextState()).withDateInfo(currentDate.toDate()).withOwner(pos)
-                        .withNextAction(wfmatrix.getNextAction());
-            }
-        }
-    }
+  
 
     @Transactional
     public List<EgAdvanceRequisition> getAdvanceRequisitionDetails(Paymentheader paymentheader) {

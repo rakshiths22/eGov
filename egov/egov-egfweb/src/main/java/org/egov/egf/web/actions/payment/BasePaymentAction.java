@@ -90,9 +90,7 @@ public class BasePaymentAction extends BaseVoucherAction {
     private static final long serialVersionUID = 8589393885303282831L;
     EisCommonService eisCommonService;
     private static Logger LOGGER = Logger.getLogger(BasePaymentAction.class);
-    @Autowired
-    @Qualifier("workflowService")
-    private SimpleWorkflowService<Paymentheader> paymentHeaderWorkflowService;
+    
     @Autowired
     private VoucherTypeForULB voucherTypeForULB;
 
@@ -137,8 +135,7 @@ public class BasePaymentAction extends BaseVoucherAction {
         String result = null;
         final Paymentheader paymentheader = (Paymentheader) persistenceService.find("from Paymentheader where id=?",
                 Long.valueOf(paymentid));
-        if (!validateOwner(paymentheader.getState()))
-            return INVALIDPAGE;
+        
         getSession().put("paymentid", paymentid);
         if (paymentheader.getVoucherheader().getName().equalsIgnoreCase(FinancialConstants.PAYMENTVOUCHER_NAME_ADVANCE)) {
             final EgAdvanceRequisition arf = (EgAdvanceRequisition) persistenceService.find(
@@ -209,11 +206,7 @@ public class BasePaymentAction extends BaseVoucherAction {
         return FinancialConstants.STANDARD_EXPENDITURETYPE_PENSION;
     }
 
-    public SimpleWorkflowService<Paymentheader> getPaymentHeaderWorkflowService() {
-        return paymentHeaderWorkflowService;
-    }
+   
 
-    public void setPaymentHeaderWorkflowService(SimpleWorkflowService<Paymentheader> paymentHeaderWorkflowService) {
-        this.paymentHeaderWorkflowService = paymentHeaderWorkflowService;
-    }
+    
 }

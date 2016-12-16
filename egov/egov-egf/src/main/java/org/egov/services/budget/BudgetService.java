@@ -80,10 +80,8 @@ public class BudgetService extends PersistenceService<Budget, Long> {
     
     @Autowired
     protected EisCommonService eisCommonService;
-    protected WorkflowService<Budget> budgetWorkflowService;
-    @Autowired
-    @Qualifier("workflowService")
-    protected SimpleWorkflowService<BudgetDetail> budgetDetailWorkflowService;
+    
+     
     
     @Autowired
     @Qualifier("persistenceService")
@@ -227,7 +225,7 @@ public class BudgetService extends PersistenceService<Budget, Long> {
             for (final BudgetDetail detail : unsavedbudgetDetailList) {
                 if (LOGGER.isDebugEnabled())
                     LOGGER.debug("moveDetails" + detail.getApprovedAmount());
-                budgetDetailWorkflowService.transition(actionName, detail, detail.getComment());
+                //budgetDetailWorkflowService.transition(actionName, detail, detail.getComment());
             }
         }
     }
@@ -325,14 +323,7 @@ public class BudgetService extends PersistenceService<Budget, Long> {
         return coaList.size() == 0 ? null : coaList;
     }
 
-    public void setBudgetWorkflowService(final WorkflowService<Budget> budgetWorkflowService) {
-        this.budgetWorkflowService = budgetWorkflowService;
-    }
-
-    public void setBudgetDetailWorkflowService(final SimpleWorkflowService<BudgetDetail> budgetDetailWorkflowService) {
-        this.budgetDetailWorkflowService = budgetDetailWorkflowService;
-    }
-
+    
     public String getEmployeeNameAndDesignationForPosition(final Position pos) throws ApplicationRuntimeException {
         final Employee pi = eisCommonService.getPrimaryAssignmentEmployeeForPos(pos.getId());
         final Assignment assignment = eisCommonService.getLatestAssignmentForEmployee(pi.getId());

@@ -40,7 +40,17 @@
 package org.egov.egf.web.actions.report;
 
 
-import com.opensymphony.xwork2.validator.annotations.Validation;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
@@ -60,7 +70,6 @@ import org.egov.commons.Vouchermis;
 import org.egov.commons.dao.FinancialYearDAO;
 import org.egov.egf.model.VoucherReportView;
 import org.egov.egf.web.actions.voucher.VoucherSearchAction;
-import org.egov.infra.admin.master.entity.AppConfig;
 import org.egov.infra.admin.master.entity.AppConfigValues;
 import org.egov.infra.admin.master.entity.Boundary;
 import org.egov.infra.admin.master.entity.Department;
@@ -69,7 +78,7 @@ import org.egov.infra.exception.ApplicationException;
 import org.egov.infra.web.struts.actions.BaseFormAction;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infra.web.utils.EgovPaginatedList;
-import org.egov.infra.workflow.entity.State;
+import org.egov.infra.workflow.multitenant.model.Task;
 import org.egov.infstr.services.Page;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.model.contra.ContraJournalVoucher;
@@ -82,17 +91,7 @@ import org.hibernate.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import com.opensymphony.xwork2.validator.annotations.Validation;
 
 @Results(value = {
         @Result(name = "PDF", type = "stream", location = "inputStream", params = { "inputName", "inputStream", "contentType",
@@ -463,7 +462,7 @@ public class VoucherStatusReportAction extends BaseFormAction
         final String dash = "-";
         final Integer voucherStatus = voucherHeader.getStatus();
         final String voucherType = voucherHeader.getType();
-        State voucherState = null;
+        Task voucherState = null;
         if (voucherStatus.longValue() == FinancialConstants.CANCELLEDVOUCHERSTATUS.longValue()
                 || voucherStatus.longValue() == FinancialConstants.CREATEDVOUCHERSTATUS.longValue())
             return dash;
@@ -474,20 +473,20 @@ public class VoucherStatusReportAction extends BaseFormAction
             if (contraJV == null)
                 return dash;
             else
-                voucherState = contraJV.getState();
+                voucherState = contraJV.getCurrentTask();
             if (voucherState == null)
                 return dash;
-            else if (voucherState.getValue().equals("END"))
+            else if (voucherState.getStatus().equals("END"))
                 return dash;
             else
                 return getUserNameForPosition(voucherState.getOwnerPosition().getId().intValue());
         }
         else if (voucherType.equalsIgnoreCase(FinancialConstants.STANDARD_VOUCHER_TYPE_JOURNAL))
         {
-            voucherState = voucherHeader.getState();
+            voucherState = voucherHeader.getCurrentTask();
             if (voucherState == null)
                 return dash;
-            else if (voucherState.getValue().equals("END"))
+            else if (voucherState.getStatus().equals("END"))
                 return dash;
             else
                 return getUserNameForPosition(voucherState.getOwnerPosition().getId().intValue());
@@ -499,10 +498,10 @@ public class VoucherStatusReportAction extends BaseFormAction
             if (paymentHeader == null)
                 return dash;
             else
-                voucherState = paymentHeader.getState();
+                voucherState = paymentHeader.getCurrentTask();
             if (voucherState == null)
                 return dash;
-            else if (voucherState.getValue().equals("END"))
+            else if (voucherState.getStatus().equals("END"))
                 return dash;
             else
                 return getUserNameForPosition(voucherState.getOwnerPosition().getId().intValue());
@@ -513,9 +512,9 @@ public class VoucherStatusReportAction extends BaseFormAction
         { 
             final ReceiptVoucher receiptVoucher = (ReceiptVoucher) persistenceService.find(
                     "from ReceiptVoucher rv where rv.voucherHeader=?", voucherHeader);
-            if (receiptVoucher == null || receiptVoucher.getState() == null)
+            if (receiptVoucher == null || receiptVoucher.getCurrentTask() == null)
             {
-                voucherState = voucherHeader.getState();
+                voucherState = voucherHeader.getCurrentTask();
                 if (voucherState == null)
                     return dash;
                 else if (voucherState.getValue().equals("END"))
@@ -526,7 +525,7 @@ public class VoucherStatusReportAction extends BaseFormAction
             else if (voucherState.getValue().equals("END"))
                 return dash;
             else
-                return getUserNameForPosition(receiptVoucher.getState().getOwnerPosition().getId().intValue());
+                return getUserNameForPosition(receiptVoucher.getCurrentTask().getOwnerPosition().getId().intValue());
         }*/
         else
             return dash;

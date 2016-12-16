@@ -64,7 +64,6 @@ import org.egov.commons.dao.FinancialYearHibernateDAO;
 import org.egov.eis.entity.Assignment;
 import org.egov.eis.service.AssignmentService;
 import org.egov.eis.service.EisCommonService;
-import org.egov.eis.web.actions.workflow.GenericWorkFlowAction;
 import org.egov.infra.admin.master.entity.AppConfigValues;
 import org.egov.infra.admin.master.entity.Department;
 import org.egov.infra.admin.master.service.AppConfigValueService;
@@ -73,8 +72,8 @@ import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.reporting.engine.ReportService;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.workflow.entity.State;
-import org.egov.infra.workflow.entity.StateAware;
-import org.egov.infra.workflow.service.WorkflowService;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlowAction;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.infstr.utils.EgovMasterDataCaching;
 import org.egov.model.budget.Budget;
@@ -106,7 +105,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
         @Result(name = BudgetProposalAction.FAILURE, location = "budgetProposal-failure.jsp"),
         @Result(name = BudgetProposalAction.REPORTVIEW, type = "stream", location = "inputStream", params = {
                 "contentType", "${contentType}", "contentDisposition", "attachment; filename=${fileName}" }) })
-public class BudgetProposalAction extends GenericWorkFlowAction {
+public class BudgetProposalAction extends BaseWorkFlowAction {
     private static final String BUDGET_DETAIL_BUDGET_ID = "budgetDetail.budget.id";
     public static final String MESSAGE = "message";
     private static final long serialVersionUID = 1L;
@@ -168,7 +167,7 @@ public class BudgetProposalAction extends GenericWorkFlowAction {
     private ReportHelper reportHelper;
     private Long docNo;
 
-    protected WorkflowService<Budget> budgetWorkflowService;
+    
     protected EisCommonService eisCommonService;
     private boolean consolidatedScreen;
     private boolean allfunctionsArrived;
@@ -219,7 +218,7 @@ public class BudgetProposalAction extends GenericWorkFlowAction {
     }
 
     @Override
-    public StateAware getModel() {
+    public WorkflowEntity getModel() {
         return budgetDetail;
     }
 
@@ -296,24 +295,7 @@ public class BudgetProposalAction extends GenericWorkFlowAction {
         budgetApprove();
     }
 
-    @Override
-    public List<String> getValidActions() {
-
-        List<String> validActions = Collections.emptyList();
-
-        if (budgetDetail.getId() == null || budgetDetail.getId() == 0)
-            validActions = Arrays.asList(FinancialConstants.BUTTONSAVE, FinancialConstants.BUTTONFORWARD);
-        else if (budgetDetail.getCurrentState() != null)
-            validActions = customizedWorkFlowService.getNextValidActions(budgetDetail.getStateType(),
-                    getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(),
-                    budgetDetail.getCurrentState().getValue(), getPendingActions(), budgetDetail.getCreatedDate());
-        else if (budgetDetail.getId() == null || budgetDetail.getId() == 0
-                || budgetDetail.getCurrentState().getValue().endsWith(FinancialConstants.WORKFLOW_STATE_NEW))
-            validActions = Arrays.asList(FinancialConstants.BUTTONFORWARD);
-
-        return validActions;
-    }
-
+    
     private void loadToMasterDataMap() {
         if (LOGGER.isInfoEnabled())
             LOGGER.info("Starting loadToMasterDataMap...... ");
@@ -757,7 +739,7 @@ public class BudgetProposalAction extends GenericWorkFlowAction {
         bpbean.setApprovedRE(bd.getApprovedAmount().setScale(2));
         bpbean.setApprovedBE(bd.getNextYrapprovedAmount().setScale(2));
         if (LOGGER.isInfoEnabled())
-            LOGGER.info("before bd.getstate().getExtraInfo1()");
+            LOGGER.info("before bd.getCurrentTask().getExtraInfo1()");
         if (LOGGER.isInfoEnabled())
             LOGGER.info("Finished populateBudgetProposalBean..... ");
     }
@@ -831,10 +813,7 @@ public class BudgetProposalAction extends GenericWorkFlowAction {
         this.actionName = actionName;
     }
 
-    public void setBudgetWorkflowService(final WorkflowService<Budget> budgetWorkflowService) {
-        this.budgetWorkflowService = budgetWorkflowService;
-    }
-
+    
     public void setEisCommonService(final EisCommonService eisCommonService) {
         this.eisCommonService = eisCommonService;
     }

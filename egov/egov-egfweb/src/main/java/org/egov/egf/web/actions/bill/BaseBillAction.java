@@ -95,7 +95,6 @@ public class BaseBillAction extends BaseVoucherAction {
     protected List<VoucherDetails> billDetailsTableNetFinal;
     protected List<VoucherDetails> billDetailsTableCreditFinal;
     protected List<CheckListHelper> checkListsTable;
-    protected SimpleWorkflowService<EgBillregister> billRegisterWorkflowService;
     protected EgBillRegisterService egBillRegisterService;
     protected EgovCommon egovCommon;
     protected @Autowired AppConfigValueService appConfigValuesService;
@@ -317,13 +316,7 @@ public class BaseBillAction extends BaseVoucherAction {
         this.detailTypeIdandName = detailTypeIdandName;
     }
 
-    public SimpleWorkflowService<EgBillregister> getBillRegisterWorkflowService() {
-        return billRegisterWorkflowService;
-    }
-
-    public void setBillRegisterWorkflowService(final SimpleWorkflowService<EgBillregister> billRegisterWorkflowService) {
-        this.billRegisterWorkflowService = billRegisterWorkflowService;
-    }
+     
 
 
     public EgBillRegisterService getEgBillRegisterService() {

@@ -136,8 +136,8 @@ public class BillPaymentVoucherPrintAction extends BaseFormAction {
         paramMap.put("bankName", bankName);
         paramMap.put("bankAccountNumber", bankAccountNumber);
 
-        if (paymentHeader != null && paymentHeader.getState() != null)
-            loadInboxHistoryData(paymentHeader.getStateHistory(), paramMap);
+        if (paymentHeader != null && paymentHeader.getCurrentTask() != null)
+            //loadInboxHistoryData(paymentHeader.getStateHistory(), paramMap);
 
         if (miscBillDetailList != null) {
             paramMap.put("partyName", getPartyName());
@@ -456,13 +456,11 @@ public class BillPaymentVoucherPrintAction extends BaseFormAction {
 					
 				}
 			
-			history.add(paymentHeader.getState().getSenderName());
-			workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(paymentHeader
-					.getState().getLastModifiedDate()));
+			//history.add(paymentHeader.getCurrentTask().getSenderName());
+			//workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(paymentHeader.getCurrentTask().getLastModifiedDate()));
 		} else {
-			history.add(paymentHeader.getState().getSenderName());
-			workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(paymentHeader
-					.getState().getLastModifiedDate()));
+			//history.add(paymentHeader.getCurrentTask().getSenderName());
+			//workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(paymentHeader.getCurrentTask().getLastModifiedDate()));
 		}
 		for (int i = 0; i < history.size(); i++) {
 			paramMap.put("workFlow_" + i, history.get(i));

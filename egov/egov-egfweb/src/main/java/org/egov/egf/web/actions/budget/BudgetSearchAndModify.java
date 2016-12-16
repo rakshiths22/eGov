@@ -81,7 +81,7 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
     private String comments = "";
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(BudgetSearchAndModify.class);
-    protected WorkflowService<Budget> budgetWorkflowService;
+    
     private boolean showDetails = false;
     private boolean isDetailByFunction;
     private ScriptService scriptService;
@@ -169,7 +169,7 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
             budgetDetail = (BudgetDetail) persistenceService.find("from BudgetDetail where id=?",
                     Long.valueOf(parameters.get("budgetDetail.id")[0]));
             setTopBudget(budgetDetail.getBudget());
-            comments = topBudget.getState().getExtraInfo();
+            comments = topBudget.getCurrentTask().getExtraInfo();
         }
         // if u want only selected function centre filter here by owner
         final String query = " from BudgetDetail bd where bd.budget=? and bd.function=" + budgetDetail.getFunction().getId()
@@ -235,8 +235,8 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
             }
             if (b != null && b.getId() != null) {
                 b = budgetService.find("from Budget where id=?", b.getId());
-                if (b.getCurrentState() != null)
-                    // need to fix phoenix migration b.getCurrentState().setText1(comments);
+                if (b.getCurrentTask() != null)
+                    // need to fix phoenix migration b.getCurrentTask().setText1(comments);
                     budgetService.persist(b);
             }
             addActionMessage(getMessage("budgetdetail.updated"));
@@ -319,9 +319,9 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
                 validateAmount(detail);
                 if (consolidatedScreen)
                     detail.setApprovedAmount(detail.getApprovedAmount().multiply(BigDecimal.valueOf(1000)));
-                final String comment = detail.getState() == null ? "" : detail.getState().getExtraInfo();
+                final String comment = detail.getCurrentTask() == null ? "" : detail.getCurrentTask().getExtraInfo();
 
-                detail.transition(true).withStateValue("END").withOwner(positionByUserId).withComments(comment);
+            //    detail.transition(true).withStateValue("END").withOwner(positionByUserId).withComments(comment);
                 budgetDetailService.persist(detail);
                 final BudgetDetail detailBE = (BudgetDetail) persistenceService.find("from BudgetDetail where id=?",
                         detail.getNextYrId());
@@ -329,7 +329,7 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
                     detailBE.setApprovedAmount(detail.getNextYrapprovedAmount().multiply(BigDecimal.valueOf(1000)));
                 else
                     detailBE.setApprovedAmount(detail.getNextYrapprovedAmount());
-                detailBE.transition(true).withStateValue("END").withOwner(getPosition()).withComments(comment);
+              //  detailBE.transition(true).withStateValue("END").withOwner(getPosition()).withComments(comment);
                 budgetDetailService.persist(detailBE);
 
                 // detail.getNextYearBEProposed
@@ -344,9 +344,9 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
                 validateAmount(detail);
                 if (consolidatedScreen)
                     detail.setApprovedAmount(detail.getApprovedAmount().multiply(BigDecimal.valueOf(1000)));
-                final String comment = detail.getState() == null ? "" : detail.getState().getExtraInfo();
+                final String comment = detail.getCurrentTask() == null ? "" : detail.getCurrentTask().getExtraInfo();
 
-                detail.transition(true).withStateValue("Forwarded by " + name).withOwner(positionByUserId).withComments(comment);
+                //detail.transition(true).withStateValue("Forwarded by " + name).withOwner(positionByUserId).withComments(comment);
                 budgetDetailService.persist(detail);
                 final BudgetDetail detailBE = (BudgetDetail) persistenceService.find("from BudgetDetail where id=?",
                         detail.getNextYrId());
@@ -355,28 +355,28 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
                     detailBE.setApprovedAmount(detail.getNextYrapprovedAmount().multiply(BigDecimal.valueOf(1000)));
                 else
                     detailBE.setApprovedAmount(detail.getNextYrapprovedAmount());
-                detailBE.transition(true).withStateValue("Forwarded by " + name).withOwner(positionByUserId)
-                        .withComments(comment);
+               /* detailBE.transition(true).withStateValue("Forwarded by " + name).withOwner(positionByUserId)
+                        .withComments(comment);*/
                 budgetDetailService.persist(detailBE);
                 // budgetDetailWorkflowService.transition(parameters.get(ACTIONNAME)[0]+"|"+userId, detail, comment);
             }
         if (LOGGER.isInfoEnabled())
             LOGGER.info("Processed Budget line items");
         // if budget is not forwarded yet send the budget else ignore
-        if (getTopBudget().getState().getOwnerPosition() != null
-                && getTopBudget().getState().getOwnerPosition().getId() != positionByUserId.getId())
-            getTopBudget().transition(true).withStateValue("Forwarded by " + name).withOwner(positionByUserId)
-                    .withComments(comments);
+     /*   if (getTopBudget().getCurrentTask().getOwnerPosition() != null
+                && getTopBudget().getCurrentTask().getOwnerPosition().getId() != positionByUserId.getId())*/
+           /* getTopBudget().transition(true).withStateValue("Forwarded by " + name).withOwner(positionByUserId)
+                    .withComments(comments);*/
         // add logic for BE approval also
         final Budget beBudget = budgetService.find("from Budget where referenceBudget=?", getTopBudget());
-        if (beBudget.getState().getOwnerPosition() != null
-                && beBudget.getState().getOwnerPosition().getId() != positionByUserId.getId())
+      /*  if (beBudget.getCurrentTask().getOwnerPosition() != null
+                && beBudget.getCurrentTask().getOwnerPosition().getId() != positionByUserId.getId())
             beBudget.transition(true).withStateValue("Forwarded by " + name).withOwner(positionByUserId).withComments(comments);
-
+*/
         // budgetWorkflowService.transition(parameters.get(ACTIONNAME)[0]+"|"+userId, getTopBudget(),comments);
 
         if (parameters.get("actionName")[0].contains("approv")) {
-            if (topBudget.getState().getValue().equals("END"))
+            if (topBudget.getCurrentTask().getStatus().equals("END"))
                 addActionMessage(getMessage("budgetdetail.approved.end"));
             else
                 addActionMessage(getMessage("budgetdetail.approved")
@@ -405,10 +405,10 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
         if (parameters.get("budget.id") != null && parameters.get("budget.id")[0] != null) {
             topBudget = budgetService.findById(Long.valueOf(parameters.get("budget.id")[0]), false);
 
-            comments = topBudget.getState().getExtraInfo();
+            comments = topBudget.getCurrentTask().getExtraInfo();
         } else if (parameters.get("budgetDetail.budget.id")[0] != null)
             topBudget = budgetService.findById(Long.valueOf(parameters.get("budgetDetail.budget.id")[0]), false);
-        comments = topBudget.getState().getExtraInfo();
+        comments = topBudget.getCurrentTask().getExtraInfo();
         // budgetDetail=budgetDetailService.find("from BudgetDetail where budget=?",topBudget);
         savedbudgetDetailList = getAllApprovedBudgetDetails(topBudget);
         if (savedbudgetDetailList.size() > 0)
@@ -447,8 +447,8 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
                     currentYearAmount).setScale(2));
             budgetAmountView.add(view);
             // if(LOGGER.isInfoEnabled()) LOGGER.info(view);
-            if (detail.getState() != null)
-                detail.setComment(detail.getState().getExtraInfo());
+            if (detail.getCurrentTask() != null)
+                detail.setComment(detail.getCurrentTask().getExtraInfo());
             final BigDecimal approvedAmt = detail.getApprovedAmount() == null ? BigDecimal.ZERO : detail.getApprovedAmount()
                     .setScale(2);
             if (re) {
@@ -574,19 +574,14 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
         return enableOriginalAmount;
     }
 
-    @Override
-    public void setBudgetDetailWorkflowService(
-            final SimpleWorkflowService<BudgetDetail> workflowService) {
-        budgetDetailWorkflowService = workflowService;
-    }
-
+   
     public List<WorkflowAction> getValidActions() {
         List<WorkflowAction> validButtons = null;
         if (isReferenceBudget(getTopBudget())) {
             if (LOGGER.isInfoEnabled())
                 LOGGER.info("Budget is Reference budget hence cannot be saved to sent for approval");
         } else
-            validButtons = budgetWorkflowService.getValidActions(getTopBudget());
+            validButtons =  null;
         return validButtons;
 
     }
@@ -656,10 +651,7 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
         return isReference;
     }
 
-    public void setBudgetWorkflowService(final WorkflowService<Budget> budgetWorkflowService) {
-        this.budgetWorkflowService = budgetWorkflowService;
-    }
-
+    
     /*
      * validates the comments for length 1024
      */

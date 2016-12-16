@@ -38,49 +38,71 @@
  *  In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
  */
 
-package org.egov.infra.workflow.service;
+package org.egov.infra.workflow.multitenant.model;
 
-import java.util.List;
+import javax.persistence.Column;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.Transient;
 
-import org.egov.infra.workflow.entity.State;
-import org.egov.infra.workflow.repository.StateRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.egov.infra.workflow.entity.StateAware;
 
-@Service
-@Transactional(readOnly = true)
-public class StateService {
+import aj.org.objectweb.asm.Attribute;
 
-    private final StateRepository stateRepository;
-
-    @Autowired
-    public StateService(final StateRepository stateRepository) {
-        this.stateRepository = stateRepository;
-    }
-
-    public boolean isPositionUnderWorkflow(final Long posId) {
-        return stateRepository.countByOwnerPosition_Id(posId) > 0;
-    }
-
-    public List<String> getAssignedWorkflowTypeNames(List<Long> ownerIds) {
-        return stateRepository.findAllTypeByOwnerAndStatus(ownerIds);
-    }
-
-    public State getStateById(Long id) {
-        return stateRepository.findOne(id);
-    }
-    
-    @Transactional
-    public State create(final State state) {
-        return stateRepository.save(state);
-    }
-
-    @Transactional
-    public State update(final State state) {
-        return stateRepository.save(state);
-    }
+@MappedSuperclass
+public abstract class WorkflowEntity extends AbstractAuditable {
+    private static final long serialVersionUID = 5776408218810221246L;
+   
+    @Column(name="state_id")
+    private String workflowId;
     
     
+    public abstract String getStateDetails();
+    
+    @Transient
+    private ProcessInstance processInstance;
+    
+    @Transient
+    private Task currentTask;
+    
+    
+   
 
-}
+    public Task getCurrentTask() {
+        return currentTask;
+    }
+
+
+    public void setCurrentTask(Task currentTask) {
+        this.currentTask = currentTask;
+    }
+
+
+    /**
+     * To set the Group Link, Any State Aware Object which needs Grouping should override this method
+     **/
+    public String myLinkId() {
+        return getId().toString();
+    }
+
+    
+    public String getWorkflowId() {
+        return workflowId;
+    }
+
+    public void setWorkflowId(String workflowId) {
+        this.workflowId = workflowId;
+    }
+
+    public ProcessInstance getProcessInstance() {
+        return processInstance;
+    }
+
+    public void setProcessInstance(ProcessInstance processInstance) {
+        this.processInstance = processInstance;
+    }
+    
+
+   }
+
+

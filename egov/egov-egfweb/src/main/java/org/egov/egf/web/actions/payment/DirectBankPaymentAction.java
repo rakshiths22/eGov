@@ -85,8 +85,8 @@ import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infra.workflow.entity.State;
-import org.egov.infra.workflow.entity.StateAware;
 import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infra.workflow.service.SimpleWorkflowService;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.model.bills.Miscbilldetail;
@@ -148,7 +148,7 @@ public class DirectBankPaymentAction extends BasePaymentAction {
     private static final String MDP_CASH = FinancialConstants.MODEOFPAYMENT_CASH;
     private String button;
     private VoucherService voucherService;
-    private SimpleWorkflowService<Paymentheader> paymentWorkflowService;
+   
     private static final Logger LOGGER = Logger.getLogger(DirectBankPaymentAction.class);
     public static final String ZERO = "0";
     private static final String VIEW = "view";
@@ -189,7 +189,7 @@ public class DirectBankPaymentAction extends BasePaymentAction {
     }
 
     @Override
-    public StateAware getModel() {
+    public WorkflowEntity getModel() {
         voucherHeader = (CVoucherHeader) super.getModel();
         return voucherHeader;
 
@@ -325,7 +325,7 @@ public class DirectBankPaymentAction extends BasePaymentAction {
                                         .getBudgetaryAppnumber() }));
                     }
                     addActionMessage(getText("payment.voucher.approved", new String[] { paymentService
-                            .getEmployeeNameForPositionId(paymentheader.getState().getOwnerPosition()) }));
+                            .getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
                 }
             }
             else
@@ -898,19 +898,19 @@ public class DirectBankPaymentAction extends BasePaymentAction {
 
         if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
             addActionMessage(getText("payment.voucher.rejected",
-                    new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getState()
+                    new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask()
                             .getOwnerPosition()) }));
         if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
             addActionMessage(getText("payment.voucher.approved", new String[] { paymentService
-                    .getEmployeeNameForPositionId(paymentheader.getState().getOwnerPosition()) }));
+                    .getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
         if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
             addActionMessage(getText("payment.voucher.cancelled"));
         else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-            if ("Closed".equals(paymentheader.getState().getValue()))
+            if ("Closed".equals(paymentheader.getCurrentTask().getStatus()))
                 addActionMessage(getText("payment.voucher.final.approval"));
             else
                 addActionMessage(getText("payment.voucher.approved",
-                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getState()
+                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask()
                                 .getOwnerPosition()) }));
             setAction(workflowBean.getWorkFlowAction());
 
@@ -926,13 +926,13 @@ public class DirectBankPaymentAction extends BasePaymentAction {
         if (cutOffDateconfigValue != null && !cutOffDateconfigValue.isEmpty())
         {
             if (null == paymentheader || null == paymentheader.getId()
-                    || paymentheader.getCurrentState().getValue().endsWith("NEW")) {
+                    || paymentheader.getCurrentTask().getStatus().endsWith("NEW")) {
                 validActions = Arrays.asList(FORWARD, FinancialConstants.CREATEANDAPPROVE);
             } else {
-                if (paymentheader.getCurrentState() != null) {
+                if (paymentheader.getCurrentTask() != null) {
                     validActions = this.customizedWorkFlowService.getNextValidActions(paymentheader
-                            .getStateType(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), paymentheader.getCurrentState().getValue(),
+                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
+                            getAdditionalRule(), paymentheader.getCurrentTask().getStatus(),
                             getPendingActions(), paymentheader.getCreatedDate());
                 }
             }
@@ -940,13 +940,13 @@ public class DirectBankPaymentAction extends BasePaymentAction {
         else
         {
             if (null == paymentheader || null == paymentheader.getId()
-                    || paymentheader.getCurrentState().getValue().endsWith("NEW")) {
+                    || paymentheader.getCurrentTask().getStatus().endsWith("NEW")) {
                 validActions = Arrays.asList(FORWARD);
             } else {
-                if (paymentheader.getCurrentState() != null) {
+                if (paymentheader.getCurrentTask() != null) {
                     validActions = this.customizedWorkFlowService.getNextValidActions(paymentheader
-                            .getStateType(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), paymentheader.getCurrentState().getValue(),
+                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
+                            getAdditionalRule(), paymentheader.getCurrentTask().getStatus(),
                             getPendingActions(), paymentheader.getCreatedDate());
                 }
             }
@@ -957,13 +957,13 @@ public class DirectBankPaymentAction extends BasePaymentAction {
     public String getNextAction() {
         WorkFlowMatrix wfMatrix = null;
         if (paymentheader.getId() != null) {
-            if (paymentheader.getCurrentState() != null) {
-                wfMatrix = this.customizedWorkFlowService.getWfMatrix(paymentheader.getStateType(),
+            if (paymentheader.getCurrentTask() != null) {
+                wfMatrix = this.customizedWorkFlowService.getWfMatrix(paymentheader.getProcessInstance().getBusinessKey(),
                         getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(), paymentheader
-                                .getCurrentState().getValue(), getPendingActions(), paymentheader
+                                .getCurrentTask().getStatus(), getPendingActions(), paymentheader
                                 .getCreatedDate());
             } else {
-                wfMatrix = this.customizedWorkFlowService.getWfMatrix(paymentheader.getStateType(),
+                wfMatrix = this.customizedWorkFlowService.getWfMatrix(paymentheader.getProcessInstance().getBusinessKey(),
                         getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(),
                         State.DEFAULT_STATE_VALUE_CREATED, getPendingActions(), paymentheader
                                 .getCreatedDate());
@@ -991,7 +991,7 @@ public class DirectBankPaymentAction extends BasePaymentAction {
         paymentheader = (Paymentheader) persistenceService.find("from Paymentheader where voucherheader=?", voucherHeader);
         voucherHeader.setStatus(FinancialConstants.CANCELLEDVOUCHERSTATUS);
         // persistenceService.setType(CVoucherHeader.class);
-        paymentheader.transition(true).end();
+        //paymentheader.transition(true).end();
         persistenceService.persist(voucherHeader);
         addActionMessage(getText("payment.cancel.success"));
         action = parameters.get(ACTIONNAME)[0];
@@ -1069,10 +1069,7 @@ public class DirectBankPaymentAction extends BasePaymentAction {
         this.paymentheader = paymentheader;
     }
 
-    public void setPaymentWorkflowService(final SimpleWorkflowService<Paymentheader> paymentWorkflowService) {
-        this.paymentWorkflowService = paymentWorkflowService;
-    }
-
+   
     public void setEgovCommon(final EgovCommon egovCommon) {
         this.egovCommon = egovCommon;
     }
@@ -1138,8 +1135,8 @@ public class DirectBankPaymentAction extends BasePaymentAction {
         this.workflowBean = workflowBean;
     }
 
-    public String getCurrentState() {
-        return paymentheader.getState().getValue();
+    public String getCurrentTask() {
+        return paymentheader.getCurrentTask().getStatus();
     }
 
     public String getCutOffDate() {

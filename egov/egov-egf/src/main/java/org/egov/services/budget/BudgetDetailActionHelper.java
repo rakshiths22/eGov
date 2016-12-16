@@ -99,16 +99,7 @@ public class BudgetDetailActionHelper {
         saveBudgetDetails(true, parameterObject.budgetDetail.getBudget(), parameterObject.budgetDetailList,
                 parameterObject.beAmounts, parameterObject.egwStatus, parameterObject.workflowBean,
                 pos);
-        if (parameterObject.budgetDetail.getBudget().getState() == null)
-            parameterObject.budgetDetail.getBudget().transition().start()
-                    .withSenderName(securityUtils.getCurrentUser().getName())
-                    .withComments(parameterObject.workflowBean.getApproverComments()).withStateValue("Created")
-                    .withDateInfo(new Date()).withOwner(pos);
-        else
-            parameterObject.budgetDetail.getBudget().transition()
-                    .withSenderName(securityUtils.getCurrentUser().getName())
-                    .withComments(parameterObject.workflowBean.getApproverComments()).withStateValue("Created")
-                    .withDateInfo(new Date()).withOwner(pos);
+         
 
         budgetDefinitionService.update(parameterObject.budgetDetail.getBudget());
 
@@ -133,7 +124,7 @@ public class BudgetDetailActionHelper {
             reCurrentYear.setUniqueNo(budgetDetailService.generateUniqueNo(reCurrentYear));
             budgetDetailService.applyAuditing(reCurrentYear);
             reCurrentYear = budgetDetailService.transitionWorkFlow(reCurrentYear, workflowBean);
-            budgetDetailService.applyAuditing(reCurrentYear.getState());
+            
             budgetDetailService.persist(reCurrentYear);
 
             beNextYear = new BudgetDetail();
@@ -218,7 +209,6 @@ public class BudgetDetailActionHelper {
             else
                 be.setStatus(egwStatusHibernateDAO.getStatusByModuleAndCode(FinancialConstants.BUDGETDETAIL,
                         FinancialConstants.BUDGETDETAIL_CREATED_STATUS));
-            budgetDetailService.applyAuditing(bd.getState());
             budgetDetailService.update(bd);
             budgetDetailService.update(be);
         }

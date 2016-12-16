@@ -821,73 +821,7 @@ public class CreateVoucher {
 	 * @throws ValidationException
 	 */
 
-	public void startWorkflow(final CVoucherHeader voucherheader)
-			throws ValidationException {
-		try {
-			final ApplicationContext applicationContext = new ClassPathXmlApplicationContext(
-					new String[] {
-							"classpath:org/serviceconfig-Bean.xml",
-							"classpath:org/egov/infstr/beanfactory/globalApplicationContext.xml",
-							"classpath:org/egov/infstr/beanfactory/applicationContext-egf.xml",
-							"classpath:org/egov/infstr/beanfactory/applicationContext-pims.xml" });
-			if (voucherheader.getType().equals(
-					FinancialConstants.STANDARD_VOUCHER_TYPE_JOURNAL)
-					|| voucherheader.getType().equals(
-							FinancialConstants.STANDARD_VOUCHER_TYPE_RECEIPT)) {
-				LOGGER.error("Calling StartWorkflow...in create voucher.....for ......ContraJournalVoucher......"
-						+ voucherheader.getType()
-						+ " ----"
-						+ voucherheader.getName());
-				final String billtype = egBillRegisterHibernateDAO
-						.getBillTypeforVoucher(voucherheader);
-				if (billtype == null) {
-					applicationContext.getBean("voucherWorkflowService");
-					voucherheader.start().withOwner(getPosition());
-					// voucherWorkflowService.transition("aa_approve",
-					// voucherheader, "Created"); // action name need to pass
-					// Position position =
-					// eisCommonService.getPositionByUserId(ApplicationThreadLocals.getUserId());
-
-					final VoucherService vs = (VoucherService) applicationContext
-							.getBean("voucherService");
-					final PersistenceService persistenceService = (PersistenceService) applicationContext
-							.getBean("persistenceService");
-					final Position nextPosition = getNextPosition(
-							voucherheader, vs, persistenceService, null);
-					voucherheader.transition(true)
-							.withStateValue("WORKFLOW INITIATED")
-							.withOwner(nextPosition)
-							.withComments("WORKFLOW STARTED");
-				}
-			}
-			/*
-			 * this logic is moved to top since both have same workflow else
-			 * if(voucherheader
-			 * .getType().equals(FinancialConstants.STANDARD_VOUCHER_TYPE_RECEIPT
-			 * )) { // ReceiptVoucher rv=new ReceiptVoucher();
-			 * PersistenceService<ReceiptVoucher, Long> persistenceService = new
-			 * PersistenceService<ReceiptVoucher, Long>();
-			 * //persistenceService.setType(ReceiptVoucher.class);
-			 * rv.setId(voucherheader.getId());
-			 * rv.setVoucherHeader(voucherheader);
-			 * persistenceService.create(rv);
-			 * SimpleWorkflowService<ReceiptVoucher> receiptWorkflowService =
-			 * (SimpleWorkflowService)
-			 * applicationContext.getBean("receiptWorkflowService");
-			 * receiptWorkflowService.start(rv, getPosition());
-			 * receiptWorkflowService.transition("co_approve", rv, "Created");
-			 * // action name need to pass }
-			 */
-
-		} catch (final Exception e) {
-			final List<ValidationError> errors = new ArrayList<ValidationError>();
-			LOGGER.error(ERR, e);
-			errors.add(new ValidationError(
-					"Exp in startWorkflow for JV/Receipt voucher=", e
-							.getMessage()));
-			throw new ValidationException(errors);
-		}
-	}
+	
 
 	private Position getNextPosition(final CVoucherHeader voucherheader,
 			final VoucherService vs,
@@ -961,55 +895,7 @@ public class CreateVoucher {
 /**
  * 
  */
-	@Deprecated
-	public void startWorkflow(final ContraJournalVoucher cjv)
-			throws ValidationException {
-		if (LOGGER.isDebugEnabled())
-			LOGGER.debug("Starting Contra Journal Voucher Workflow....startWorkflow(ContraJournalVoucher cjv)...");
-
-		try {
-			if (cjv.getVoucherHeaderId().getState() == null) {
-				if (LOGGER.isDebugEnabled())
-					LOGGER.debug("Calling StartWorkflow...in create voucher.....for ......ContraJournalVoucher.....................................................................................");
-				if (LOGGER.isDebugEnabled())
-					LOGGER.debug("fetching voucherWorkflowService from application context.......");
-				final ApplicationContext applicationContext = new ClassPathXmlApplicationContext(
-						new String[] {
-								"classpath:org/serviceconfig-Bean.xml",
-								"classpath:org/egov/infstr/beanfactory/globalApplicationContext.xml",
-								"classpath:org/egov/infstr/beanfactory/applicationContext-egf.xml",
-								"classpath:org/egov/infstr/beanfactory/applicationContext-pims.xml" });
-				applicationContext.getBean("voucherWorkflowService");
-				if (LOGGER.isDebugEnabled())
-					LOGGER.debug("completed voucherWorkflowService from application context.......");
-				cjv.getVoucherHeaderId().start().withOwner(getPosition());
-				// voucherWorkflowService.transition("am_approve",
-				// cjv.getVoucherHeaderId(), "Created"); // action name need to
-				// pass
-				final Position position = eisCommonService
-						.getPositionByUserId(ApplicationThreadLocals.getUserId());
-				cjv.transition(true).withStateValue("WORKFLOW INITIATED")
-						.withOwner(position).withComments("WORKFLOW STARTED");
-				final VoucherService vs = (VoucherService) applicationContext
-						.getBean("voucherService");
-				final PersistenceService persistenceService = (PersistenceService) applicationContext
-						.getBean("persistenceService");
-				final Position nextPosition = getNextPosition(
-						cjv.getVoucherHeaderId(), vs, persistenceService, null);
-				cjv.transition(true).withStateValue("WORKFLOW INITIATED")
-						.withOwner(nextPosition)
-						.withComments("WORKFLOW STARTED");
-			}
-		} catch (final Exception e) {
-			final List<ValidationError> errors = new ArrayList<ValidationError>();
-			LOGGER.error(ERR, e);
-			errors.add(new ValidationError("Exp in startWorkflow for Contra=",
-					e.getMessage()));
-			throw new ValidationException(errors);
-		}
-		if (LOGGER.isDebugEnabled())
-			LOGGER.debug("Completed Contra Journal Voucher Workflow.......");
-	}
+	 
 
 	/**
 	 * only for contra workflow
@@ -1019,43 +905,7 @@ public class CreateVoucher {
 	 *             Uses VoucherWorkflow since contra and brv workflows are same
 	 */
 
-	public void startWorkflowForCashUpdate(final CVoucherHeader voucherHeader)
-			throws ValidationException {
-		if (LOGGER.isDebugEnabled())
-			LOGGER.debug("Starting  Journal Voucher Workflow.  for contra......");
-
-		try {
-			if (LOGGER.isDebugEnabled())
-				LOGGER.debug("Calling StartWorkflow...For Cash");
-			final ApplicationContext applicationContext = new ClassPathXmlApplicationContext(
-					new String[] {
-							"classpath:org/serviceconfig-Bean.xml",
-							"classpath:org/egov/infstr/beanfactory/globalApplicationContext.xml",
-							"classpath:org/egov/infstr/beanfactory/applicationContext-egf.xml",
-							"classpath:org/egov/infstr/beanfactory/applicationContext-pims.xml" });
-			applicationContext.getBean("voucherWorkflowService");
-			if (LOGGER.isDebugEnabled())
-				LOGGER.debug("completed voucherWorkflowService from application context.......");
-			voucherHeader.start().withOwner(getPosition());
-			final VoucherService vs = (VoucherService) applicationContext
-					.getBean("voucherService");
-			final PersistenceService persistenceService = (PersistenceService) applicationContext
-					.getBean("persistenceService");
-			final Position nextPosition = getNextPosition(voucherHeader, vs,
-					persistenceService, null);
-			voucherHeader.transition(true).withStateValue("Forwarded")
-					.withOwner(nextPosition).withComments("Forwarded");
-
-		} catch (final Exception e) {
-			final List<ValidationError> errors = new ArrayList<ValidationError>();
-			LOGGER.error(ERR, e);
-			errors.add(new ValidationError("Exp in startWorkflow for Contra=",
-					e.getMessage()));
-			throw new ValidationException(errors);
-		}
-		if (LOGGER.isDebugEnabled())
-			LOGGER.debug("Completed Contra Journal Voucher Workflow.......");
-	}
+	 
 
 	public Position getPosition() throws ApplicationRuntimeException {
 		Position pos;

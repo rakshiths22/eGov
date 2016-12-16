@@ -62,11 +62,12 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 
 @Entity
 @Table(name = "VOUCHERHEADER")
 @SequenceGenerator(name = SEQ_VOUCHERHEADER, sequenceName = SEQ_VOUCHERHEADER, allocationSize = 1)
-public class CVoucherHeader extends StateAware {
+public class CVoucherHeader extends WorkflowEntity {
 
     public static final String SEQ_VOUCHERHEADER = "SEQ_VOUCHERHEADER";
     private static final long serialVersionUID = -1950866465902911747L;
@@ -336,7 +337,7 @@ public class CVoucherHeader extends StateAware {
     @Override
     public String getStateDetails() {
 
-        return getState().getComments().isEmpty() ? voucherNumber : voucherNumber + "-" + getState().getComments();
+        return getCurrentTask().getComments().isEmpty() ? voucherNumber : voucherNumber + "-" + getCurrentTask().getComments();
     }
 
     public Set<CGeneralLedger> getGeneralledger() {

@@ -134,7 +134,6 @@ public class ScheduledRemittanceService {
     private RemittancePersistenceService remittancePersistenceService;
     private PaymentService paymentService;
     private PersistenceService<RemittanceSchedulerLog, Integer> remittanceSchedulerLogService;
-    private SimpleWorkflowService<Paymentheader> paymentWorkflowService;
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy");
     private List<String> receiptFundCodes;
     private EisCommonService eisCommonService;
@@ -926,9 +925,7 @@ public class ScheduledRemittanceService {
         miscbillDetail.setPaidto(remitted);
         persistenceService.getSession().save(miscbillDetail);
 
-        ph.start().withOwner(nextOwner);
-        paymentWorkflowService.transition("uac_ao_approve|" + user.getId(), ph, "created from schedular");
-
+      
         return voucherHeader;
     }
 
@@ -1392,10 +1389,7 @@ public class ScheduledRemittanceService {
         this.paymentService = paymentService;
     }
 
-    public void setPaymentWorkflowService(
-            final SimpleWorkflowService<Paymentheader> paymentWorkflowService) {
-        this.paymentWorkflowService = paymentWorkflowService;
-    }
+    
 
     public void setRemittanceSchedulerLogService(
             final PersistenceService<RemittanceSchedulerLog, Integer> remittanceSchedulerLogService) {

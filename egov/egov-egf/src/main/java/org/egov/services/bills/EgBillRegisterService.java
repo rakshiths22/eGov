@@ -80,9 +80,7 @@ public class EgBillRegisterService extends PersistenceService<EgBillregister, Lo
     private SecurityUtils securityUtils;
     @Autowired
     private AssignmentService assignmentService;
-    @Autowired
-    @Qualifier("workflowService")
-    private SimpleWorkflowService<EgBillregister> billRegisterWorkflowService;
+     
     @Autowired
     @Qualifier("persistenceService")
     private PersistenceService persistenceService;
@@ -102,7 +100,7 @@ public class EgBillRegisterService extends PersistenceService<EgBillregister, Lo
     public EgBillregister createBill(EgBillregister bill, WorkflowBean workflowBean, List<CheckListHelper> checkListsTable) {
         try {
             applyAuditing(bill);
-            if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction()) && bill.getState() == null)
+            if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction()) && bill.getCurrentTask() == null)
             {
                 bill.setBillstatus("APPROVED");
                 EgwStatus egwStatus = egwStatusHibernateDAO.getStatusByModuleAndCode(FinancialConstants.CONTINGENCYBILL_FIN,
@@ -112,7 +110,7 @@ public class EgBillRegisterService extends PersistenceService<EgBillregister, Lo
             else
             {
                 bill = transitionWorkFlow(bill, workflowBean);
-                applyAuditing(bill.getState());
+                
             }
             persist(bill);
             bill.getEgBillregistermis().setSourcePath(
@@ -155,7 +153,6 @@ public class EgBillRegisterService extends PersistenceService<EgBillregister, Lo
     {
         try {
             bill = transitionWorkFlow(bill, workflowBean);
-            applyAuditing(bill.getState());
             persist(bill);
 
         } catch (final Exception e) {
@@ -169,70 +166,7 @@ public class EgBillRegisterService extends PersistenceService<EgBillregister, Lo
 
     @Transactional
     public EgBillregister transitionWorkFlow(final EgBillregister billregister, WorkflowBean workflowBean) {
-        final DateTime currentDate = new DateTime();
-        final User user = securityUtils.getCurrentUser();
-        final Assignment userAssignment = assignmentService.findByEmployeeAndGivenDate(user.getId(), new Date()).get(0);
-        Position pos = null;
-        Assignment wfInitiator = null;
-        if (null != billregister.getId())
-            wfInitiator = getWorkflowInitiator(billregister);
-
-        if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-            if (wfInitiator.equals(userAssignment)) {
-                billregister.transition(true).end().withSenderName(user.getName())
-                        .withComments(workflowBean.getApproverComments())
-                        .withDateInfo(currentDate.toDate());
-            } else {
-                final String stateValue = FinancialConstants.WORKFLOW_STATE_REJECTED;
-                billregister.transition(true).withSenderName(user.getName()).withComments(workflowBean.getApproverComments())
-                        .withStateValue(stateValue).withDateInfo(currentDate.toDate())
-                        .withOwner(wfInitiator.getPosition()).withNextAction(FinancialConstants.WF_STATE_EOA_Approval_Pending);
-            }
-
-        } else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-
-            final WorkFlowMatrix wfmatrix = billRegisterWorkflowService.getWfMatrix(billregister.getStateType(), null,
-                    null, null, billregister.getCurrentState().getValue(), null);
-            billregister.transition(true).withSenderName(user.getName()).withComments(workflowBean.getApproverComments())
-                    .withStateValue(wfmatrix.getCurrentDesignation() + " Approved").withDateInfo(currentDate.toDate())
-                    .withOwner(pos)
-                    .withNextAction(wfmatrix.getNextAction());
-
-            EgwStatus egwStatus = egwStatusHibernateDAO.getStatusByModuleAndCode(FinancialConstants.CONTINGENCYBILL_FIN,
-                    FinancialConstants.CONTINGENCYBILL_APPROVED_STATUS);
-            billregister.setStatus(egwStatus);
-            billregister.transition(true).end().withSenderName(user.getName()).withComments(workflowBean.getApproverComments())
-                    .withDateInfo(currentDate.toDate());
-        } else if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-            EgwStatus egwStatus = egwStatusHibernateDAO.getStatusByModuleAndCode(FinancialConstants.CONTINGENCYBILL_FIN,
-                    FinancialConstants.CONTINGENCYBILL_CANCELLED_STATUS);
-            billregister.setStatus(egwStatus);
-            billregister.setBillstatus(FinancialConstants.CONTINGENCYBILL_CANCELLED_STATUS);
-            billregister.transition(true).end().withStateValue(FinancialConstants.WORKFLOW_STATE_CANCELLED)
-                    .withSenderName(user.getName()).withComments(workflowBean.getApproverComments())
-                    .withDateInfo(currentDate.toDate());
-        } else {
-            if (null != workflowBean.getApproverPositionId() && workflowBean.getApproverPositionId() != -1)
-                pos = (Position) persistenceService.find("from Position where id=?", workflowBean.getApproverPositionId());
-            if (null == billregister.getState()) {
-                final WorkFlowMatrix wfmatrix = billRegisterWorkflowService.getWfMatrix(billregister.getStateType(), null,
-                        null, null, workflowBean.getCurrentState(), null);
-                billregister.transition().start().withSenderName(user.getName())
-                        .withComments(workflowBean.getApproverComments())
-                        .withStateValue(wfmatrix.getNextState()).withDateInfo(currentDate.toDate()).withOwner(pos)
-                        .withNextAction(wfmatrix.getNextAction());
-            } else if (billregister.getCurrentState().getNextAction().equalsIgnoreCase("END"))
-                billregister.transition(true).end().withSenderName(user.getName())
-                        .withComments(workflowBean.getApproverComments())
-                        .withDateInfo(currentDate.toDate());
-            else {
-                final WorkFlowMatrix wfmatrix = billRegisterWorkflowService.getWfMatrix(billregister.getStateType(), null,
-                        null, null, billregister.getCurrentState().getValue(), null);
-                billregister.transition(true).withSenderName(user.getName()).withComments(workflowBean.getApproverComments())
-                        .withStateValue(wfmatrix.getNextState()).withDateInfo(currentDate.toDate()).withOwner(pos)
-                        .withNextAction(wfmatrix.getNextAction());
-            }
-        }
+             
         return billregister;
     }
 

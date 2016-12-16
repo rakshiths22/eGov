@@ -92,8 +92,8 @@ import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infra.workflow.entity.State;
-import org.egov.infra.workflow.entity.StateAware;
 import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infra.workflow.service.SimpleWorkflowService;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.infstr.utils.EgovMasterDataCaching;
@@ -154,7 +154,7 @@ public class RemitRecoveryAction extends BasePaymentAction {
     private Paymentheader paymentheader = new Paymentheader();
     private static final String PAYMENTID = "paymentid";
     private static final String VIEW = "view";
-    private SimpleWorkflowService<Paymentheader> paymentWorkflowService;
+     
     public boolean showApprove = false;
     private CommonBean commonBean;
     private String modeOfPayment;
@@ -215,7 +215,7 @@ public class RemitRecoveryAction extends BasePaymentAction {
     }
 
     @Override
-    public StateAware getModel() {
+    public WorkflowEntity getModel() {
         voucherHeader = (CVoucherHeader) super.getModel();
         voucherHeader.setType(FinancialConstants.STANDARD_VOUCHER_TYPE_PAYMENT);
         return voucherHeader;
@@ -378,7 +378,7 @@ public class RemitRecoveryAction extends BasePaymentAction {
                 addActionMessage(getText("remittancepayment.transaction.success")
                         + paymentheader.getVoucherheader().getVoucherNumber());
                 addActionMessage(getText("payment.voucher.approved",
-                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getState().getOwnerPosition()) }));
+                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
             }
 
         } catch (final ValidationException e) {
@@ -537,19 +537,19 @@ public class RemitRecoveryAction extends BasePaymentAction {
 
         if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
             addActionMessage(getText("payment.voucher.rejected",
-                    new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getState()
+                    new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask()
                             .getOwnerPosition()) }));
         if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
             addActionMessage(getText("payment.voucher.approved", new String[] { paymentService
-                    .getEmployeeNameForPositionId(paymentheader.getState().getOwnerPosition()) }));
+                    .getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
         if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
             addActionMessage(getText("payment.voucher.cancelled"));
         else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-            if ("Closed".equals(paymentheader.getState().getValue()))
+            if ("Closed".equals(paymentheader.getCurrentTask().getStatus()))
                 addActionMessage(getText("payment.voucher.final.approval"));
             else
                 addActionMessage(getText("payment.voucher.approved",
-                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getState()
+                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask()
                                 .getOwnerPosition()) }));
             setAction(workflowBean.getWorkFlowAction());
 
@@ -572,7 +572,7 @@ public class RemitRecoveryAction extends BasePaymentAction {
         voucherHeader.setStatus(FinancialConstants.CANCELLEDVOUCHERSTATUS);
         // persistenceService.setType(CVoucherHeader.class);
         persistenceService.persist(voucherHeader);
-        paymentheader.transition(true).end();
+       // paymentheader.transition(true).end();
         addActionMessage(getText("payment.voucher.cancelled"));
         return MESSAGES;
     }
@@ -583,8 +583,8 @@ public class RemitRecoveryAction extends BasePaymentAction {
     public String viewInboxItem() {
         paymentheader = paymentService.find("from Paymentheader where id=?", Long.valueOf(paymentid));
         /*
-         * if (paymentheader.getState().getValue() != null && !paymentheader.getState().getValue().isEmpty() &&
-         * paymentheader.getState().getValue().contains("Reject")) {
+         * if (paymentheader.getCurrentTask().getStatus() != null && !paymentheader.getCurrentTask().getStatus().isEmpty() &&
+         * paymentheader.getCurrentTask().getStatus().contains("Reject")) {
          * voucherHeader.setId(paymentheader.getVoucherheader().getId()); showCancel = true; return beforeEdit(); }
          */
         showApprove = true;
@@ -907,13 +907,13 @@ public class RemitRecoveryAction extends BasePaymentAction {
         if (cutOffDateconfigValue != null && !cutOffDateconfigValue.isEmpty())
         {
             if (null == paymentheader || null == paymentheader.getId()
-                    || paymentheader.getCurrentState().getValue().endsWith("NEW")) {
+                    || paymentheader.getCurrentTask().getStatus().endsWith("NEW")) {
                 validActions = Arrays.asList(FinancialConstants.BUTTONFORWARD, FinancialConstants.CREATEANDAPPROVE);
             } else {
-                if (paymentheader.getCurrentState() != null) {
+                if (paymentheader.getCurrentTask() != null) {
                     validActions = this.customizedWorkFlowService.getNextValidActions(paymentheader
-                            .getStateType(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), paymentheader.getCurrentState().getValue(),
+                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
+                            getAdditionalRule(), paymentheader.getCurrentTask().getStatus(),
                             getPendingActions(), paymentheader.getCreatedDate());
                 }
             }
@@ -921,13 +921,13 @@ public class RemitRecoveryAction extends BasePaymentAction {
         else
         {
             if (null == paymentheader || null == paymentheader.getId()
-                    || paymentheader.getCurrentState().getValue().endsWith("NEW")) {
+                    || paymentheader.getCurrentTask().getStatus().endsWith("NEW")) {
                 validActions = Arrays.asList(FinancialConstants.BUTTONFORWARD);
             } else {
-                if (paymentheader.getCurrentState() != null) {
+                if (paymentheader.getCurrentTask() != null) {
                     validActions = this.customizedWorkFlowService.getNextValidActions(paymentheader
-                            .getStateType(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), paymentheader.getCurrentState().getValue(),
+                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
+                            getAdditionalRule(), paymentheader.getCurrentTask().getStatus(),
                             getPendingActions(), paymentheader.getCreatedDate());
                 }
             }
@@ -938,13 +938,13 @@ public class RemitRecoveryAction extends BasePaymentAction {
     public String getNextAction() {
         WorkFlowMatrix wfMatrix = null;
         if (paymentheader.getId() != null) {
-            if (paymentheader.getCurrentState() != null) {
-                wfMatrix = this.customizedWorkFlowService.getWfMatrix(paymentheader.getStateType(),
+            if (paymentheader.getCurrentTask() != null) {
+                wfMatrix = this.customizedWorkFlowService.getWfMatrix(paymentheader.getProcessInstance().getBusinessKey(),
                         getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(), paymentheader
-                                .getCurrentState().getValue(), getPendingActions(), paymentheader
+                                .getCurrentTask().getStatus(), getPendingActions(), paymentheader
                                 .getCreatedDate());
             } else {
-                wfMatrix = this.customizedWorkFlowService.getWfMatrix(paymentheader.getStateType(),
+                wfMatrix = this.customizedWorkFlowService.getWfMatrix(paymentheader.getProcessInstance().getBusinessKey(),
                         getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(),
                         State.DEFAULT_STATE_VALUE_CREATED, getPendingActions(), paymentheader
                                 .getCreatedDate());
@@ -995,9 +995,7 @@ public class RemitRecoveryAction extends BasePaymentAction {
         this.paymentService = paymentService;
     }
 
-    public void setPaymentWorkflowService(final SimpleWorkflowService<Paymentheader> paymentWorkflowService) {
-        this.paymentWorkflowService = paymentWorkflowService;
-    }
+  
 
     public void setVoucherService(final VoucherService voucherService) {
         this.voucherService = voucherService;
@@ -1111,8 +1109,8 @@ public class RemitRecoveryAction extends BasePaymentAction {
         this.workflowBean = workflowBean;
     }
 
-    public String getCurrentState() {
-        return paymentheader.getState().getValue();
+    public String getCurrentTask() {
+        return paymentheader.getCurrentTask().getStatus();
     }
 
     public String getCutOffDate() {

@@ -250,8 +250,8 @@ public class ExpenseBillPrintAction extends BaseFormAction {
         if (cbill.getBilldate() != null)
             paramMap.put("billDate", sdf.format(cbill.getBilldate()));
         paramMap.put("voucherDescription", getVoucherDescription());
-        if (cbill != null && cbill.getState() != null)
-            loadInboxHistoryData(cbill.getStateHistory(), paramMap);
+        if (cbill != null && cbill.getCurrentTask() != null)
+           // loadInboxHistoryData(cbill.getStateHistory(), paramMap);
 
         if (billRegistermis != null) {
             paramMap.put("billDate", Constants.DDMMYYYYFORMAT2.format(billRegistermis.getEgBillregister().getBilldate()));
@@ -423,7 +423,7 @@ public class ExpenseBillPrintAction extends BaseFormAction {
 		final List<String> history = new ArrayList<String>();
 		final List<String> workFlowDate = new ArrayList<String>();
 
-		if (!stateHistory.isEmpty()) {
+		/*if (!stateHistory.isEmpty()) {
 			for (final StateHistory historyState : stateHistory)
 
 				if (!"NEW".equalsIgnoreCase(historyState.getValue())) {
@@ -436,27 +436,19 @@ public class ExpenseBillPrintAction extends BaseFormAction {
 					}
 				}
 
-			history.add(cbill.getState().getSenderName());
-			workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(cbill.getState()
+			history.add(cbill.getCurrentTask().getSenderName());
+			workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(cbill.getCurrentTask()
 					.getLastModifiedDate()));
 		} else {
-			history.add(cbill.getState().getSenderName());
-			workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(cbill.getState()
+			history.add(cbill.getCurrentTask().getSenderName());
+			workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(cbill.getCurrentTask()
 					.getLastModifiedDate()));
 		}
 		for (int i = 0; i < history.size(); i++) {
 			paramMap.put("workFlow_" + i, history.get(i));
 			paramMap.put("workFlowDate_" + i, workFlowDate.get(i));
-		}
-		/*
-		 * if(cbill.getState()!=null &&
-		 * cbill.getState().getValue().equalsIgnoreCase("Closed")){
-		 * paramMap.put("workFlow_approver"
-		 * ,eisCommonService.getUserForPosition(
-		 * cbill.getState().getOwnerPosition().getId(),
-		 * cbill.getCreatedDate())); paramMap.put("workFlowDate_approval_date" ,
-		 * cbill.getState().getLastModifiedDate() ); }
-		 */
+		}*/
+		 
 	}
 
     private void prepareForPrint() {

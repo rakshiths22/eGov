@@ -87,8 +87,8 @@ import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infra.workflow.entity.State;
-import org.egov.infra.workflow.entity.StateAware;
 import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infstr.models.EgChecklists;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.infstr.utils.EgovMasterDataCaching;
@@ -164,7 +164,7 @@ public class ContingentBillAction extends BaseBillAction {
     private AutonumberServiceBeanResolver beanResolver;
 
     @Override
-    public StateAware getModel() {
+    public WorkflowEntity getModel() {
         return super.getModel();
     }
 
@@ -287,19 +287,19 @@ public class ContingentBillAction extends BaseBillAction {
             bill = egBillRegisterService.sendForApproval(bill, workflowBean);
             if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
                 addActionMessage(getText("bill.rejected",
-                        new String[] { voucherService.getEmployeeNameForPositionId(bill.getState()
+                        new String[] { voucherService.getEmployeeNameForPositionId(bill.getCurrentTask()
                                 .getOwnerPosition()) }));
             if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
                 addActionMessage(getText("bill.forwarded",
-                        new String[] { voucherService.getEmployeeNameForPositionId(bill.getState().getOwnerPosition()) }));
+                        new String[] { voucherService.getEmployeeNameForPositionId(bill.getCurrentTask().getOwnerPosition()) }));
             if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
                 addActionMessage(getText("cbill.cancellation.succesful"));
             else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-                if ("Closed".equals(bill.getState().getValue()))
+                if ("Closed".equals(bill.getCurrentTask().getStatus()))
                     addActionMessage(getText("bill.final.approval", new String[] { "The File has been approved" }));
                 else
                     addActionMessage(getText("bill.approved",
-                            new String[] { voucherService.getEmployeeNameForPositionId(bill.getState()
+                            new String[] { voucherService.getEmployeeNameForPositionId(bill.getCurrentTask()
                                     .getOwnerPosition()) }));
             }
         } catch (final ValidationException e) {
@@ -398,7 +398,7 @@ public class ContingentBillAction extends BaseBillAction {
                     addActionMessage(getText("budget.recheck.sucessful", new String[] { bill.getEgBillregistermis()
                             .getBudgetaryAppnumber() }));
                 addActionMessage(getText("bill.forwarded",
-                        new String[] { voucherService.getEmployeeNameForPositionId(bill.getState().getOwnerPosition()) }));
+                        new String[] { voucherService.getEmployeeNameForPositionId(bill.getCurrentTask().getOwnerPosition()) }));
             }
         } catch (final ValidationException e) {
             if (LOGGER.isInfoEnabled())
@@ -423,27 +423,27 @@ public class ContingentBillAction extends BaseBillAction {
         List<String> validActions = Collections.emptyList();
         if (!cutOffDateconfigValue.isEmpty())
         {
-            if (null == bill || null == bill.getId() || bill.getCurrentState().getValue().endsWith("NEW")) {
+            if (null == bill || null == bill.getId() || bill.getCurrentTask().getStatus().endsWith("NEW")) {
                 validActions = Arrays.asList(FORWARD, FinancialConstants.CREATEANDAPPROVE);
             } else {
-                if (bill.getCurrentState() != null) {
+                if (bill.getCurrentTask() != null) {
                     validActions = this.customizedWorkFlowService.getNextValidActions(bill
-                            .getStateType(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), bill.getCurrentState().getValue(),
+                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
+                            getAdditionalRule(), bill.getCurrentTask().getStatus(),
                             getPendingActions(), bill.getCreatedDate());
                 }
             }
         }
         else
         {
-            if (null == bill || null == bill.getId() || bill.getCurrentState().getValue().endsWith("NEW")) {
+            if (null == bill || null == bill.getId() || bill.getCurrentTask().getStatus().endsWith("NEW")) {
                 // read from constant
                 validActions = Arrays.asList(FORWARD);
             } else {
-                if (bill.getCurrentState() != null) {
+                if (bill.getCurrentTask() != null) {
                     validActions = this.customizedWorkFlowService.getNextValidActions(bill
-                            .getStateType(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), bill.getCurrentState().getValue(),
+                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
+                            getAdditionalRule(), bill.getCurrentTask().getStatus(),
                             getPendingActions(), bill.getCreatedDate());
                 }
             }
@@ -454,14 +454,14 @@ public class ContingentBillAction extends BaseBillAction {
     public String getNextAction() {
         WorkFlowMatrix wfMatrix = null;
         if (bill.getId() != null) {
-            if (bill.getCurrentState() != null) {
-                wfMatrix = this.customizedWorkFlowService.getWfMatrix(bill.getStateType(),
+            if (bill.getCurrentTask() != null) {
+                wfMatrix = this.customizedWorkFlowService.getWfMatrix(bill.getProcessInstance().getBusinessKey(),
                         getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(), bill
-                                .getCurrentState().getValue(),
+                                .getCurrentTask().getStatus(),
                         getPendingActions(), bill
                                 .getCreatedDate());
             } else {
-                wfMatrix = this.customizedWorkFlowService.getWfMatrix(bill.getStateType(),
+                wfMatrix = this.customizedWorkFlowService.getWfMatrix(bill.getProcessInstance().getBusinessKey(),
                         getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(),
                         State.DEFAULT_STATE_VALUE_CREATED, getPendingActions(), bill
                                 .getCreatedDate());
@@ -479,9 +479,8 @@ public class ContingentBillAction extends BaseBillAction {
         else
             try {
                 cbill = (EgBillregister) persistenceService.find("from EgBillregister where id=?", billRegisterId);
-                if (cbill != null && cbill.getState() != null)
-                    if (!validateOwner(cbill.getState()))
-                        throw new ApplicationRuntimeException("Invalid Aceess");
+                if (cbill != null && cbill.getCurrentTask() != null)
+                    
                 voucherHeader.setVoucherDate(commonBean.getBillDate());
                 voucherHeader.setVoucherNumber(commonBean.getBillNumber());
                 /*
@@ -516,13 +515,12 @@ public class ContingentBillAction extends BaseBillAction {
 
         EgBillregister cbill = null;
         cbill = (EgBillregister) persistenceService.find("from Cbill where id=?", billRegisterId);
-        if (cbill != null && cbill.getState() != null)
-            if (!validateOwner(cbill.getState()))
-                throw new ApplicationRuntimeException("Invalid Aceess");
+        if (cbill != null && cbill.getCurrentTask() != null)
+            
         if (parameters.get(ACTION_NAME)[0].contains("reject"))
             cbill.getCreatedBy().getId().intValue();
         // billRegisterWorkflowService.transition(parameters.get(ACTION_NAME)[0]+"|"+userId, cbill,parameters.get("comments")[0]);
-        cbill.transition(true).end().withOwner(getPosition()).withComments(parameters.get("comments")[0]);
+       // cbill.transition(true).end().withOwner(getPosition()).withComments(parameters.get("comments")[0]);
         final String statusQury = "from EgwStatus where upper(moduletype)=upper('" + FinancialConstants.CONTINGENCYBILL_FIN
                 + "') and  upper(description)=upper('" + FinancialConstants.CONTINGENCYBILL_CANCELLED_STATUS + "')";
         final EgwStatus egwStatus = (EgwStatus) persistenceService.find(statusQury);
@@ -672,7 +670,7 @@ public class ContingentBillAction extends BaseBillAction {
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("User selected id is : " + userId);
         addActionMessage(getText("bill.forwarded",
-                new String[] { voucherService.getEmployeeNameForPositionId(cbill.getState().getOwnerPosition()) }));
+                new String[] { voucherService.getEmployeeNameForPositionId(cbill.getCurrentTask().getOwnerPosition()) }));
     }
 
     @SkipValidation
@@ -680,8 +678,8 @@ public class ContingentBillAction extends BaseBillAction {
     public String beforeView() throws ClassNotFoundException {
         bill = egBillRegisterService.find("from EgBillregister where id=?", billRegisterId);
         /*
-         * if (cbill.getState() != null && cbill.getState().getValue() != null) if
-         * ((cbill.getState().getValue().contains("REJECT") || cbill.getState().getValue().contains("reject")) && null !=
+         * if (cbill.getCurrentTask() != null && cbill.getCurrentTask().getStatus() != null) if
+         * ((cbill.getCurrentTask().getStatus().contains("REJECT") || cbill.getCurrentTask().getStatus().contains("reject")) && null !=
          * parameters.get(MODE) && parameters.get(MODE)[0].equalsIgnoreCase(APPROVE)) return beforeEdit();
          */
         bill = prepareForViewModifyReverse();
@@ -843,8 +841,8 @@ public class ContingentBillAction extends BaseBillAction {
         commonBean.setPartyBillNumber(cbill.getEgBillregistermis().getPartyBillNumber());
         commonBean.setPartyBillDate(cbill.getEgBillregistermis().getPartyBillDate());
         commonBean.setPayto(cbill.getEgBillregistermis().getPayto());
-        if (null != cbill.getState())
-            commonBean.setStateId(cbill.getState().getId());
+       /* if (null != cbill.getCurrentTask())
+            commonBean.setStateId(cbill.getCurrentTask().getId());*/
         commonBean.setBudgetReappNo(cbill.getEgBillregistermis().getBudgetaryAppnumber());
 
         final String amountInWords = NumberToWord.amountInWords(cbill.getPassedamount().doubleValue());
@@ -1264,8 +1262,8 @@ public class ContingentBillAction extends BaseBillAction {
         this.workflowBean = workflowBean;
     }
 
-    public String getCurrentState() {
-        return bill.getState().getValue();
+    public String getCurrentTask() {
+        return bill.getCurrentTask().getStatus();
     }
 
     public String getCutOffDate() {

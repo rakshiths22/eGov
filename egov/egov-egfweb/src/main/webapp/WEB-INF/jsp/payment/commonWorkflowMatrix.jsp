@@ -116,9 +116,9 @@
 	}
 </script>
 <s:if test="%{getNextAction()!='END'}">
-	<s:if test="%{getCurrentState()!='Closed'}">
+	<s:if test="%{getCurrentTask()!='Closed'}">
 		<s:hidden id="currentState" name="currentState"
-			value="%{getCurrentState()}" />
+			value="%{getCurrentTask()}" />
 	</s:if>
 	<s:else>
 		<s:hidden id="currentState" name="currentState" value="" />

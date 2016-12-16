@@ -39,12 +39,10 @@
  */
 package org.egov.model.instrument;
 
-import org.egov.commons.CChartOfAccounts;
-import org.egov.commons.CVoucherHeader;
-import org.egov.commons.EgwStatus;
-import org.egov.infra.admin.master.entity.User;
-import org.egov.infra.workflow.entity.StateAware;
-import org.hibernate.validator.constraints.Length;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -59,15 +57,18 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+
+import org.egov.commons.CChartOfAccounts;
+import org.egov.commons.CVoucherHeader;
+import org.egov.commons.EgwStatus;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
+import org.hibernate.validator.constraints.Length;
 
 @Entity
 @Table(name = "EGF_DISHONORCHEQUE")
 @SequenceGenerator(name = DishonorCheque.SEQ_EGF_DISHONORCHEQUE, sequenceName = DishonorCheque.SEQ_EGF_DISHONORCHEQUE, allocationSize = 1)
-public class DishonorCheque extends StateAware {
+public class DishonorCheque extends WorkflowEntity {
 
     private static final long serialVersionUID = -6134188498111765210L;
     public static final String SEQ_EGF_DISHONORCHEQUE = "SEQ_EGF_DISHONORCHQ";

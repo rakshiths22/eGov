@@ -39,17 +39,17 @@
  */
 package org.egov.model.budget;
 
-import org.egov.commons.EgwStatus;
-import org.egov.infra.workflow.entity.StateAware;
-import org.egov.utils.Constants;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class BudgetReAppropriationMisc extends StateAware {
+import org.egov.commons.EgwStatus;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
+import org.egov.utils.Constants;
+
+public class BudgetReAppropriationMisc extends WorkflowEntity {
     private static final long serialVersionUID = 3462810824735494382L;
     private Long id;
     private String sequenceNumber;
@@ -109,8 +109,8 @@ public class BudgetReAppropriationMisc extends StateAware {
         final List<BudgetReAppropriation> reAppList = new ArrayList<BudgetReAppropriation>();
         budgetReAppropriations = budgetReAppropriations == null ? new HashSet<BudgetReAppropriation>() : budgetReAppropriations;
         for (final BudgetReAppropriation entry : budgetReAppropriations)
-            if (!Constants.END.equalsIgnoreCase(entry.getState().getValue())
-                    || !"APPROVED".equalsIgnoreCase(entry.getState().getValue()))
+            if (!Constants.END.equalsIgnoreCase(entry.getCurrentTask().getStatus())
+                    || !"APPROVED".equalsIgnoreCase(entry.getCurrentTask().getStatus()))
                 reAppList.add(entry);
         return reAppList;
     }

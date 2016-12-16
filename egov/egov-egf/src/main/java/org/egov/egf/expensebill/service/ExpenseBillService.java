@@ -63,8 +63,6 @@ import org.egov.infra.script.service.ScriptService;
 import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.infra.utils.autonumber.AutonumberServiceBeanResolver;
 import org.egov.infra.validation.exception.ValidationException;
-import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
-import org.egov.infra.workflow.service.SimpleWorkflowService;
 import org.egov.infstr.models.EgChecklists;
 import org.egov.model.bills.EgBillregister;
 import org.egov.pims.commons.Position;
@@ -132,10 +130,7 @@ public class ExpenseBillService {
     @Autowired
     private CheckListService checkListService;
 
-    @Autowired
-    @Qualifier("workflowService")
-    private SimpleWorkflowService<EgBillregister> egBillregisterRegisterWorkflowService;
-
+     
     @Autowired
     private FundService fundService;
 
@@ -318,7 +313,7 @@ public class ExpenseBillService {
         if (null != egBillregister && null != egBillregister.getStatus()
                 && null != egBillregister.getStatus().getCode())
             if (FinancialConstants.CONTINGENCYBILL_CREATED_STATUS.equals(egBillregister.getStatus().getCode())
-                    && egBillregister.getState() != null && workFlowAction.equalsIgnoreCase(FinancialConstants.BUTTONAPPROVE))
+                    && egBillregister.getCurrentTask() != null && workFlowAction.equalsIgnoreCase(FinancialConstants.BUTTONAPPROVE))
                 egBillregister.setStatus(financialUtils.getStatusByModuleAndCode(FinancialConstants.CONTINGENCYBILL_FIN,
                         FinancialConstants.CONTINGENCYBILL_APPROVED_STATUS));
             else if (workFlowAction.equals(FinancialConstants.BUTTONREJECT))
@@ -360,47 +355,7 @@ public class ExpenseBillService {
         Position pos = null;
         Assignment wfInitiator = null;
         final String currState = "";
-        if (null != egBillregister.getId())
-            wfInitiator = assignmentService.getPrimaryAssignmentForUser(egBillregister.getCreatedBy().getId());
-        if (FinancialConstants.BUTTONREJECT.toString().equalsIgnoreCase(workFlowAction)) {
-            final String stateValue = FinancialConstants.WORKFLOW_STATE_REJECTED;
-            egBillregister.transition(true).withSenderName(user.getUsername() + "::" + user.getName())
-                    .withComments(approvalComent)
-                    .withStateValue(stateValue).withDateInfo(currentDate.toDate())
-                    .withOwner(wfInitiator.getPosition())
-                    .withNextAction("")
-                    .withNatureOfTask(FinancialConstants.WORKFLOWTYPE_EXPENSE_BILL_DISPLAYNAME);
-        } else {
-            if (null != approvalPosition && approvalPosition != -1 && !approvalPosition.equals(Long.valueOf(0)))
-                pos = positionMasterService.getPositionById(approvalPosition);
-            WorkFlowMatrix wfmatrix;
-            if (null == egBillregister.getState()) {
-                wfmatrix = egBillregisterRegisterWorkflowService.getWfMatrix(egBillregister.getStateType(), null,
-                        null, additionalRule, currState, null);
-                egBillregister.transition().start().withSenderName(user.getUsername() + "::" + user.getName())
-                        .withComments(approvalComent)
-                        .withStateValue(wfmatrix.getNextState()).withDateInfo(new Date()).withOwner(pos)
-                        .withNextAction(wfmatrix.getNextAction())
-                        .withNatureOfTask(FinancialConstants.WORKFLOWTYPE_EXPENSE_BILL_DISPLAYNAME);
-            } else if (FinancialConstants.BUTTONCANCEL.toString().equalsIgnoreCase(workFlowAction)) {
-                final String stateValue = FinancialConstants.WORKFLOW_STATE_CANCELLED;
-                wfmatrix = egBillregisterRegisterWorkflowService.getWfMatrix(egBillregister.getStateType(), null,
-                        null, additionalRule, egBillregister.getCurrentState().getValue(), null);
-                egBillregister.transition(true).withSenderName(user.getUsername() + "::" + user.getName())
-                        .withComments(approvalComent)
-                        .withStateValue(stateValue).withDateInfo(currentDate.toDate()).withOwner(pos)
-                        .withNextAction("")
-                        .withNatureOfTask(FinancialConstants.WORKFLOWTYPE_EXPENSE_BILL_DISPLAYNAME);
-            } else {
-                wfmatrix = egBillregisterRegisterWorkflowService.getWfMatrix(egBillregister.getStateType(), null,
-                        null, additionalRule, egBillregister.getCurrentState().getValue(), null);
-                egBillregister.transition(true).withSenderName(user.getUsername() + "::" + user.getName())
-                        .withComments(approvalComent)
-                        .withStateValue(wfmatrix.getNextState()).withDateInfo(new Date()).withOwner(pos)
-                        .withNextAction(wfmatrix.getNextAction())
-                        .withNatureOfTask(FinancialConstants.WORKFLOWTYPE_EXPENSE_BILL_DISPLAYNAME);
-            }
-        }
+       
         if (LOG.isDebugEnabled())
             LOG.debug(" WorkFlow Transition Completed  ...");
     }
@@ -408,16 +363,7 @@ public class ExpenseBillService {
     public Long getApprovalPositionByMatrixDesignation(final EgBillregister egBillregister,
             final String additionalRule, final String mode, final String workFlowAction) {
         Long approvalPosition = null;
-        final WorkFlowMatrix wfmatrix = egBillregisterRegisterWorkflowService.getWfMatrix(egBillregister
-                .getStateType(), null, null, additionalRule, egBillregister.getCurrentState().getValue(), null);
-        if (egBillregister.getState() != null && !egBillregister.getState().getHistory().isEmpty()
-                && egBillregister.getState().getOwnerPosition() != null)
-            approvalPosition = egBillregister.getState().getOwnerPosition().getId();
-        else if (wfmatrix != null)
-            approvalPosition = financialUtils.getApproverPosition(wfmatrix.getNextDesignation(),
-                    egBillregister.getState(), egBillregister.getCreatedBy().getId());
-        if (workFlowAction.equals(FinancialConstants.BUTTONCANCEL))
-            approvalPosition = null;
+      
 
         return approvalPosition;
     }

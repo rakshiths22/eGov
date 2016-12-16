@@ -73,6 +73,7 @@ import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infra.workflow.service.SimpleWorkflowService;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.infstr.utils.EgovMasterDataCaching;
@@ -103,7 +104,7 @@ public class AdvancePaymentAction extends BasePaymentAction {
     private Paymentheader paymentheader;
     private PaymentService paymentService;
     private VoucherService voucherService;
-    private SimpleWorkflowService<Paymentheader> paymentWorkflowService;
+   
     private PersistenceService<Miscbilldetail, Long> miscbilldetailService;
     private Map<String, String> modeOfPaymentMap = new LinkedHashMap<String, String>();
     private EgovCommon egovCommon;
@@ -204,7 +205,7 @@ public class AdvancePaymentAction extends BasePaymentAction {
                     advanceRequisition.getAdvanceRequisitionAmount());
 
             createMiscBill();
-            paymentheader.start().withOwner(paymentService.getPosition());
+          //  paymentheader.start().withOwner(paymentService.getPosition());
             advanceRequisition.getEgAdvanceReqMises().setVoucherheader(paymentheader.getVoucherheader());
             sendForApproval();
             addActionMessage(getText("arf.payment.transaction.success") + " " + voucherHeader.getVoucherNumber());
@@ -244,22 +245,9 @@ public class AdvancePaymentAction extends BasePaymentAction {
         else
             userId = ApplicationThreadLocals.getUserId().intValue();
 
-        paymentWorkflowService.transition(parameters.get(ACTIONNAME)[0] + "|" + userId, paymentheader,
-                parameters.get("comments")[0]);
+       
         paymentService.persist(paymentheader);
-        if (parameters.get(ACTIONNAME)[0].contains("approve")) {
-            if ("END".equals(paymentheader.getState().getValue()))
-                addActionMessage(getText("payment.voucher.final.approval"));
-            else
-                addActionMessage(getText("payment.voucher.approved",
-                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getState()
-                                .getOwnerPosition()) }));
-            setAction(parameters.get(ACTIONNAME)[0]);
-
-        } else
-            addActionMessage(getText("payment.voucher.rejected",
-                    new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getState()
-                            .getOwnerPosition()) }));
+        
         return viewInboxItem();
     }
 
@@ -465,7 +453,7 @@ public class AdvancePaymentAction extends BasePaymentAction {
         voucherHeader = paymentheader.getVoucherheader();
         voucherHeader.setStatus(FinancialConstants.CANCELLEDVOUCHERSTATUS);
         // persistenceService.setType(CVoucherHeader.class);
-        paymentheader.transition(true).end();
+        //paymentheader.transition(true).end();
         persistenceService.persist(voucherHeader);
         addActionMessage(getText("payment.cancel.success"));
         action = parameters.get(ACTIONNAME)[0];
@@ -475,7 +463,7 @@ public class AdvancePaymentAction extends BasePaymentAction {
     }
 
     @Override
-    public StateAware getModel() {
+    public WorkflowEntity getModel() {
         voucherHeader = (CVoucherHeader) super.getModel();
         return voucherHeader;
     }
@@ -647,9 +635,7 @@ public class AdvancePaymentAction extends BasePaymentAction {
         this.paymentService = paymentService;
     }
 
-    public void setPaymentWorkflowService(final SimpleWorkflowService<Paymentheader> paymentWorkflowService) {
-        this.paymentWorkflowService = paymentWorkflowService;
-    }
+  
 
     public void setPaymentMode(final String paymentMode) {
         this.paymentMode = paymentMode;

@@ -39,22 +39,19 @@
  */
 package org.egov.services.instrument;
 
+import java.util.Date;
+
 import org.apache.log4j.Logger;
-import org.egov.infra.workflow.service.SimpleWorkflowService;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.model.instrument.DishonorCheque;
 import org.egov.pims.commons.Position;
 import org.egov.pims.service.EisUtilService;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
-
 @Transactional(readOnly = true)
 public class DishonorChequeService extends PersistenceService<DishonorCheque, Long> {
 
     private static final Logger LOGGER = Logger.getLogger("DishonorChequeService.class");
-    private SimpleWorkflowService<DishonorCheque> dishonorChqWorkflowService;
-
     private EisUtilService eisService;
     private FinancialIntegrationService financialIntegrationService;
 
@@ -76,7 +73,7 @@ public class DishonorChequeService extends PersistenceService<DishonorCheque, Lo
     {
         // Get cheque creator details
 
-        if (null == dishonorCheque.getState()) {
+        if (null == dishonorCheque.getCurrentTask()) {
             final Position pos = eisService.getPrimaryPositionForUser(dishonorCheque.getPayinSlipCreator().longValue(),
                     new Date());
             if (LOGGER.isDebugEnabled())
@@ -86,24 +83,24 @@ public class DishonorChequeService extends PersistenceService<DishonorCheque, Lo
                 financialIntegrationService.updateSourceInstrumentVoucher(
                         FinancialIntegrationService.EVENT_INSTRUMENT_DISHONOR_INITIATED, dishonorCheque.getInstrumentHeader()
                                 .getId());
-            dishonorCheque.start().withOwner(pos).withComments("DishonorCheque Work flow started");
+           
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("---------" + dishonorCheque);
-            dishonorChqWorkflowService.transition("forward", dishonorCheque, "Created by SM");
+           // dishonorChqWorkflowService.transition("forward", dishonorCheque, "Created by SM");
         }
 
         if (null != workFlowAction && !"".equals(workFlowAction)) {
             final String comments = null == approverComments || "".equals(approverComments.trim()) ? "" : approverComments;
-            dishonorChqWorkflowService.transition(workFlowAction.toLowerCase(), dishonorCheque, comments);
+           // dishonorChqWorkflowService.transition(workFlowAction.toLowerCase(), dishonorCheque, comments);
         }
         if (LOGGER.isDebugEnabled())
-            LOGGER.error("---------" + dishonorCheque.getState().getId());
+            LOGGER.error("---------" + dishonorCheque.getCurrentTask().getId());
 
     }
 
     /*
      * public void startChequeWorkflow(DishonorCheque dishonorCheque,String workFlowAction,String approverComments) { // Get
-     * cheque creator details if(null == dishonorCheque.getState()){ Position pos =
+     * cheque creator details if(null == dishonorCheque.getCurrentTask()){ Position pos =
      * eisService.getPrimaryPositionForUser(dishonorCheque.getApproverPositionId(),new Date()); dishonorCheque =
      * (DishonorCheque)dishonorCheque.start().pos, "DishonorCheque Work flow started");
      * dishonorChequeWorkflowService.transition("forward", dishonorCheque, "Created by SM"); } if((null != workFlowAction) &&
@@ -112,14 +109,7 @@ public class DishonorChequeService extends PersistenceService<DishonorCheque, Lo
      * dishonorChequeWorkflowService.transition(workFlowAction.toLowerCase(),dishonorCheque, comments); } }
      */
 
-    public SimpleWorkflowService<DishonorCheque> getDishonorChqWorkflowService() {
-        return dishonorChqWorkflowService;
-    }
-
-    public void setDishonorChqWorkflowService(
-            final SimpleWorkflowService<DishonorCheque> dishonorChqWorkflowService) {
-        this.dishonorChqWorkflowService = dishonorChqWorkflowService;
-    }
+    
 
     public EisUtilService getEisService() {
         return eisService;

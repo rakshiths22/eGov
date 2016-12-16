@@ -119,7 +119,6 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
     private ChartOfAccounts chartOfAccounts;
     private ChartOfAccounts engine;
     private static final String ACTIONNAME = "actionName";
-    private SimpleWorkflowService<CVoucherHeader> voucherWorkflowService;
     private String methodName = "";
     private static final String VHID = "vhid";
     protected EisCommonService eisCommonService;
@@ -167,11 +166,11 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
         final Map<String, Object> vhInfoMap = voucherService.getVoucherInfo(voucherHeader.getId());
         voucherHeader = (CVoucherHeader) vhInfoMap.get(Constants.VOUCHERHEADER);
         try {
-            if (voucherHeader != null && voucherHeader.getState() != null)
-                if (voucherHeader.getState().getValue().contains("Rejected")) {
+            if (voucherHeader != null && voucherHeader.getCurrentTask() != null)
+                if (voucherHeader.getCurrentTask().getStatus().contains("Rejected")) {
                     positionsForUser = eisService.getPositionsForUser(ApplicationThreadLocals.getUserId(), new Date());
                 }
-                else if (voucherHeader.getState().getValue().contains("Closed")) {
+                else if (voucherHeader.getCurrentTask().getStatus().contains("Closed")) {
                     if (LOGGER.isDebugEnabled())
                         LOGGER.debug("Valid Owner :return true");
                 } else if (parameters.get("showMode")[0].equalsIgnoreCase("view")) {
@@ -218,7 +217,7 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
         voucherHeader = preApprovedActionHelper.sendForApproval(voucherHeader, workflowBean);
         if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
             addActionMessage(getText("pjv.voucher.approved",
-                    new String[] { voucherService.getEmployeeNameForPositionId(voucherHeader.getState().getOwnerPosition()) }));
+                    new String[] { voucherService.getEmployeeNameForPositionId(voucherHeader.getCurrentTask().getOwnerPosition()) }));
         if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
             addActionMessage(getText("billVoucher.file.canceled"));
             if (!"JVGeneral".equalsIgnoreCase(voucherHeader.getName()))
@@ -301,7 +300,7 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
 
             if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
                 addActionMessage(getText("pjv.voucher.approved",
-                        new String[] { voucherService.getEmployeeNameForPositionId(voucherHeader.getState().getOwnerPosition()) }));
+                        new String[] { voucherService.getEmployeeNameForPositionId(voucherHeader.getCurrentTask().getOwnerPosition()) }));
         } catch (final ValidationException e) {
             resetVoucherHeader();
             voucherHeader = oldVh;
@@ -335,7 +334,7 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
         final EgBillregistermis billMis = (EgBillregistermis) persistenceService.find(
                 "from  EgBillregistermis  mis where voucherHeader.id=?", vhId);
 
-        if (billMis != null && billMis.getEgBillregister().getState() == null) {
+        if (billMis != null && billMis.getEgBillregister().getCurrentTask() == null) {
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("....Cancelling Bill Associated with the Voucher....");
             billQuery.append(
@@ -523,14 +522,7 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
         this.voucherHelper = voucherHelper;
     }
 
-    public SimpleWorkflowService<CVoucherHeader> getVoucherWorkflowService() {
-        return voucherWorkflowService;
-    }
-
-    public void setVoucherWorkflowService(
-            final SimpleWorkflowService<CVoucherHeader> voucherWorkflowService) {
-        this.voucherWorkflowService = voucherWorkflowService;
-    }
+   
 
     public String getMethodName() {
         return methodName;

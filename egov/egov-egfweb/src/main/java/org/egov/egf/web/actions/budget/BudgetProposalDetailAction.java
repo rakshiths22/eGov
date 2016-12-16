@@ -73,7 +73,7 @@ import org.egov.infra.config.core.ApplicationThreadLocals;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
-import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.model.budget.Budget;
 import org.egov.model.budget.BudgetDetail;
@@ -142,7 +142,7 @@ public class BudgetProposalDetailAction extends BaseBudgetDetailAction {
     }
 
     @Override
-    public StateAware getModel() {
+    public WorkflowEntity getModel() {
         return budgetDetail;
     }
 
@@ -422,14 +422,14 @@ public class BudgetProposalDetailAction extends BaseBudgetDetailAction {
                             + "-" + reCurrentYear.getFunction().getId() + "-" + reCurrentYear.getBudgetGroup().getId());
             budgetDetailService.applyAuditing(reCurrentYear);
             reCurrentYear = budgetDetailService.transitionWorkFlow(reCurrentYear, workflowBean);
-            budgetDetailService.applyAuditing(reCurrentYear.getState());
+            
             budgetDetailService.persist(reCurrentYear);
 
             headerDisabled = true;
             BudgetDetail beNextYear = new BudgetDetail();
 
-            if (addNewDetails)
-                beNextYear.transition(true).withStateValue("END").withOwner(getPosition()).withComments("");
+           /* if (addNewDetails)
+                beNextYear.transition(true).withStateValue("END").withOwner(getPosition()).withComments("");*/
             beNextYear.copyFrom(detail);
             beNextYear.setBudget(refBudget);
             beNextYear.setOriginalAmount(beAmounts.get(index));
@@ -457,27 +457,7 @@ public class BudgetProposalDetailAction extends BaseBudgetDetailAction {
                 .findByEmployeeAndGivenDate(budgetDetail.getCreatedBy().getId(), new Date()).get(0);
     }
 
-    @Override
-    public List<String> getValidActions() {
-
-        List<String> validActions = Collections.emptyList();
-
-        if (budgetDetail.getId() == null || budgetDetail.getId() == 0 || budgetDetail.getCurrentState() == null)
-            validActions = Arrays.asList(FinancialConstants.BUTTONSAVE, FinancialConstants.BUTTONFORWARD);
-        else if (budgetDetail.getCurrentState() != null)
-            validActions = customizedWorkFlowService.getNextValidActions(budgetDetail.getStateType(),
-                    getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(),
-                    budgetDetail.getCurrentState().getValue(), getPendingActions(), budgetDetail.getCreatedDate());
-        else if (budgetDetail.getId() == null || budgetDetail.getId() == 0
-                || budgetDetail.getCurrentState().getValue().endsWith("NEW"))
-            validActions = Arrays.asList(FinancialConstants.BUTTONFORWARD);
-        else if (budgetDetail.getCurrentState() != null)
-            validActions = customizedWorkFlowService.getNextValidActions(budgetDetail.getStateType(),
-                    getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(),
-                    budgetDetail.getCurrentState().getValue(), getPendingActions(), budgetDetail.getCreatedDate());
-
-        return validActions;
-    }
+   
 
     @Override
     public void approve() {
@@ -496,8 +476,8 @@ public class BudgetProposalDetailAction extends BaseBudgetDetailAction {
 
         for (final BudgetDetail detail : savedbudgetDetailList) {
             if (new String("forward").equals(parameters.get(ACTIONNAME)[0]))
-                detail.transition(true).withStateValue("Forwarded by " + getPosition().getName())
-                        .withOwner(getPositionByUserId(userId)).withComments(detail.getComment());
+              /*  detail.transition(true).withStateValue("Forwarded by " + getPosition().getName())
+                        .withOwner(getPositionByUserId(userId)).withComments(detail.getComment());*/
             budgetDetailService.persist(detail);
         }
         // We Dont need to start budget workflow here, Its starts frm HOD level.
@@ -507,7 +487,7 @@ public class BudgetProposalDetailAction extends BaseBudgetDetailAction {
         // forwardBudget(budgetComment, userId); //for BE
 
         if (parameters.get(ACTIONNAME)[0].contains("approv")) {
-            if (topBudget.getState().getValue().equals("END"))
+            if (topBudget.getCurrentTask().getStatus().equals("END"))
                 addActionMessage(getMessage("budgetdetail.approved.end"));
             else
                 addActionMessage(getMessage("budgetdetail.approved")

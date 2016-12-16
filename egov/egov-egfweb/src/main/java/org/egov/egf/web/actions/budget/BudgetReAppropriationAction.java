@@ -125,9 +125,7 @@ public class BudgetReAppropriationAction extends BaseFormAction {
     @Autowired
     @Qualifier("budgetReAppropriationService")
     private BudgetReAppropriationService budgetReAppropriationService;
-    @Autowired
-    @Qualifier("workflowService")
-    private WorkflowService<BudgetReAppropriation> budgetReAppropriationWorkflowService;
+     
     @Autowired
     private BudgetDetailsDAO budgetDetailsDAO;
     private CFinancialYear financialYear;
@@ -320,8 +318,8 @@ public class BudgetReAppropriationAction extends BaseFormAction {
         final BudgetReAppropriationMisc misc = save(getUserId());
         addActionMessage(getText("budget.reapp.approved.end"));
         /*
-         * final Position owner = misc.getState().getOwnerPosition(); if
-         * ("END".equalsIgnoreCase(misc.getCurrentState().getValue())) addActionMessage(getText("budget.reapp.approved.end"));
+         * final Position owner = misc.getCurrentTask().getOwnerPosition(); if
+         * ("END".equalsIgnoreCase(misc.getCurrentTask().getStatus())) addActionMessage(getText("budget.reapp.approved.end"));
          * else addActionMessage(getText("budget.reapp.approved") +
          * budgetService.getEmployeeNameAndDesignationForPosition(owner));
          */
@@ -552,10 +550,7 @@ public class BudgetReAppropriationAction extends BaseFormAction {
         return "search";
     }
 
-    public void transition(final String actionName, final BudgetReAppropriation detail, final String comment) {
-        budgetReAppropriationWorkflowService.transition(actionName, detail, comment);
-    }
-
+     
     public List<BudgetReAppropriation> getReAppropriationList() {
         return reAppropriationList;
     }
@@ -580,10 +575,7 @@ public class BudgetReAppropriationAction extends BaseFormAction {
         return message;
     }
 
-    public void setBudgetReAppropriationWorkflowService(
-            final WorkflowService<BudgetReAppropriation> budgetReAppropriationWorkflowService) {
-        this.budgetReAppropriationWorkflowService = budgetReAppropriationWorkflowService;
-    }
+    
 
     public BudgetDetailsDAO getBudgetDetailsDAO() {
         return budgetDetailsDAO;

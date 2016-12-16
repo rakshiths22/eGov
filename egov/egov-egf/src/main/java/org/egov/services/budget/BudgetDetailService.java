@@ -128,7 +128,7 @@ public class BudgetDetailService extends PersistenceService<BudgetDetail, Long> 
     private static final String RE = "RE";
     @Autowired
     protected EisCommonService eisCommonService;
-    protected WorkflowService<BudgetDetail> budgetDetailWorkflowService;
+     
     private ScriptService scriptExecutionService;
     @Autowired
     private AppConfigValueService appConfigValuesService;
@@ -166,9 +166,7 @@ public class BudgetDetailService extends PersistenceService<BudgetDetail, Long> 
     @Autowired
     private AssignmentService assignmentService;
 
-    @Autowired
-    @Qualifier("workflowService")
-    private SimpleWorkflowService<BudgetDetail> budgetDetailWFService;
+    
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -603,7 +601,7 @@ public class BudgetDetailService extends PersistenceService<BudgetDetail, Long> 
     }
 
     public void transitionToEnd(final BudgetDetail detail, final Position position) {
-        detail.transition(true).end().withOwner(position);
+        //detail.transition(true).end().withOwner(position);
     }
 
     public List<Object[]> fetchActualsForFYDate(final String fromDate, final String toVoucherDate,
@@ -1528,7 +1526,7 @@ public class BudgetDetailService extends PersistenceService<BudgetDetail, Long> 
                         + miscQuery + " and ((bdetail.glcodeid between bg.mincode "
                         + "and bg.maxcode) or bdetail.glcodeid=bg.majorcode) group by bd.id");
         final List<Object[]> result = getSession().createSQLQuery(query.toString()).list();
-        return result;
+        return result; 
     }
 
     public List<Object[]> fetchActualsForFYWithParams(final String fromDate, final String toVoucherDate,
@@ -1681,10 +1679,7 @@ public class BudgetDetailService extends PersistenceService<BudgetDetail, Long> 
         return eisCommonService.getEmployeeByUserId(ApplicationThreadLocals.getUserId());
     }
 
-    public void setBudgetDetailWorkflowService(final WorkflowService<BudgetDetail> budgetDetailWorkflowService) {
-        this.budgetDetailWorkflowService = budgetDetailWorkflowService;
-    }
-
+     
     public void setPersistenceService(final PersistenceService persistenceService) {
         this.persistenceService = persistenceService;
     }
@@ -2210,85 +2205,13 @@ public class BudgetDetailService extends PersistenceService<BudgetDetail, Long> 
 
     @Transactional
     public BudgetDetail transitionWorkFlow(final BudgetDetail budgetDetail, final WorkflowBean workflowBean) {
-        final User user = securityUtils.getCurrentUser();
-        final Assignment userAssignment = assignmentService.findByEmployeeAndGivenDate(user.getId(), new Date()).get(0);
-        Position pos = null;
-        Assignment wfInitiator = null;
-        if (budgetDetail.getId() != null && budgetDetail.getId() != 0)
-            wfInitiator = getWorkflowInitiator(budgetDetail);
-
-        if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-            if (wfInitiator.equals(userAssignment))
-                budgetDetail.transition(true).end().withSenderName(user.getName())
-                        .withComments(workflowBean.getApproverComments()).withDateInfo(new Date());
-            else {
-                final String stateValue = FinancialConstants.WORKFLOW_STATE_REJECTED;
-                budgetDetail.transition(true).withSenderName(user.getName())
-                        .withComments(workflowBean.getApproverComments()).withStateValue(stateValue)
-                        .withDateInfo(new Date()).withOwner(wfInitiator.getPosition())
-                        .withNextAction(FinancialConstants.WF_STATE_EOA_Approval_Pending);
-            }
-
-        } else if (FinancialConstants.BUTTONVERIFY.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-            budgetDetail.transition(true).withSenderName(user.getName())
-                    .withComments(workflowBean.getApproverComments())
-                    .withStateValue(" Approved").withDateInfo(new Date())
-                    .withOwner(pos);
-            budgetDetail.transition(true).end().withSenderName(user.getName())
-                    .withComments(workflowBean.getApproverComments()).withDateInfo(new Date());
-            budgetDetail.setStatus(egwStatusHibernateDAO.getStatusByModuleAndCode(FinancialConstants.BUDGETDETAIL,
-                    FinancialConstants.BUDGETDETAIL_VERIFIED_STATUS));
-        } else if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-            budgetDetail.setStatus(egwStatusHibernateDAO.getStatusByModuleAndCode(FinancialConstants.BUDGETDETAIL,
-                    FinancialConstants.WORKFLOW_STATE_CANCELLED));
-            budgetDetail.transition(true).end().withStateValue(FinancialConstants.WORKFLOW_STATE_CANCELLED)
-                    .withSenderName(user.getName()).withComments(workflowBean.getApproverComments())
-                    .withDateInfo(new Date());
-        } else if (FinancialConstants.BUTTONSAVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-            if (budgetDetail.getState() == null) {
-                budgetDetail.transition().start().withSenderName(user.getName())
-                        .withComments(workflowBean.getApproverComments()).withStateValue(FinancialConstants.WORKFLOW_STATE_NEW)
-                        .withDateInfo(new Date()).withOwner(userAssignment.getPosition());
-                budgetDetail.setStatus(egwStatusHibernateDAO.getStatusByModuleAndCode(FinancialConstants.BUDGETDETAIL,
-                        FinancialConstants.WORKFLOW_STATE_NEW));
-            }
-        } else {
-            if (null != workflowBean.getApproverPositionId() && workflowBean.getApproverPositionId() != -1)
-                pos = (Position) persistenceService.find("from Position where id=?",
-                        workflowBean.getApproverPositionId());
-            if (null == budgetDetail.getState()) {
-                budgetDetail.transition().start().withSenderName(user.getName())
-                        .withComments(workflowBean.getApproverComments())
-                        .withStateValue(FinancialConstants.BUDGETDETAIL_CREATED_STATUS)
-                        .withDateInfo(new Date()).withOwner(pos);
-                budgetDetail.setStatus(egwStatusHibernateDAO.getStatusByModuleAndCode(FinancialConstants.BUDGETDETAIL,
-                        FinancialConstants.BUDGETDETAIL_CREATED_STATUS));
-            } else if (budgetDetail.getCurrentState().getNextAction() != null
-                    && budgetDetail.getCurrentState().getNextAction().equalsIgnoreCase(FinancialConstants.WORKFLOWENDSTATE))
-                budgetDetail.transition(true).end().withSenderName(user.getName())
-                        .withComments(workflowBean.getApproverComments()).withDateInfo(new Date());
-            else
-                budgetDetail.transition(true).withSenderName(user.getName())
-                        .withComments(workflowBean.getApproverComments())
-                        .withStateValue(FinancialConstants.BUDGETDETAIL_CREATED_STATUS)
-                        .withDateInfo(new Date()).withOwner(pos);
-        }
+        
         return budgetDetail;
     }
 
     @Transactional
     public BudgetDetail rejectWorkFlow(final BudgetDetail budgetDetail, final String comment) {
-        final DateTime currentDate = new DateTime();
-        final User user = securityUtils.getCurrentUser();
-        Assignment wfInitiator = new Assignment();
-        if (budgetDetail.getId() != null && budgetDetail.getId() != 0)
-            wfInitiator = getWorkflowInitiator(budgetDetail);
-        final String stateValue = FinancialConstants.WORKFLOW_STATE_REJECTED;
-        budgetDetail.transition(true).withSenderName(user.getName())
-                .withStateValue(stateValue).withComments(comment)
-                .withDateInfo(currentDate.toDate()).withOwner(wfInitiator.getPosition())
-                .withNextAction(FinancialConstants.WF_STATE_EOA_Approval_Pending);
-        applyAuditing(budgetDetail.getState());
+        
         return budgetDetail;
     }
 

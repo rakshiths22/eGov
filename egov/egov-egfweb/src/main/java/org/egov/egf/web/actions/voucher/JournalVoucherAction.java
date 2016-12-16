@@ -55,7 +55,6 @@ import org.apache.struts2.convention.annotation.Result;
 import org.apache.struts2.convention.annotation.Results;
 import org.apache.struts2.interceptor.validation.SkipValidation;
 import org.egov.commons.CVoucherHeader;
-import org.egov.egf.budget.model.BudgetControlType;
 import org.egov.egf.budget.service.BudgetControlTypeService;
 import org.egov.eis.service.EisCommonService;
 import org.egov.infra.admin.master.entity.AppConfigValues;
@@ -66,7 +65,7 @@ import org.egov.infra.script.service.ScriptService;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
-import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infra.workflow.service.SimpleWorkflowService;
 import org.egov.model.voucher.VoucherDetails;
 import org.egov.model.voucher.VoucherTypeBean;
@@ -103,7 +102,6 @@ public class JournalVoucherAction extends BaseVoucherAction
     private VoucherHelper voucherHelper;
     private static final String VOUCHERQUERY = " from CVoucherHeader where id=?";
     private static final String ACTIONNAME = "actionName";
-    private SimpleWorkflowService<CVoucherHeader> voucherWorkflowService;
     private static final String VHID = "vhid";
     protected EisCommonService eisCommonService;
     @Autowired
@@ -167,7 +165,7 @@ public class JournalVoucherAction extends BaseVoucherAction
     }
 
     @Override
-    public StateAware getModel() {
+    public WorkflowEntity getModel() {
         voucherHeader = (CVoucherHeader) super.getModel();
         voucherHeader.setType(FinancialConstants.STANDARD_VOUCHER_TYPE_JOURNAL);
         // voucherHeader.setName(FinancialConstants.JOURNALVOUCHER_NAME_GENERAL);
@@ -251,7 +249,7 @@ public class JournalVoucherAction extends BaseVoucherAction
                                 + " Created Sucessfully"
                                 + "\\n"
                                 + getText("pjv.voucher.approved",
-                                        new String[] { voucherService.getEmployeeNameForPositionId(voucherHeader.getState()
+                                        new String[] { voucherService.getEmployeeNameForPositionId(voucherHeader.getCurrentTask()
                                                 .getOwnerPosition()) });
                         target = "success";
                     }
@@ -267,7 +265,7 @@ public class JournalVoucherAction extends BaseVoucherAction
                                         .getBudgetaryAppnumber() })
                                 + "\\n"
                                 + getText("pjv.voucher.approved",
-                                        new String[] { voucherService.getEmployeeNameForPositionId(voucherHeader.getState()
+                                        new String[] { voucherService.getEmployeeNameForPositionId(voucherHeader.getCurrentTask()
                                                 .getOwnerPosition()) });
 
                         target = "success";
@@ -317,13 +315,13 @@ public class JournalVoucherAction extends BaseVoucherAction
         if (cutOffDateconfigValue != null && !cutOffDateconfigValue.isEmpty())
         {
             if (null == voucherHeader || null == voucherHeader.getId()
-                    || voucherHeader.getCurrentState().getValue().endsWith("NEW")) {
+                    || voucherHeader.getCurrentTask().getStatus().endsWith("NEW")) {
                 validActions = Arrays.asList(FinancialConstants.BUTTONFORWARD, FinancialConstants.CREATEANDAPPROVE);
             } else {
-                if (voucherHeader.getCurrentState() != null) {
+                if (voucherHeader.getCurrentTask() != null) {
                     validActions = this.customizedWorkFlowService.getNextValidActions(voucherHeader
-                            .getStateType(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), voucherHeader.getCurrentState().getValue(),
+                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
+                            getAdditionalRule(), voucherHeader.getCurrentTask().getStatus(),
                             getPendingActions(), voucherHeader.getCreatedDate());
                 }
             }
@@ -331,14 +329,14 @@ public class JournalVoucherAction extends BaseVoucherAction
         else
         {
             if (null == voucherHeader || null == voucherHeader.getId()
-                    || voucherHeader.getCurrentState().getValue().endsWith("NEW")) {
+                    || voucherHeader.getCurrentTask().getStatus().endsWith("NEW")) {
                 // read from constant
                 validActions = Arrays.asList(FinancialConstants.BUTTONFORWARD);
             } else {
-                if (voucherHeader.getCurrentState() != null) {
+                if (voucherHeader.getCurrentTask() != null) {
                     validActions = this.customizedWorkFlowService.getNextValidActions(voucherHeader
-                            .getStateType(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), voucherHeader.getCurrentState().getValue(),
+                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
+                            getAdditionalRule(), voucherHeader.getCurrentTask().getStatus(),
                             getPendingActions(), voucherHeader.getCreatedDate());
                 }
             }
@@ -453,15 +451,7 @@ public class JournalVoucherAction extends BaseVoucherAction
         this.voucherHelper = voucherHelper;
     }
 
-    public SimpleWorkflowService<CVoucherHeader> getVoucherWorkflowService() {
-        return voucherWorkflowService;
-    }
-
-    public void setVoucherWorkflowService(
-            final SimpleWorkflowService<CVoucherHeader> voucherWorkflowService) {
-        this.voucherWorkflowService = voucherWorkflowService;
-    }
-
+    
     public EisCommonService getEisCommonService() {
         return eisCommonService;
     }

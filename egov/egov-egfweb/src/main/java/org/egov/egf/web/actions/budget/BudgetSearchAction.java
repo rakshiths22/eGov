@@ -106,7 +106,6 @@ public class BudgetSearchAction extends BaseFormAction {
     private final List<BudgetDetail> budgetDetailList = new ArrayList<BudgetDetail>();
     protected List<BudgetDetail> savedbudgetDetailList = new ArrayList<BudgetDetail>();
     protected List<BudgetAmountView> budgetAmountView = new ArrayList<BudgetAmountView>();
-    protected SimpleWorkflowService<BudgetDetail> budgetDetailWorkflowService;
     protected Long financialYear;
     protected List<Budget> budgets;
     protected boolean isApproveAction = false;
@@ -478,8 +477,8 @@ public class BudgetSearchAction extends BaseFormAction {
         for (final BudgetDetail detail : budgetDetails) {
             final BudgetAmountView view = new BudgetAmountView();
             budgetAmountView.add(view);
-            if (detail.getState() != null)
-                detail.setComment(detail.getState().getExtraInfo());
+            if (detail.getCurrentTask() != null)
+                detail.setComment(detail.getCurrentTask().getExtraInfo());
             final BigDecimal approvedAmt = detail.getApprovedAmount() == null ? BigDecimal.ZERO
                     : divideAndRoundStrToBigDec(detail
                             .getApprovedAmount().toString());
@@ -555,9 +554,7 @@ public class BudgetSearchAction extends BaseFormAction {
         return user;
     }
 
-    public void setBudgetDetailWorkflowService(final SimpleWorkflowService<BudgetDetail> workflowService) {
-        budgetDetailWorkflowService = workflowService;
-    }
+    
 
     public String getMode() {
         return mode;

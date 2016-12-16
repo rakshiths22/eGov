@@ -112,7 +112,7 @@ public class CreateExpenseBillController extends BaseBillController {
 
         setDropDownValues(model);
         model.addAttribute(STATE_TYPE, egBillregister.getClass().getSimpleName());
-        prepareWorkflow(model, egBillregister, new WorkflowContainer());
+        prepareWorkflow(model, egBillregister, null);
         prepareValidActionListByCutOffDate(model);
         egBillregister.setBilldate(new Date());
         return EXPENSEBILL_FORM;
@@ -129,7 +129,7 @@ public class CreateExpenseBillController extends BaseBillController {
         if (resultBinder.hasErrors()) {
             setDropDownValues(model);
             model.addAttribute(STATE_TYPE, egBillregister.getClass().getSimpleName());
-            prepareWorkflow(model, egBillregister, new WorkflowContainer());
+            prepareWorkflow(model, egBillregister, null);
             model.addAttribute(NET_PAYABLE_ID, request.getParameter(NET_PAYABLE_ID));
             model.addAttribute(APPROVAL_DESIGNATION, request.getParameter(APPROVAL_DESIGNATION));
             model.addAttribute(APPROVAL_POSITION, request.getParameter(APPROVAL_POSITION));
@@ -155,7 +155,7 @@ public class CreateExpenseBillController extends BaseBillController {
             } catch (final ValidationException e) {
                 setDropDownValues(model);
                 model.addAttribute(STATE_TYPE, egBillregister.getClass().getSimpleName());
-                prepareWorkflow(model, egBillregister, new WorkflowContainer());
+                prepareWorkflow(model, egBillregister, null);
                 model.addAttribute(NET_PAYABLE_ID, request.getParameter(NET_PAYABLE_ID));
                 model.addAttribute(APPROVAL_DESIGNATION, request.getParameter(APPROVAL_DESIGNATION));
                 model.addAttribute(APPROVAL_POSITION, request.getParameter(APPROVAL_POSITION));
@@ -167,9 +167,9 @@ public class CreateExpenseBillController extends BaseBillController {
                 return EXPENSEBILL_FORM;
             }
 
-            final String approverDetails = financialUtils.getApproverDetails(workFlowAction,
-                    savedEgBillregister.getState(), savedEgBillregister.getId(), approvalPosition);
-
+            final String approverDetails =null;/* financialUtils.getApproverDetails(workFlowAction,
+                    savedEgBillregister.getCurrentTask(), savedEgBillregister.getId(), approvalPosition);
+*/
             return "redirect:/expensebill/success?approverDetails= " + approverDetails + "&billNumber="
                     + savedEgBillregister.getBillnumber();
 
@@ -231,10 +231,10 @@ public class CreateExpenseBillController extends BaseBillController {
         } else if (FinancialConstants.CONTINGENCYBILL_APPROVED_STATUS.equals(expenseBill.getStatus().getCode()))
             message = messageSource.getMessage("msg.expense.bill.approved.success",
                     new String[] { expenseBill.getBillnumber() }, null);
-        else if (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(expenseBill.getState().getValue()))
+        else if (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(expenseBill.getCurrentTask().getStatus()))
             message = messageSource.getMessage("msg.expense.bill.reject",
                     new String[] { expenseBill.getBillnumber(), approverName, nextDesign }, null);
-        else if (FinancialConstants.WORKFLOW_STATE_CANCELLED.equals(expenseBill.getState().getValue()))
+        else if (FinancialConstants.WORKFLOW_STATE_CANCELLED.equals(expenseBill.getCurrentTask().getStatus()))
             message = messageSource.getMessage("msg.expense.bill.cancel",
                     new String[] { expenseBill.getBillnumber() }, null);
 

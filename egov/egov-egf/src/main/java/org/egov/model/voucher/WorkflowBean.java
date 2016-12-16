@@ -148,7 +148,7 @@ public class WorkflowBean {
         this.approverPositionId = approverPositionId;
     }
     
-    public String getCurrentState() {
+    public String getCurrentTask() {
         return currentState;
     }
 
