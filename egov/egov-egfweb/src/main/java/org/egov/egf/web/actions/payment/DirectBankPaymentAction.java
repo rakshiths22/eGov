@@ -919,58 +919,9 @@ public class DirectBankPaymentAction extends BasePaymentAction {
         return viewInboxItem();
     }
 
-    public List<String> getValidActions() {
-        List<String> validActions = Collections.emptyList();
-        List<AppConfigValues> cutOffDateconfigValue = appConfigValuesService.getConfigValuesByModuleAndKey("EGF",
-                "DataEntryCutOffDate");
-        if (cutOffDateconfigValue != null && !cutOffDateconfigValue.isEmpty())
-        {
-            if (null == paymentheader || null == paymentheader.getId()
-                    || paymentheader.getCurrentTask().getStatus().endsWith("NEW")) {
-                validActions = Arrays.asList(FORWARD, FinancialConstants.CREATEANDAPPROVE);
-            } else {
-                if (paymentheader.getCurrentTask() != null) {
-                    validActions = this.customizedWorkFlowService.getNextValidActions(paymentheader
-                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), paymentheader.getCurrentTask().getStatus(),
-                            getPendingActions(), paymentheader.getCreatedDate());
-                }
-            }
-        }
-        else
-        {
-            if (null == paymentheader || null == paymentheader.getId()
-                    || paymentheader.getCurrentTask().getStatus().endsWith("NEW")) {
-                validActions = Arrays.asList(FORWARD);
-            } else {
-                if (paymentheader.getCurrentTask() != null) {
-                    validActions = this.customizedWorkFlowService.getNextValidActions(paymentheader
-                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), paymentheader.getCurrentTask().getStatus(),
-                            getPendingActions(), paymentheader.getCreatedDate());
-                }
-            }
-        }
-        return validActions;
-    }
+   
 
-    public String getNextAction() {
-        WorkFlowMatrix wfMatrix = null;
-        if (paymentheader.getId() != null) {
-            if (paymentheader.getCurrentTask() != null) {
-                wfMatrix = this.customizedWorkFlowService.getWfMatrix(paymentheader.getProcessInstance().getBusinessKey(),
-                        getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(), paymentheader
-                                .getCurrentTask().getStatus(), getPendingActions(), paymentheader
-                                .getCreatedDate());
-            } else {
-                wfMatrix = this.customizedWorkFlowService.getWfMatrix(paymentheader.getProcessInstance().getBusinessKey(),
-                        getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(),
-                        State.DEFAULT_STATE_VALUE_CREATED, getPendingActions(), paymentheader
-                                .getCreatedDate());
-            }
-        }
-        return wfMatrix == null ? "" : wfMatrix.getNextAction();
-    }
+    
 
     public Paymentheader getPayment() {
         String paymentid = null;

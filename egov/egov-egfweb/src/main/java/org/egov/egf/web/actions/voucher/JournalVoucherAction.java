@@ -65,6 +65,7 @@ import org.egov.infra.script.service.ScriptService;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
+import org.egov.infra.workflow.multitenant.model.WorkflowContainer;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infra.workflow.service.SimpleWorkflowService;
 import org.egov.model.voucher.VoucherDetails;
@@ -122,10 +123,11 @@ public class JournalVoucherAction extends BaseVoucherAction
     @Override
     public void prepare() {
         super.prepare();
+        
         addDropdownData("approvaldepartmentList", Collections.EMPTY_LIST);
         addDropdownData("designationList", Collections.EMPTY_LIST);
         addDropdownData("userList", Collections.EMPTY_LIST);
-    }
+        prepareWorkflow(null, getModel(), new WorkflowContainer());    }
 
     @SkipValidation
     @Action(value = "/voucher/journalVoucher-newForm")
@@ -317,13 +319,9 @@ public class JournalVoucherAction extends BaseVoucherAction
             if (null == voucherHeader || null == voucherHeader.getId()
                     || voucherHeader.getCurrentTask().getStatus().endsWith("NEW")) {
                 validActions = Arrays.asList(FinancialConstants.BUTTONFORWARD, FinancialConstants.CREATEANDAPPROVE);
-            } else {
-                if (voucherHeader.getCurrentTask() != null) {
-                    validActions = this.customizedWorkFlowService.getNextValidActions(voucherHeader
-                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), voucherHeader.getCurrentTask().getStatus(),
-                            getPendingActions(), voucherHeader.getCreatedDate());
-                }
+            } 
+            else {
+                validActions=  super.getValidActions(getModel(),workflowContainer);
             }
         }
         else
@@ -334,10 +332,7 @@ public class JournalVoucherAction extends BaseVoucherAction
                 validActions = Arrays.asList(FinancialConstants.BUTTONFORWARD);
             } else {
                 if (voucherHeader.getCurrentTask() != null) {
-                    validActions = this.customizedWorkFlowService.getNextValidActions(voucherHeader
-                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), voucherHeader.getCurrentTask().getStatus(),
-                            getPendingActions(), voucherHeader.getCreatedDate());
+                    validActions=  super.getValidActions(getModel(),super.getWorkflowContainer());
                 }
             }
         }

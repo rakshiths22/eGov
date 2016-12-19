@@ -118,7 +118,9 @@ public abstract class BaseBudgetDetailAction extends BaseWorkFlowAction {
     @Autowired
     @Qualifier("budgetService")
     protected BudgetService budgetService;
-
+    
+    protected Long approverPositionId;
+    
     protected List<String> headerFields = new ArrayList<String>();
     protected List<String> gridFields = new ArrayList<String>();
     protected List<String> mandatoryFields = new ArrayList<String>();
@@ -477,10 +479,10 @@ public abstract class BaseBudgetDetailAction extends BaseWorkFlowAction {
     }
 
     public void populateWorkflowBean() {
-        workflowBean.setApproverPositionId(approverPositionId);
+       /* workflowBean.setApproverPositionId(approverPositionId);
         workflowBean.setApproverComments(approverComments);
         workflowBean.setWorkFlowAction(workFlowAction);
-        workflowBean.setCurrentState(currentState);
+        workflowBean.setCurrentState(currentState);*/
     }
 
     public String getCurrentYearRange() {

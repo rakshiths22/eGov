@@ -167,7 +167,7 @@ public class AdvanceRequisitionPaymentAction extends BaseVoucherAction {
             paymentService.persist(paymentheader);
             createMiscBill(paymentheader, advanceRequisition);
             advanceRequisition.getEgAdvanceReqMises().setVoucherheader(paymentheader.getVoucherheader());
-            advanceRequisition.withComments(narration).end();
+           // advanceRequisition.withComments(narration).end();
             addActionMessage(getText("payment.transaction.success", new String[] { paymentheader.getVoucherheader()
                     .getVoucherNumber() }));
         } catch (final ValidationException e) {

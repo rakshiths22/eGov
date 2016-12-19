@@ -59,9 +59,9 @@
 		<property name="remarks">
 			<column name="REMARKS" />
 		</property>	
-		<many-to-one name="state" class="org.egov.infra.workflow.entity.State" cascade="all">
-               <column name="STATE_ID"/>
-        </many-to-one>
+		<property name="workflowId">
+			<column name="state_id" />
+		</property>	
         <many-to-one name="status" class="org.egov.commons.EgwStatus" fetch="select">
             <column name="STATUS" precision="22" scale="0" />
         </many-to-one>

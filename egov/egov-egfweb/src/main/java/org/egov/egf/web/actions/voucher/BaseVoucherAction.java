@@ -211,10 +211,10 @@ public class BaseVoucherAction extends BaseWorkFlowAction {
     }
 
     public void populateWorkflowBean() {
-        workflowBean.setApproverPositionId(approverPositionId);
+        /*workflowBean.setApproverPositionId(approverPositionId);
         workflowBean.setApproverComments(approverComments);
         workflowBean.setWorkFlowAction(workFlowAction);
-        workflowBean.setCurrentState(currentState);
+        workflowBean.setCurrentState(currentState);*/
     }
 
     public boolean isOneFunctionCenter() {

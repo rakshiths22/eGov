@@ -888,6 +888,7 @@ public class BudgetProposalAction extends BaseWorkFlowAction {
         }
         final List<Assignment> assignment = assignmentService.findAllAssignmentsByHODDeptAndDates(
                 budgetDetail.getExecutingDepartment().getId(), budgetDetail.getBudget().getAsOnDate());
+        Long approverPositionId=null;
         if (!assignment.isEmpty())
             approverPositionId = assignment.get(0).getPosition().getId();
         populateWorkflowBean();
@@ -915,10 +916,10 @@ public class BudgetProposalAction extends BaseWorkFlowAction {
     }
 
     protected void populateWorkflowBean() {
-        workflowBean.setApproverPositionId(approverPositionId);
+      /*  workflowBean.setApproverPositionId(approverPositionId);
         workflowBean.setApproverComments(approverComments);
         workflowBean.setWorkFlowAction(actionName);
-        workflowBean.setCurrentState(currentState);
+        workflowBean.setCurrentState(currentState);*/
     }
 
     public String modifyList() {

@@ -417,58 +417,9 @@ public class ContingentBillAction extends BaseBillAction {
         return "messages";
     }
 
-    public List<String> getValidActions() {
-        List<AppConfigValues> cutOffDateconfigValue = appConfigValuesService.getConfigValuesByModuleAndKey("EGF",
-                "DataEntryCutOffDate");
-        List<String> validActions = Collections.emptyList();
-        if (!cutOffDateconfigValue.isEmpty())
-        {
-            if (null == bill || null == bill.getId() || bill.getCurrentTask().getStatus().endsWith("NEW")) {
-                validActions = Arrays.asList(FORWARD, FinancialConstants.CREATEANDAPPROVE);
-            } else {
-                if (bill.getCurrentTask() != null) {
-                    validActions = this.customizedWorkFlowService.getNextValidActions(bill
-                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), bill.getCurrentTask().getStatus(),
-                            getPendingActions(), bill.getCreatedDate());
-                }
-            }
-        }
-        else
-        {
-            if (null == bill || null == bill.getId() || bill.getCurrentTask().getStatus().endsWith("NEW")) {
-                // read from constant
-                validActions = Arrays.asList(FORWARD);
-            } else {
-                if (bill.getCurrentTask() != null) {
-                    validActions = this.customizedWorkFlowService.getNextValidActions(bill
-                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), bill.getCurrentTask().getStatus(),
-                            getPendingActions(), bill.getCreatedDate());
-                }
-            }
-        }
-        return validActions;
-    }
+    
 
-    public String getNextAction() {
-        WorkFlowMatrix wfMatrix = null;
-        if (bill.getId() != null) {
-            if (bill.getCurrentTask() != null) {
-                wfMatrix = this.customizedWorkFlowService.getWfMatrix(bill.getProcessInstance().getBusinessKey(),
-                        getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(), bill
-                                .getCurrentTask().getStatus(),
-                        getPendingActions(), bill
-                                .getCreatedDate());
-            } else {
-                wfMatrix = this.customizedWorkFlowService.getWfMatrix(bill.getProcessInstance().getBusinessKey(),
-                        getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(),
-                        State.DEFAULT_STATE_VALUE_CREATED, getPendingActions(), bill
-                                .getCreatedDate());
-            }
-        }
-        return wfMatrix == null ? "" : wfMatrix.getNextAction();
-    }
+   
 
     @SkipValidation
     @ValidationErrorPage(value = EDIT)

@@ -41,13 +41,14 @@ package org.egov.model.advance;
 
 import org.egov.commons.EgwStatus;
 import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-public class EgAdvanceRequisition extends StateAware implements java.io.Serializable {
+public class EgAdvanceRequisition extends WorkflowEntity implements java.io.Serializable {
 
     /**
      *

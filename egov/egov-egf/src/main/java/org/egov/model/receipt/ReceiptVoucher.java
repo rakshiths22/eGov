@@ -41,8 +41,9 @@ package org.egov.model.receipt;
 
 import org.egov.commons.CVoucherHeader;
 import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 
-public class ReceiptVoucher extends StateAware {
+public class ReceiptVoucher extends WorkflowEntity {
     private static final long serialVersionUID = 1896028685883363477L;
     private Long id;
     private CVoucherHeader voucherHeader;

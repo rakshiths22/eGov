@@ -143,12 +143,12 @@
 	</bean>
 
 
-	<bean id="BudgetDetailInboxRenderService"
+	<!-- <bean id="BudgetDetailInboxRenderService"
 		class="org.egov.egf.workflow.renderer.BudgetDetailRenderService">
 		<constructor-arg index="0"
 			ref="budgetDetailHeaderPersistenceService" />
 	</bean>
-	
+	 -->
 	<bean id="billRegisterPersistenceService" parent="abstractPersistenceService">
         <constructor-arg name="type" value="org.egov.model.bills.EgBillregister" />
 	</bean>

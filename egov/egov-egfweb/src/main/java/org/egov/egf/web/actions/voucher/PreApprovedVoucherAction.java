@@ -310,82 +310,12 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
     public List<String> getValidActions() {
 
         List<String> validActions = Collections.emptyList();
-        if (!action.equalsIgnoreCase("save"))
-            if (null == getModel() || null == getModel().getId() || getModel().getCurrentTask().getStatus().endsWith("NEW")) {
-                validActions = Arrays.asList(FORWARD);
-            } else {
-                if (getModel().getCurrentTask() != null) {
-                    validActions = this.customizedWorkFlowService.getNextValidActions(getModel()
-                            .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
-                            getAdditionalRule(), getModel().getCurrentTask().getStatus(),
-                            getPendingActions(), getModel().getCreatedDate());
-                }
-            }
-        else {
-            CVoucherHeader model = new CVoucherHeader();
-            List<AppConfigValues> cutOffDateconfigValue = appConfigValuesService.getConfigValuesByModuleAndKey("EGF",
-                    "DataEntryCutOffDate");
-            if (cutOffDateconfigValue != null && !cutOffDateconfigValue.isEmpty()) {
-                if (null == model || null == model.getId() || model.getCurrentTask().getStatus().endsWith("NEW")) {
-                    validActions = Arrays.asList(FORWARD, FinancialConstants.CREATEANDAPPROVE);
-                } else {
-                    if (model.getCurrentTask() != null) {
-                        validActions = this.customizedWorkFlowService.getNextValidActions(model
-                                .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
-                                getAdditionalRule(), model.getCurrentTask().getStatus(),
-                                getPendingActions(), model.getCreatedDate());
-                    }
-                }
-            } else {
-                if (null == model || null == model.getId() || model.getCurrentTask().getStatus().endsWith("NEW")) {
-                    validActions = Arrays.asList(FORWARD);
-                } else {
-                    if (model.getCurrentTask() != null) {
-                        validActions = this.customizedWorkFlowService.getNextValidActions(model
-                                .getProcessInstance().getBusinessKey(), getWorkFlowDepartment(), getAmountRule(),
-                                getAdditionalRule(), model.getCurrentTask().getStatus(),
-                                getPendingActions(), model.getCreatedDate());
-                    }
-                }
-            }
-        }
+       
         return validActions;
     }
 
     public String getNextAction() {
         WorkFlowMatrix wfMatrix = null;
-        if (!action.equalsIgnoreCase("save")) {
-            if (getModel().getId() != null) {
-                if (getModel().getCurrentTask() != null) {
-                    wfMatrix = this.customizedWorkFlowService.getWfMatrix(getModel().getProcessInstance().getBusinessKey(),
-                            getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(), getModel()
-                                    .getCurrentTask().getStatus(),
-                            getPendingActions(), getModel()
-                                    .getCreatedDate());
-                } else {
-                    wfMatrix = this.customizedWorkFlowService.getWfMatrix(getModel().getProcessInstance().getBusinessKey(),
-                            getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(),
-                            State.DEFAULT_STATE_VALUE_CREATED, getPendingActions(), getModel()
-                                    .getCreatedDate());
-                }
-            }
-        } else {
-            CVoucherHeader model = new CVoucherHeader();
-            if (model.getId() != null) {
-                if (model.getCurrentTask() != null) {
-                    wfMatrix = this.customizedWorkFlowService.getWfMatrix(model.getProcessInstance().getBusinessKey(),
-                            getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(), model
-                                    .getCurrentTask().getStatus(),
-                            getPendingActions(), model
-                                    .getCreatedDate());
-                } else {
-                    wfMatrix = this.customizedWorkFlowService.getWfMatrix(model.getProcessInstance().getBusinessKey(),
-                            getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(),
-                            State.DEFAULT_STATE_VALUE_CREATED, getPendingActions(), model
-                                    .getCreatedDate());
-                }
-            }
-        }
         return wfMatrix == null ? "" : wfMatrix.getNextAction();
     }
 
@@ -695,10 +625,10 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
     }
 
     protected void populateWorkflowBean() {
-        workflowBean.setApproverPositionId(approverPositionId);
+       /* workflowBean.setApproverPositionId(approverPositionId);
         workflowBean.setApproverComments(approverComments);
         workflowBean.setWorkFlowAction(workFlowAction);
-        workflowBean.setCurrentState(currentState);
+        workflowBean.setCurrentState(currentState);*/
     }
 
     public String saveAsWorkingCopy() throws ValidationException {

@@ -66,28 +66,29 @@ public abstract class BaseWorkFlowAction extends BaseFormAction{
     @Autowired
     protected DepartmentService departmentService;
     
-    private State state;
+    
+    
+    protected WorkflowContainer workflowContainer;
 
     
+    public WorkflowContainer getWorkflowContainer() {
+        return workflowContainer;
+    }
+
+
+
+    public void setWorkflowContainer(WorkflowContainer workflowContainer) {
+        this.workflowContainer = workflowContainer;
+    }
+
+
+
     public List<Department> addAllDepartments() {
         return departmentService.getAllDepartments();
     }
 
-    public WorkflowContainer getWorkflowContainer() {
-        return new WorkflowContainer();
-    }
-    protected String workFlowAction;
-    protected String approverComments;
-    protected String currentState;
-    protected String currentDesignation;
-    protected String additionalRule;
-    protected BigDecimal amountRule;
-    protected String workFlowDepartment;
-    protected String pendingActions;
-    protected String approverName;
-    protected String approverDepartment;
-    protected String approverDesignation;
-    protected Long approverPositionId;
+    
+   
     /**
      * @param prepareModel
      * @param model
@@ -172,107 +173,9 @@ public abstract class BaseWorkFlowAction extends BaseFormAction{
         this.departmentService = departmentService;
     }
 
-    public State getState() {
-        return state;
-    }
+   
 
-    public void setState(State state) {
-        this.state = state;
-    }
-
-    public String getWorkFlowAction() {
-        return workFlowAction;
-    }
-
-    public void setWorkFlowAction(String workFlowAction) {
-        this.workFlowAction = workFlowAction;
-    }
-
-    public String getApproverComments() {
-        return approverComments;
-    }
-
-    public void setApproverComments(String approverComments) {
-        this.approverComments = approverComments;
-    }
-
-    public String getCurrentState() {
-        return currentState;
-    }
-
-    public void setCurrentState(String currentState) {
-        this.currentState = currentState;
-    }
-
-    public String getCurrentDesignation() {
-        return currentDesignation;
-    }
-
-    public void setCurrentDesignation(String currentDesignation) {
-        this.currentDesignation = currentDesignation;
-    }
-
-    public String getAdditionalRule() {
-        return additionalRule;
-    }
-
-    public void setAdditionalRule(String additionalRule) {
-        this.additionalRule = additionalRule;
-    }
-
-    public BigDecimal getAmountRule() {
-        return amountRule;
-    }
-
-    public void setAmountRule(BigDecimal amountRule) {
-        this.amountRule = amountRule;
-    }
-
-    public String getWorkFlowDepartment() {
-        return workFlowDepartment;
-    }
-
-    public void setWorkFlowDepartment(String workFlowDepartment) {
-        this.workFlowDepartment = workFlowDepartment;
-    }
-
-    public String getApproverName() {
-        return approverName;
-    }
-
-    public void setApproverName(String approverName) {
-        this.approverName = approverName;
-    }
-
-    public String getApproverDepartment() {
-        return approverDepartment;
-    }
-
-    public void setApproverDepartment(String approverDepartment) {
-        this.approverDepartment = approverDepartment;
-    }
-
-    public String getApproverDesignation() {
-        return approverDesignation;
-    }
-
-    public void setApproverDesignation(String approverDesignation) {
-        this.approverDesignation = approverDesignation;
-    }
-
-    public Long getApproverPositionId() {
-        return approverPositionId;
-    }
-
-    public void setApproverPositionId(Long approverPositionId) {
-        this.approverPositionId = approverPositionId;
-    }
-
-    public void setPendingActions(String pendingActions) {
-        this.pendingActions = pendingActions;
-    }
-
-    @Transactional
+       @Transactional
     public WorkflowEntity transitionWorkFlow(final WorkflowEntity voucherHeader, WorkflowContainer workflowBean) {
        
         return voucherHeader;
