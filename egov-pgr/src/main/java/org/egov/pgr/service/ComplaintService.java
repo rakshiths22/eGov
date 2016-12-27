@@ -162,8 +162,8 @@ public class ComplaintService {
 
         if (StringUtils.isBlank(complaint.getCrn()))
             complaint.setCrn(applicationNumberGenerator.generate());
-        final User user = securityUtils.getCurrentUser();
-        complaint.getComplainant().setUserDetail(user);
+//        final User user = securityUtils.getCurrentUser();
+//        complaint.getComplainant().setUserDetail(user);
         /*
          * if (!SecurityUtils.isCurrentUserAnonymous() && securityUtils.currentUserType().equals(UserType.CITIZEN)) {
          * complaint.getComplainant().setEmail(user.getEmailId()); complaint.getComplainant().setName(user.getName());
