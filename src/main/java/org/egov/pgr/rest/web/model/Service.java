@@ -2,94 +2,86 @@ package org.egov.pgr.rest.web.model;
 
 import java.io.Serializable;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Service implements Serializable {
 
-    private static final long serialVersionUID = 4218331701543171474L;
+	private static final long serialVersionUID = 4218331701543171474L;
 
-    @SerializedName("service_code")
-    @Expose
-    private String code;
+	@JsonProperty("service_code")
+	private String code;
+	
+	@JsonProperty("service_name")
+	private String name;
+	
+	@JsonProperty("description")
+	private String description;
+	
+	@JsonProperty("metadata")
+	private Boolean metadata;
+	
+	@JsonProperty("type")
+	private String type;
+	
+	@JsonProperty("keywords")
+	private String keywords;
+	
+	@JsonProperty("group")
+	private String category;
 
-    @SerializedName("service_name")
-    @Expose
-    private String name;
+	public String getCode() {
+		return code;
+	}
 
-    @SerializedName("description")
-    @Expose
-    private String description;
+	public void setCode(String code) {
+		this.code = code;
+	}
 
-    @SerializedName("metadata")
-    @Expose
-    private Boolean metadata;
+	public String getName() {
+		return name;
+	}
 
-    @SerializedName("type")
-    @Expose
-    private String type;
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    @SerializedName("keywords")
-    @Expose
-    private String keywords;
+	public String getDescription() {
+		return description;
+	}
 
-    @SerializedName("group")
-    @Expose
-    private String category;
+	public void setDescription(String description) {
+		this.description = description;
+	}
 
-    public String getCode() {
-        return code;
-    }
+	public Boolean getMetadata() {
+		return metadata;
+	}
 
-    public void setCode(final String code) {
-        this.code = code;
-    }
+	public void setMetadata(Boolean metadata) {
+		this.metadata = metadata;
+	}
 
-    public String getName() {
-        return name;
-    }
+	public String getType() {
+		return type;
+	}
 
-    public void setName(final String name) {
-        this.name = name;
-    }
+	public void setType(String type) {
+		this.type = type;
+	}
 
-    public String getDescription() {
-        return description;
-    }
+	public String getKeywords() {
+		return keywords;
+	}
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
+	public void setKeywords(String keywords) {
+		this.keywords = keywords;
+	}
 
-    public Boolean getMetadata() {
-        return metadata;
-    }
+	public String getCategory() {
+		return category;
+	}
 
-    public void setMetadata(final Boolean metadata) {
-        this.metadata = metadata;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(final String type) {
-        this.type = type;
-    }
-
-    public String getKeywords() {
-        return keywords;
-    }
-
-    public void setKeywords(final String keywords) {
-        this.keywords = keywords;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(final String category) {
-        this.category = category;
-    }
+	public void setCategory(String category) {
+		this.category = category;
+	}
 }

@@ -66,114 +66,156 @@ import static org.egov.pgr.entity.ComplaintType.SEQ_COMPLAINTTYPE;
 @Table(name = "egpgr_complainttype")
 @SequenceGenerator(name = SEQ_COMPLAINTTYPE, sequenceName = SEQ_COMPLAINTTYPE, allocationSize = 1)
 public class ComplaintType extends AbstractAuditable {
-    public static final String SEQ_COMPLAINTTYPE = "SEQ_EGPGR_COMPLAINTTYPE";
-    private static final long serialVersionUID = 8904645810221559541L;
-    @Id
-    @GeneratedValue(generator = SEQ_COMPLAINTTYPE, strategy = GenerationType.SEQUENCE)
-    private Long id;
+	public static final String SEQ_COMPLAINTTYPE = "SEQ_EGPGR_COMPLAINTTYPE";
+	private static final long serialVersionUID = 8904645810221559541L;
+	@Id
+	@GeneratedValue(generator = SEQ_COMPLAINTTYPE, strategy = GenerationType.SEQUENCE)
+	private Long id;
 
-    @NotBlank
-    @SafeHtml
-    @Length(max = 150)
-    @Column(name = "name")
-    private String name;
+	@NotBlank
+	@SafeHtml
+	@Length(max = 150)
+	@Column(name = "name")
+	private String name;
 
-    @NotBlank
-    @Length(max = 20)
-    @SafeHtml
-    @Column(name = "code", updatable = false)
-    private String code;
+	@NotBlank
+	@Length(max = 20)
+	@SafeHtml
+	@Column(name = "code", updatable = false)
+	private String code;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department")
-    private Department department;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "department")
+	private Department department;
 
-    @Length(max = 100)
-    @SafeHtml
-    private String description;
+	@Length(max = 100)
+	@SafeHtml
+	private String description;
 
-    @NotNull
-    private Integer slaHours;
+	@NotNull
+	private Integer slaHours;
 
-    private boolean isActive;
+	private boolean isActive;
 
-    private boolean hasFinancialImpact;
+	private boolean hasFinancialImpact;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "category")
-    private ComplaintTypeCategory category;
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "category")
+	private ComplaintTypeCategory category;
 
-    @Override
-    public Long getId() {
-        return id;
-    }
+	private boolean metadata;
 
-    @Override
-    public void setId(final Long id) {
-        this.id = id;
-    }
+	@Length(max = 50)
+	private String type;
 
-    public String getName() {
-        return name;
-    }
+	@Length(max = 100)
+	private String keywords;
 
-    public void setName(final String name) {
-        this.name = name;
-    }
+	private String attributes;
 
-    public Department getDepartment() {
-        return department;
-    }
+	@Override
+	public Long getId() {
+		return id;
+	}
 
-    public void setDepartment(final Department department) {
-        this.department = department;
-    }
+	@Override
+	public void setId(final Long id) {
+		this.id = id;
+	}
 
-    public String getCode() {
-        return code;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public void setCode(final String code) {
-        this.code = code;
-    }
+	public void setName(final String name) {
+		this.name = name;
+	}
 
-    public boolean getIsActive() {
-        return isActive;
-    }
+	public Department getDepartment() {
+		return department;
+	}
 
-    public void setIsActive(final boolean isActive) {
-        this.isActive = isActive;
-    }
+	public void setDepartment(final Department department) {
+		this.department = department;
+	}
 
-    public String getDescription() {
-        return description;
-    }
+	public String getCode() {
+		return code;
+	}
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
+	public void setCode(final String code) {
+		this.code = code;
+	}
 
-    public Integer getSlaHours() {
-        return slaHours;
-    }
+	public boolean getIsActive() {
+		return isActive;
+	}
 
-    public void setSlaHours(final Integer slaHours) {
-        this.slaHours = slaHours;
-    }
+	public void setIsActive(final boolean isActive) {
+		this.isActive = isActive;
+	}
 
-    public boolean isHasFinancialImpact() {
-        return hasFinancialImpact;
-    }
+	public String getDescription() {
+		return description;
+	}
 
-    public void setHasFinancialImpact(final boolean hasFinancialImpact) {
-        this.hasFinancialImpact = hasFinancialImpact;
-    }
+	public void setDescription(final String description) {
+		this.description = description;
+	}
 
-    public ComplaintTypeCategory getCategory() {
-        return category;
-    }
+	public Integer getSlaHours() {
+		return slaHours;
+	}
 
-    public void setCategory(final ComplaintTypeCategory category) {
-        this.category = category;
-    }
+	public void setSlaHours(final Integer slaHours) {
+		this.slaHours = slaHours;
+	}
+
+	public boolean isHasFinancialImpact() {
+		return hasFinancialImpact;
+	}
+
+	public void setHasFinancialImpact(final boolean hasFinancialImpact) {
+		this.hasFinancialImpact = hasFinancialImpact;
+	}
+
+	public ComplaintTypeCategory getCategory() {
+		return category;
+	}
+
+	public void setCategory(final ComplaintTypeCategory category) {
+		this.category = category;
+	}
+
+	public boolean isMetadata() {
+		return metadata;
+	}
+
+	public void setMetadata(boolean metadata) {
+		this.metadata = metadata;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public String getKeywords() {
+		return keywords;
+	}
+
+	public void setKeywords(String keywords) {
+		this.keywords = keywords;
+	}
+
+	public String getAttributes() {
+		return attributes;
+	}
+
+	public void setAttributes(String attributes) {
+		this.attributes = attributes;
+	}
 }
