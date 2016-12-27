@@ -98,7 +98,8 @@ import org.egov.model.bills.EgBilldetails;
 import org.egov.model.bills.EgBillregister;
 import org.egov.model.bills.EgBillregistermis;
 import org.egov.model.voucher.VoucherDetails;
-import org.egov.model.voucher.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.utils.CheckListHelper;
 import org.egov.utils.FinancialConstants;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -201,6 +202,8 @@ public class ContingentBillAction extends BaseBillAction {
         billDetailsTableCreditFinal = null;
         checkListsTable = null;
         subledgerlist = null;
+       // prepareWorkflow(null, bill, workflowBean);
+        
     }
 
     private void getNetPayableCodes() {
@@ -250,22 +253,13 @@ public class ContingentBillAction extends BaseBillAction {
     @SkipValidation
     @Action(value = "/bill/contingentBill-newform")
     public String newform() {
-        List<AppConfigValues> cutOffDateconfigValue = appConfigValuesService.getConfigValuesByModuleAndKey("EGF",
-                "DataEntryCutOffDate");
-        Date date;
-        if (!cutOffDateconfigValue.isEmpty())
-        {
-            try {
-                date = df.parse(cutOffDateconfigValue.get(0).getValue());
-                cutOffDate = formatter.format(date);
-            } catch (ParseException e) {
-
-            }
-        }
+         
         reset();
         commonBean.setBillDate(getDefaultDate());
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("bigllDetailslist.............................." + billDetailslist.size());
+        workflowBean.setBusinessKey(bill.getClass().getSimpleName());
+        prepareWorkflow(null, bill, workflowBean);
         return NEW;
     }
 
@@ -283,18 +277,18 @@ public class ContingentBillAction extends BaseBillAction {
                 bill.getEgBillregistermis().setSourcePath(
                         "/EGF/bill/contingentBill!beforeView.action?billRegisterId=" + bill.getId());
             }
-            populateWorkflowBean();
+            
             bill = egBillRegisterService.sendForApproval(bill, workflowBean);
-            if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+            if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkflowAction()))
                 addActionMessage(getText("bill.rejected",
                         new String[] { voucherService.getEmployeeNameForPositionId(bill.getCurrentTask()
                                 .getOwnerPosition()) }));
-            if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+            if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkflowAction()))
                 addActionMessage(getText("bill.forwarded",
                         new String[] { voucherService.getEmployeeNameForPositionId(bill.getCurrentTask().getOwnerPosition()) }));
-            if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+            if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkflowAction()))
                 addActionMessage(getText("cbill.cancellation.succesful"));
-            else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
+            else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction())) {
                 if ("Closed".equals(bill.getCurrentTask().getStatus()))
                     addActionMessage(getText("bill.final.approval", new String[] { "The File has been approved" }));
                 else
@@ -303,11 +297,13 @@ public class ContingentBillAction extends BaseBillAction {
                                     .getOwnerPosition()) }));
             }
         } catch (final ValidationException e) {
+            prepareWorkflow(null, bill, workflowBean);
 
             final List<ValidationError> errors = new ArrayList<ValidationError>();
             errors.add(new ValidationError("exp", e.getErrors().get(0).getMessage()));
             throw new ValidationException(errors);
         } catch (final Exception e) {
+            prepareWorkflow(null, bill, workflowBean);
 
             final List<ValidationError> errors = new ArrayList<ValidationError>();
             errors.add(new ValidationError("exp", e.getMessage()));
@@ -330,6 +326,7 @@ public class ContingentBillAction extends BaseBillAction {
 
     public void prepareCreate() {
         loadSchemeSubscheme();
+        prepareWorkflow(null, bill, workflowBean);
     }
 
     @Validations(requiredFields = { @RequiredFieldValidator(fieldName = "fundId", message = "", key = REQUIRED),
@@ -371,36 +368,20 @@ public class ContingentBillAction extends BaseBillAction {
                 if (!isBillNumUnique(commonBean.getBillNumber()))
                     throw new ValidationException(Arrays.asList(new ValidationError("bill number", "Duplicate Bill Number : "
                             + commonBean.getBillNumber())));
-            populateWorkflowBean();
+         
             bill = egBillRegisterService.createBill(bill, workflowBean, checkListsTable);
-            addActionMessage(getText("cbill.transaction.succesful") + bill.getBillnumber());
+            if(!workflowBean.getWorkflowAction().equalsIgnoreCase(WorkflowConstants.ACTION_CREATE_AND_APPROVE))
+            {
+                bill=(EgBillregister)transitionWorkFlow(bill, workflowBean);
+                addActionMessage(generateActionMessage(bill, workflowBean));
+            }
+            
+            egBillRegisterService.persist(bill);
             billRegisterId = bill.getId();
 
-            if (!cutOffDate.isEmpty() && cutOffDate != null)
-            {
-                try {
-                    date = sdf.parse(cutOffDate);
-                    cutOffDate1 = formatter1.format(date);
-                } catch (ParseException e) {
-
-                }
-            }
-            if (cutOffDate1 != null && voucherDate.compareTo(cutOffDate1) <= 0
-                    && FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
-            {
-                if (bill.getEgBillregistermis().getBudgetaryAppnumber() != null)
-                    addActionMessage(getText("budget.recheck.sucessful", new String[] { bill.getEgBillregistermis()
-                            .getBudgetaryAppnumber() }));
-            }
-            else
-            {
-                if (bill.getEgBillregistermis().getBudgetaryAppnumber() != null)
-                    addActionMessage(getText("budget.recheck.sucessful", new String[] { bill.getEgBillregistermis()
-                            .getBudgetaryAppnumber() }));
-                addActionMessage(getText("bill.forwarded",
-                        new String[] { voucherService.getEmployeeNameForPositionId(bill.getCurrentTask().getOwnerPosition()) }));
-            }
+             
         } catch (final ValidationException e) {
+            prepareWorkflow(null, bill, workflowBean);
             if (LOGGER.isInfoEnabled())
                 LOGGER.info("Inside catch block");
             if (billDetailsTableSubledger == null)
@@ -1205,13 +1186,7 @@ public class ContingentBillAction extends BaseBillAction {
         return primaryDepartment.getId().intValue();
     }
 
-    public WorkflowBean getWorkflowBean() {
-        return workflowBean;
-    }
-
-    public void setWorkflowBean(WorkflowBean workflowBean) {
-        this.workflowBean = workflowBean;
-    }
+    
 
     public String getCurrentTask() {
         return bill.getCurrentTask().getStatus();

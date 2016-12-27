@@ -54,7 +54,7 @@ import org.egov.infra.workflow.service.SimpleWorkflowService;
 import org.egov.infstr.models.EgChecklists;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.model.bills.EgBillregister;
-import org.egov.model.voucher.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.pims.commons.Position;
 import org.egov.services.voucher.JournalVoucherActionHelper;
 import org.egov.utils.CheckListHelper;
@@ -100,18 +100,14 @@ public class EgBillRegisterService extends PersistenceService<EgBillregister, Lo
     public EgBillregister createBill(EgBillregister bill, WorkflowBean workflowBean, List<CheckListHelper> checkListsTable) {
         try {
             applyAuditing(bill);
-            if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction()) && bill.getCurrentTask() == null)
+            if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction()) && bill.getCurrentTask() == null)
             {
                 bill.setBillstatus("APPROVED");
                 EgwStatus egwStatus = egwStatusHibernateDAO.getStatusByModuleAndCode(FinancialConstants.CONTINGENCYBILL_FIN,
                         FinancialConstants.CONTINGENCYBILL_APPROVED_STATUS);
                 bill.setStatus(egwStatus);
             }
-            else
-            {
-                bill = transitionWorkFlow(bill, workflowBean);
-                
-            }
+            
             persist(bill);
             bill.getEgBillregistermis().setSourcePath(
                     "/EGF/bill/contingentBill-beforeView.action?billRegisterId=" + bill.getId().toString());
@@ -152,7 +148,7 @@ public class EgBillRegisterService extends PersistenceService<EgBillregister, Lo
     public EgBillregister sendForApproval(EgBillregister bill, WorkflowBean workflowBean)
     {
         try {
-            bill = transitionWorkFlow(bill, workflowBean);
+           
             persist(bill);
 
         } catch (final Exception e) {
@@ -164,11 +160,7 @@ public class EgBillRegisterService extends PersistenceService<EgBillregister, Lo
         return bill;
     }
 
-    @Transactional
-    public EgBillregister transitionWorkFlow(final EgBillregister billregister, WorkflowBean workflowBean) {
-             
-        return billregister;
-    }
+     
 
     private Assignment getWorkflowInitiator(final EgBillregister billregister) {
         Assignment wfInitiator = assignmentService.findByEmployeeAndGivenDate(billregister.getCreatedBy().getId(), new Date())

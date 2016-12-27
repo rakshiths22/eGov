@@ -98,7 +98,7 @@ import org.egov.model.budget.BudgetDetail;
 import org.egov.model.budget.BudgetGroup;
 import org.egov.model.budget.BudgetUpload;
 import org.egov.model.repository.BudgetDetailRepository;
-import org.egov.model.voucher.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.pims.commons.Designation;
 import org.egov.pims.commons.Position;
 import org.egov.pims.model.PersonalInformation;

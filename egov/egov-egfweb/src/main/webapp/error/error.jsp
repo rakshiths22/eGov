@@ -48,7 +48,7 @@
 
 
 <center>
-<%@ include file="/egovheader.jsp" %>
+ 
  <html:form>
   <table border=1 class="eGovTblMain" width="754" summary>
     <tbody>
@@ -62,7 +62,7 @@
   </table>
 </center>
 </html:form>
- <%@ include file = "/egovfooter.jsp" %>
+ 
 </body>
 
 </html>

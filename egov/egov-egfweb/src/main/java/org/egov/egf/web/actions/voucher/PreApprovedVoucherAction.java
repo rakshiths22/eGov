@@ -99,7 +99,7 @@ import org.egov.model.bills.EgBillregister;
 import org.egov.model.bills.EgBillregistermis;
 import org.egov.model.contra.ContraJournalVoucher;
 import org.egov.model.voucher.PreApprovedVoucher;
-import org.egov.model.voucher.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.pims.commons.Designation;
 import org.egov.pims.commons.Position;
 import org.egov.pims.model.PersonalInformation;
@@ -138,7 +138,6 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
     private VoucherService voucherService;
     private CVoucherHeader voucherHeader = new CVoucherHeader();
     private EgBillregister egBillregister = new EgBillregister();
-    protected WorkflowBean workflowBean = new WorkflowBean();
     protected EisCommonService eisCommonService;
     @Autowired
     @Qualifier("persistenceService")
@@ -307,17 +306,7 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
 
     }
 
-    public List<String> getValidActions() {
-
-        List<String> validActions = Collections.emptyList();
-       
-        return validActions;
-    }
-
-    public String getNextAction() {
-        WorkFlowMatrix wfMatrix = null;
-        return wfMatrix == null ? "" : wfMatrix.getNextAction();
-    }
+    
 
     @SkipValidation
     @Action(value = "/voucher/preApprovedVoucher-loadvoucher")
@@ -325,6 +314,7 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
         String result = null;
         voucherHeader = (CVoucherHeader) getPersistenceService().find(VOUCHERQUERY, Long.valueOf(parameters.get(VHID)[0]));
         voucherId = Long.valueOf(parameters.get(VHID)[0]);
+        prepareWorkflow(null,voucherHeader,workflowBean);
         boolean ismodifyJv = false;
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("voucherHeader==" + voucherHeader);
@@ -498,7 +488,7 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
                         "Voucher could not be permitted in the current year for the Bill prepared in the previous financial year/s",
                         "Voucher could not be permitted in the current year for the Bill prepared in the previous financial year/s");
             getMasterDataForBill();
-            populateWorkflowBean();
+         
             voucherHeader = preApprovedActionHelper.createVoucherFromBill(voucherHeader, workflowBean,
                     Long.parseLong(parameters.get(BILLID)[0]), voucherNumber, voucherHeader.getVoucherDate());
             if (!cutOffDate.isEmpty() && cutOffDate != null) {
@@ -510,7 +500,7 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
                 }
             }
             if (cutOffDate1 != null && voucherDate.compareTo(cutOffDate1) <= 0
-                    && FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
+                    && FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction())) {
 
                 if (voucherHeader.getVouchermis().getBudgetaryAppnumber() == null) {
                     addActionMessage(getText("Voucher created successfully. Voucher No : ")
@@ -585,30 +575,15 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
         methodName = "update";
         try {
             voucherHeader = (CVoucherHeader) voucherService.findById(Long.parseLong(parameters.get(VHID)[0]), false);
-            populateWorkflowBean();
-            voucherHeader = preApprovedActionHelper.sendForApproval(voucherHeader, workflowBean);
+           
+            transitionWorkFlow(voucherHeader, workflowBean);
+            voucherService.persist(voucherHeader);
+          
             type = billsService.getBillTypeforVoucher(voucherHeader);
             if (null == type)
                 type = "default";
 
-            if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
-                addActionMessage(getText("pjv.voucher.rejected",
-                        new String[] { voucherService.getEmployeeNameForPositionId(voucherHeader.getCurrentTask()
-                                .getOwnerPosition()) }));
-            if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
-                addActionMessage(getText("pjv.voucher.approved",
-                        new String[] {
-                                voucherService.getEmployeeNameForPositionId(voucherHeader.getCurrentTask().getOwnerPosition()) }));
-            if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
-                addActionMessage(getText("billVoucher.file.canceled"));
-            else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-                if ("Closed".equals(voucherHeader.getCurrentTask().getStatus()))
-                    addActionMessage(getText("pjv.voucher.final.approval", new String[] { "The File has been approved" }));
-                else
-                    addActionMessage(getText("pjv.voucher.approved",
-                            new String[] { voucherService.getEmployeeNameForPositionId(voucherHeader.getCurrentTask()
-                                    .getOwnerPosition()) }));
-            }
+            
         } catch (final ValidationException e) {
 
             final List<ValidationError> errors = new ArrayList<ValidationError>();
@@ -1304,23 +1279,9 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
     public static void setBillsService(final BillsService billsService) {
         PreApprovedVoucherAction.billsService = billsService;
     }
+ 
 
-    public WorkflowBean getWorkflowBean() {
-        return workflowBean;
-    }
-
-    public void setWorkflowBean(WorkflowBean workflowBean) {
-        this.workflowBean = workflowBean;
-    }
-
-    public String getAction() {
-        return action;
-    }
-
-    public void setAction(String action) {
-        this.action = action;
-    }
-
+     
     public String getMode() {
         return mode;
     }

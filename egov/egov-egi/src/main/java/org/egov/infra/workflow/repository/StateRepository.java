@@ -53,6 +53,6 @@ public interface StateRepository extends JpaRepository<State, Long> {
 
     Long countByOwnerPosition_Id(Long id);
 
-    @Query("select distinct s.type from State s where s.ownerPosition.id in (:ownerIds)  and s.status <> 2")
-    List<String> findAllTypeByOwnerAndStatus(@Param("ownerIds") List<Long> ownerIds);
+    @Query("select distinct s.type from State s where s.ownerPosition.id in (:ownerIds)  and s.status <> 2 and type in (:types) ")
+    List<String> findAllTypeByOwnerAndStatus(@Param("ownerIds") List<Long> ownerIds,@Param("types") List<String> enabledTypes);
 }

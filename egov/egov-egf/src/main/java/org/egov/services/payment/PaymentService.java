@@ -88,7 +88,7 @@ import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
-import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.model.bills.EgBillSubType;
 import org.egov.model.bills.EgBillregister;
@@ -99,7 +99,6 @@ import org.egov.model.payment.ChequeAssignment;
 import org.egov.model.payment.PaymentBean;
 import org.egov.model.payment.Paymentheader;
 import org.egov.model.recoveries.Recovery;
-import org.egov.model.voucher.WorkflowBean;
 import org.egov.pims.commons.Position;
 import org.egov.pims.model.PersonalInformation;
 import org.egov.services.cheque.ChequeAssignmentService;
@@ -115,7 +114,6 @@ import org.hibernate.SQLQuery;
 import org.hibernate.transform.Transformers;
 import org.hibernate.type.BigDecimalType;
 import org.hibernate.type.StringType;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.annotation.Transactional;
@@ -415,7 +413,7 @@ public class PaymentService extends PersistenceService<Paymentheader, Long> {
 					.setSourcePath(
 							"/EGF/payment/payment-view.action?" + PAYMENTID
 									+ "=" + paymentheader.getId());
-			 if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())
+			 if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction())
 		                    && voucherHeader.getCurrentTask() == null)
 		            {
 		                paymentheader.getVoucherheader().setStatus(

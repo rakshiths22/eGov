@@ -39,146 +39,112 @@
  */
 package org.egov.infra.workflow.multitenant.service;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.egov.infra.admin.master.entity.Department;
 import org.egov.infra.admin.master.service.DepartmentService;
 import org.egov.infra.web.struts.actions.BaseFormAction;
-import org.egov.infra.workflow.entity.State;
-import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
-import org.egov.infra.workflow.matrix.service.CustomizedWorkFlowService;
+import org.egov.infra.workflow.entity.WorkflowTypes;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.infra.workflow.multitenant.model.WorkflowContainer;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
+import org.egov.infra.workflow.service.WorkflowTypeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 
 @Component
-public abstract class BaseWorkFlowAction extends BaseFormAction{
+public abstract class BaseWorkFlowAction extends BaseFormAction {
 
-    @Autowired
-    protected CustomizedWorkFlowService customizedWorkFlowService;
+    private static final long serialVersionUID = 5111571178164448793L;
+
+    protected WorkflowBean workflowBean = new WorkflowBean();
 
     @Autowired
     protected DepartmentService departmentService;
+
+    @Autowired
+    private BaseWorkFlow baseWorkFlow;
     
-    
-    
-    protected WorkflowContainer workflowContainer;
-
-    
-    public WorkflowContainer getWorkflowContainer() {
-        return workflowContainer;
-    }
-
-
-
-    public void setWorkflowContainer(WorkflowContainer workflowContainer) {
-        this.workflowContainer = workflowContainer;
-    }
-
-
+    @Autowired
+    private WorkflowTypeService workflowTypeService;
 
     public List<Department> addAllDepartments() {
         return departmentService.getAllDepartments();
     }
 
-    
-   
     /**
      * @param prepareModel
      * @param model
-     * @param container
-     *            This method we are calling In GET Method..
+     * @param container This method we are calling In GET Method..
      */
+    @Deprecated
     protected void prepareWorkflow(final Model prepareModel, final WorkflowEntity model, final WorkflowContainer container) {
-        prepareModel.addAttribute("approverDepartmentList", addAllDepartments());
-        prepareModel.addAttribute("validActionList", getValidActions(model, container));
-        prepareModel.addAttribute("nextAction", getNextAction(model, container));
-
-    }
-     
-    
-
-    
-
-    /**
-     * @param model
-     * @param container
-     * @return NextAction From Matrix With Parameters
-     *         Type,CurrentState,CreatedDate
-     */
-    public String getNextAction(final WorkflowEntity model, final WorkflowContainer container) {
-
-        WorkFlowMatrix wfMatrix = null;
-        if (null != model && null != model.getId())
-            if (null != model.getProcessInstance())
-                wfMatrix = customizedWorkFlowService.getWfMatrix(model.getProcessInstance().getBusinessKey(),
-                        container.getWorkFlowDepartment(), container.getAmountRule(), container.getAdditionalRule(),
-                        "", container.getPendingActions(), model.getCreatedDate());
-            else
-                wfMatrix = customizedWorkFlowService.getWfMatrix(model.getProcessInstance().getBusinessKey(),
-                        container.getWorkFlowDepartment(), container.getAmountRule(), container.getAdditionalRule(),
-                        State.DEFAULT_STATE_VALUE_CREATED, container.getPendingActions(), model.getCreatedDate());
-        return wfMatrix == null ? "" : wfMatrix.getNextAction();
     }
 
-    /**
-     * @param model
-     * @param container
-     * @return List of WorkFlow Buttons From Matrix By Passing parametres
-     *         Type,CurrentState,CreatedDate
-     */
-    public List<String> getValidActions(final WorkflowEntity model, final WorkflowContainer container) {
-        List<String> validActions = Collections.emptyList();
-        if (null == model
-                || null == model.getId() || (model.getProcessInstance()==null) 
-                || (model != null && model.getProcessInstance() != null ? model.getProcessInstance().getStatus()
-                        .equals("Closed")
-                        || model.getProcessInstance().getStatus().equals("END") : false))
-            validActions = Arrays.asList("Forward");
-        else if (null != model.getProcessInstance())
-            validActions = customizedWorkFlowService.getNextValidActions(model.getProcessInstance().getBusinessKey(), container
-                    .getWorkFlowDepartment(), container.getAmountRule(), container.getAdditionalRule(), model
-                    .getProcessInstance().getStatus(), container.getPendingActions(), model.getCreatedDate());
-        else
-            // FIXME This May not work
-            validActions = customizedWorkFlowService.getNextValidActions(model.getProcessInstance().getBusinessKey(),
-                    container.getWorkFlowDepartment(), container.getAmountRule(), container.getAdditionalRule(),
-                    State.DEFAULT_STATE_VALUE_CREATED, container.getPendingActions(), model.getCreatedDate());
-        return validActions;
-    }
-    
-    protected String getPendingActions() {
-        return null;
+    protected void prepareWorkflow(final Model prepareModel, final WorkflowEntity model, WorkflowBean workflowBean) {
+        this.workflowBean = baseWorkFlow.prepareWorkflow(prepareModel, model, workflowBean);
+        if(this.workflowBean.getDepartmentList()==null)
+        {
+            workflowBean.setDepartmentList(addAllDepartments());
+        }
+
     }
 
-    public CustomizedWorkFlowService getCustomizedWorkFlowService() {
-        return customizedWorkFlowService;
+    public WorkflowEntity transitionWorkFlow( WorkflowEntity workflowEntity, final WorkflowBean workflowBean) {
+        workflowEntity= baseWorkFlow.transitionWorkFlow(workflowEntity, workflowBean);
+        generateActionMessage(workflowEntity,workflowBean);
+       
+        
+        return workflowEntity;
+        
+        
+        
     }
 
-    public void setCustomizedWorkFlowService(CustomizedWorkFlowService customizedWorkFlowService) {
-        this.customizedWorkFlowService = customizedWorkFlowService;
+    protected String generateActionMessage(WorkflowEntity workflowEntity, WorkflowBean workflowBean2) {
+        WorkflowTypes type = workflowTypeService.getWorkflowTypeByType(workflowBean.getBusinessKey());
+        String message="";
+        switch(workflowBean2.getWorkflowAction().toLowerCase())   
+       {
+       case  WorkflowConstants.ACTION_APPROVE :
+           message="Workflow Item "+type.getDisplayName()+"of "+workflowEntity.getStateDetails()+" approved Successfully";
+           break;
+       case  WorkflowConstants.ACTION_REJECT :
+           message="Workflow Item "+type.getDisplayName()+"of "+workflowEntity.getStateDetails()+" Rejected Successfully"
+                   +" and sent back to creator";
+           break;   
+       case  WorkflowConstants.ACTION_FORWARD :
+           message="Workflow Item "+type.getDisplayName()+"of "+workflowEntity.getStateDetails()+" Forwarded Successfully"
+                   + " to "+workflowBean2.getApproverName();
+           break;    
+       case  WorkflowConstants.ACTION_CANCEL :
+           message="Workflow Item "+type.getDisplayName()+"of "+workflowEntity.getStateDetails()+" Cancelled Successfully";
+           break; 
+       case  WorkflowConstants.ACTION_SAVE :
+           message="Workflow Item "+type.getDisplayName()+"of "+workflowEntity.getStateDetails()+" Saved Successfully";
+           break;   
+           
+       }
+        return message;
+   
+    }
+
+    public WorkflowBean getWorkflowBean() {
+        return workflowBean;
+    }
+
+    public void setWorkflowBean(final WorkflowBean workflowBean) {
+        this.workflowBean = workflowBean;
     }
 
     public DepartmentService getDepartmentService() {
         return departmentService;
     }
 
-    public void setDepartmentService(DepartmentService departmentService) {
+    public void setDepartmentService(final DepartmentService departmentService) {
         this.departmentService = departmentService;
-    }
-
-   
-
-       @Transactional
-    public WorkflowEntity transitionWorkFlow(final WorkflowEntity voucherHeader, WorkflowContainer workflowBean) {
-       
-        return voucherHeader;
     }
 
 }

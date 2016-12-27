@@ -53,10 +53,28 @@ import aj.org.objectweb.asm.Attribute;
 public abstract class WorkflowEntity extends AbstractAuditable {
     private static final long serialVersionUID = 5776408218810221246L;
    
-    @Column(name="state_id")
+    @Column(name="processid")
     private String workflowId;
     
-    
+    /**
+     * 
+     */
+    @Column(name="state_id")
+    private Long state_id;
+        
+    public Long getState_id() {
+        return state_id;
+    }
+   
+    @Transient
+    protected WorkflowBean workflowBean;
+
+
+    public void setState_id(Long state_id) {
+        this.state_id = state_id;
+    }
+
+
     public abstract String getStateDetails();
     
     @Transient

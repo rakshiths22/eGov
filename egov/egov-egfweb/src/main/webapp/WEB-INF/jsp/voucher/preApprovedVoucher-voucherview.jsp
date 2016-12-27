@@ -231,8 +231,8 @@ function onSubmit()
 				<div id="wfHistoryDiv">
 					<jsp:include page="../workflow/workflowHistory.jsp" />
 				</div>
-				<%@ include file='../workflow/commonWorkflowMatrix.jsp'%>
-				<%@ include file='../workflow/commonWorkflowMatrix-button.jsp'%>
+				<%@ include file='../workflow/commonworkflow.jsp'%>
+				<%@ include file='../workflow/commonworkflow-button.jsp'%>
 
 
 			</div>

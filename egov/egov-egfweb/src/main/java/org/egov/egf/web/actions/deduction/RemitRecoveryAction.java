@@ -104,7 +104,7 @@ import org.egov.model.payment.Paymentheader;
 import org.egov.model.recoveries.Recovery;
 import org.egov.model.service.RecoveryService;
 import org.egov.model.voucher.CommonBean;
-import org.egov.model.voucher.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.payment.services.PaymentActionHelper;
 import org.egov.pims.commons.Designation;
 import org.egov.services.deduction.RemitRecoveryService;
@@ -353,7 +353,7 @@ public class RemitRecoveryAction extends BasePaymentAction {
             voucherHeader.setName(FinancialConstants.PAYMENTVOUCHER_NAME_REMITTANCE);
             final HashMap<String, Object> headerDetails = createHeaderAndMisDetails();
             recovery = (Recovery) persistenceService.find("from Recovery where id=?", remittanceBean.getRecoveryId());
-            populateWorkflowBean();
+         
             paymentheader = paymentActionHelper.createRemittancePayment(paymentheader, voucherHeader,
                     Integer.valueOf(commonBean.getAccountNumberId()), getModeOfPayment(), remittanceBean.getTotalAmount(),
                     listRemitBean, recovery, remittanceBean, remittedTo, workflowBean, headerDetails, commonBean);
@@ -368,7 +368,7 @@ public class RemitRecoveryAction extends BasePaymentAction {
                 }
             }
             if (cutOffDate1 != null && voucherDate.compareTo(cutOffDate1) <= 0
-                    && FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+                    && FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction()))
             {
                 addActionMessage(getText("remittancepayment.transaction.success")
                         + paymentheader.getVoucherheader().getVoucherNumber());
@@ -532,28 +532,10 @@ public class RemitRecoveryAction extends BasePaymentAction {
     @Action(value = "/deduction/remitRecovery-sendForApproval")
     public String sendForApproval() {
         paymentheader = paymentService.find("from Paymentheader where id=?", Long.valueOf(paymentid));
-        populateWorkflowBean();
-        paymentheader = paymentActionHelper.sendForApproval(paymentheader, workflowBean);
+       
+      //  paymentheader = paymentActionHelper.sendForApproval(paymentheader, workflowBean);
 
-        if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
-            addActionMessage(getText("payment.voucher.rejected",
-                    new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask()
-                            .getOwnerPosition()) }));
-        if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
-            addActionMessage(getText("payment.voucher.approved", new String[] { paymentService
-                    .getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
-        if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
-            addActionMessage(getText("payment.voucher.cancelled"));
-        else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-            if ("Closed".equals(paymentheader.getCurrentTask().getStatus()))
-                addActionMessage(getText("payment.voucher.final.approval"));
-            else
-                addActionMessage(getText("payment.voucher.approved",
-                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask()
-                                .getOwnerPosition()) }));
-            setAction(workflowBean.getWorkFlowAction());
-
-        }
+        
 
         return MESSAGES;
     }
@@ -1052,13 +1034,7 @@ public class RemitRecoveryAction extends BasePaymentAction {
         this.chartOfAccounts = chartOfAccounts;
     }
 
-    public WorkflowBean getWorkflowBean() {
-        return workflowBean;
-    }
-
-    public void setWorkflowBean(WorkflowBean workflowBean) {
-        this.workflowBean = workflowBean;
-    }
+   
 
     public String getCurrentTask() {
         return paymentheader.getCurrentTask().getStatus();

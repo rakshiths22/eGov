@@ -31,14 +31,21 @@ public class Task {
     
     private String action = null;
     
+    private String sender;
+    
+  
     private WorkflowEntity entity;
     
     private String comments;
     
     private String extraInfo;
     
+    private String details;
+    
     private Position ownerPosition;
-
+    
+    private String natureOfTask;
+    
      
 
     public Position getOwnerPosition() {
@@ -170,14 +177,36 @@ public class Task {
         this.businesskey = businesskey;
     }
 
-    public BigDecimal getSenderid() {
-        return senderid;
+
+    public void setSender(String sender) {
+        this.sender = sender;
     }
 
-    public void setSenderid(BigDecimal senderid) {
-        this.senderid = senderid;
+    public String getSender() {
+        return sender;
     }
 
-    private BigDecimal senderid = null;
+    public String getNatureOfTask() {
+        return natureOfTask;
+    }
+
+    public void setNatureOfTask(String natureOfTask) {
+        this.natureOfTask = natureOfTask;
+    }
+
+    public String getDetails() {
+        return details;
+    }
+
+    public void setDetails(String details) {
+        this.details = details;
+    }
+
+   
+
+
+
+
+
 
 }

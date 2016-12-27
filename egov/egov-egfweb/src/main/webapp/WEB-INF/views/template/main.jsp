@@ -45,7 +45,7 @@
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring" %>
 <%@ taglib uri="/WEB-INF/tags/cdn.tld" prefix="cdn" %>
 <!DOCTYPE html>
-<html oncontextmenu="return false;">
+<html  >
 	<head>
 	    <meta charset="utf-8">
 	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -76,7 +76,7 @@
 		<![endif]-->
 	
 	</head>
-    <body class="page-body" oncontextmenu="return false;">
+    <body class="page-body"  >
         <div class="page-container">
             <tiles:insertAttribute name="header"/>
                 <div class="main-content">

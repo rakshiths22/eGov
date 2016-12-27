@@ -73,7 +73,7 @@ import org.egov.model.bills.EgBillregister;
 import org.egov.model.bills.EgBillregistermis;
 import org.egov.model.voucher.VoucherDetails;
 import org.egov.model.voucher.VoucherTypeBean;
-import org.egov.model.voucher.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.pims.commons.Designation;
 import org.egov.pims.commons.Position;
 import org.egov.services.voucher.JournalVoucherActionHelper;
@@ -213,12 +213,12 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
             LOGGER.debug("journalVoucherModifyAction | sendForApproval | Start");
         if (voucherHeader.getId() == null)
             voucherHeader = (CVoucherHeader) voucherService.findById(Long.parseLong(parameters.get("voucherId")[0]), false);
-        populateWorkflowBean();
+        
         voucherHeader = preApprovedActionHelper.sendForApproval(voucherHeader, workflowBean);
-        if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+        if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkflowAction()))
             addActionMessage(getText("pjv.voucher.approved",
                     new String[] { voucherService.getEmployeeNameForPositionId(voucherHeader.getCurrentTask().getOwnerPosition()) }));
-        if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
+        if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkflowAction())) {
             addActionMessage(getText("billVoucher.file.canceled"));
             if (!"JVGeneral".equalsIgnoreCase(voucherHeader.getName()))
                 cancelBill(voucherHeader.getId());
@@ -268,8 +268,8 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
             voucherHeader.setId(Long.valueOf(parameters.get(VHID)[0]));
         validateBeforeEdit(voucherHeader);
         CVoucherHeader oldVh = voucherHeader;
-        populateWorkflowBean();
-        if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
+        
+        if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkflowAction())) {
             voucherHeader = (CVoucherHeader) voucherService.findById(Long.parseLong(parameters.get(VHID)[0]), false);
             sendForApproval();
             return "message";
@@ -298,7 +298,7 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
                 // setOneFunctionCenterValue();
                 resetVoucherHeader();
 
-            if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+            if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkflowAction()))
                 addActionMessage(getText("pjv.voucher.approved",
                         new String[] { voucherService.getEmployeeNameForPositionId(voucherHeader.getCurrentTask().getOwnerPosition()) }));
         } catch (final ValidationException e) {
@@ -573,11 +573,5 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
      * public boolean isRejectedVoucher() { return isRejectedVoucher; } public void setRejectedVoucher(boolean isRejectedVoucher)
      * { this.isRejectedVoucher = isRejectedVoucher; }
      */
-    public WorkflowBean getWorkflowBean() {
-        return workflowBean;
-    }
-
-    public void setWorkflowBean(WorkflowBean workflowBean) {
-        this.workflowBean = workflowBean;
-    }
+   
 }

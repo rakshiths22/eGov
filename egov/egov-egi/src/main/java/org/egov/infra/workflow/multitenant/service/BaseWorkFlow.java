@@ -39,242 +39,122 @@
  */
 package org.egov.infra.workflow.multitenant.service;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang.math.NumberUtils;
 import org.egov.infra.admin.master.entity.Department;
 import org.egov.infra.admin.master.service.DepartmentService;
-import org.egov.infra.workflow.entity.State;
-import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
-import org.egov.infra.workflow.matrix.service.CustomizedWorkFlowService;
-import org.egov.infra.workflow.multitenant.model.WorkflowContainer;
+import org.egov.infra.workflow.multitenant.model.ProcessInstance;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 
 @Component
-public abstract class BaseWorkFlow {
-
+public  class BaseWorkFlow {
+    
+    private WorkflowInterface workflowInterface;
+    
     @Autowired
-    protected CustomizedWorkFlowService customizedWorkFlowService;
-
+    ApplicationContext applicationContext;
+    
     @Autowired
     protected DepartmentService departmentService;
     
-    private State state;
+    public WorkflowEntity transitionWorkFlow(final WorkflowEntity workflowEntity, final WorkflowBean workflowBean) {
+        
+        workflowInterface=getWorkflowImplementation(workflowEntity,workflowBean);
+        ProcessInstance pi=setUpProcessInstance(workflowBean,workflowEntity);
+        if(pi.getId()==null)
+          pi=  workflowInterface.start("", pi);
+        else
+         pi=   workflowInterface.update("", pi); 
+        workflowEntity.setWorkflowId(pi.getId()); 
+        if(NumberUtils.isDigits(pi.getId()))
+          workflowEntity.setState_id(Long.valueOf(pi.getId()));
+        return workflowEntity;
+    }
 
+    public WorkflowInterface getWorkflowImplementation(WorkflowEntity workflowEntity, WorkflowBean workflowBean2) {
+        return (WorkflowInterface)applicationContext.getBean("baseWorkflowMatrixService");
+     }
+    private ProcessInstance setUpProcessInstance(WorkflowBean workflowBean,WorkflowEntity workflowEntity) {
+        ProcessInstance pi=new ProcessInstance();
+        if(workflowBean.getWorkflowId()!=null && !workflowBean.getWorkflowId().isEmpty())
+        {
+            pi.setId(workflowBean.getWorkflowId());
+        }
+        if(workflowEntity.getWorkflowId()!=null && !workflowEntity.getWorkflowId().isEmpty())
+        {
+            pi.setId(workflowEntity.getWorkflowId());
+        }
+        pi.setBusinessKey(workflowBean.getBusinessKey());
+        pi.setEntity(workflowEntity);
+        pi.setStatus(workflowBean.getCurrentState());
+        pi.setAction(workflowBean.getWorkflowAction());
+        if(workflowBean.getApproverPositionId()!=null)  
+            pi.setAsignee(workflowBean.getApproverPositionId().toString());
+        pi.setDescription(workflowBean.getWorkflowComments());
+        
+        return pi;   
+          
+      }
+    private void setUpWorkflowBean(ProcessInstance pi,WorkflowBean workflowBean) {
+        workflowBean.setBusinessKey(pi.getBusinessKey());
+        workflowBean.setValidActions(pi.getAttributes().get("validActions").getValues());
+       // workflowBean.setDepartmentList(pi.getAttributes().get("departmentList").getValues());
+        workflowBean.setNextAction((pi.getAttributes().get("nextAction").getCode()));
+        workflowBean.setCurrentState(pi.getStatus());
+        if( workflowBean.getCurrentState()==null ||workflowBean.getCurrentState().isEmpty())
+        {
+            workflowBean.setCurrentState("NEW");
+        }
+        if(pi.getAssignee()!=null)
+        workflowBean.setCurrentPositionId(Long.valueOf(pi.getAssignee()));
+        if(workflowBean.getWorkflowId()==null)
+        workflowBean.setWorkflowId(pi.getId());
+        workflowBean.setDesignationList(Collections.EMPTY_LIST);
+        workflowBean.setUserList(Collections.EMPTY_LIST);
+        if(pi.getAssignee()!=null)
+        workflowBean.setApproverPositionId(Long.valueOf(pi.getAssignee())); 
+          
+       
+      }
+    
+    protected WorkflowBean prepareWorkflow(final Model prepareModel, final WorkflowEntity model, WorkflowBean workflowBean) {
+        
+        ProcessInstance pi= setUpProcessInstance(workflowBean,model);
+        WorkflowInterface workflowImplementation = getWorkflowImplementation(model, workflowBean);
+        pi= workflowImplementation.getProcess("", pi);
+        setUpWorkflowBean(pi,workflowBean);
+        if(workflowBean.getDepartmentList()==null)
+        {
+            workflowBean.setDepartmentList(addAllDepartments());
+        }
+        if(prepareModel!=null)
+            
+        prepareModel.addAttribute("workflowBean", workflowBean);
+        return workflowBean;
+    }
     
     public List<Department> addAllDepartments() {
         return departmentService.getAllDepartments();
     }
 
-    public WorkflowContainer getWorkflowContainer() {
-        return new WorkflowContainer();
-    }
-    protected String workFlowAction;
-    protected String approverComments;
-    protected String currentState;
-    protected String currentDesignation;
-    protected String additionalRule;
-    protected BigDecimal amountRule;
-    protected String workFlowDepartment;
-    protected String pendingActions;
-    protected String approverName;
-    protected String approverDepartment;
-    protected String approverDesignation;
-    protected Long approverPositionId;
-    /**
-     * @param prepareModel
-     * @param model
-     * @param container
-     *            This method we are calling In GET Method..
-     */
-    protected void prepareWorkflow(final Model prepareModel, WorkflowEntity model, final WorkflowContainer container) {
-        prepareModel.addAttribute("approverDepartmentList", addAllDepartments());
-        prepareModel.addAttribute("validActionList", getValidActions(model, container));
-        prepareModel.addAttribute("nextAction", getNextAction(model, container));
-
-    }
-     
-    
-
-    
-
-    /**
-     * @param model
-     * @param container
-     * @return NextAction From Matrix With Parameters
-     *         Type,CurrentState,CreatedDate
-     */
-    public String getNextAction(final WorkflowEntity model, final WorkflowContainer container) {
-
-        WorkFlowMatrix wfMatrix = null;
-        if (null != model && null != model.getId())
-            if (null != model.getProcessInstance())
-                wfMatrix = customizedWorkFlowService.getWfMatrix(model.getProcessInstance().getBusinessKey(),
-                        container.getWorkFlowDepartment(), container.getAmountRule(), container.getAdditionalRule(),
-                        "", container.getPendingActions(), model.getCreatedDate());
-            else
-                wfMatrix = customizedWorkFlowService.getWfMatrix(model.getProcessInstance().getBusinessKey(),
-                        container.getWorkFlowDepartment(), container.getAmountRule(), container.getAdditionalRule(),
-                        State.DEFAULT_STATE_VALUE_CREATED, container.getPendingActions(), model.getCreatedDate());
-        return wfMatrix == null ? "" : wfMatrix.getNextAction();
+    protected WorkflowBean populateWorkflowBean(HttpServletRequest request) {
+        WorkflowBean workflowBean=new WorkflowBean();
+       workflowBean.setAdditionalRule(request.getParameter("additionalRule"));
+        
+        return workflowBean;
+        
     }
 
-    /**
-     * @param model
-     * @param container
-     * @return List of WorkFlow Buttons From Matrix By Passing parametres
-     *         Type,CurrentState,CreatedDate
-     */
-    public List<String> getValidActions(final WorkflowEntity model, final WorkflowContainer container) {
-        List<String> validActions = Collections.emptyList();
-        if (null == model
-                || null == model.getId() || (model.getProcessInstance()==null) 
-                || (model != null && model.getProcessInstance() != null ? model.getProcessInstance().getStatus()
-                        .equals("Closed")
-                        || model.getProcessInstance().getStatus().equals("END") : false))
-            validActions = Arrays.asList("Forward");
-        else if (null != model.getProcessInstance())
-            validActions = customizedWorkFlowService.getNextValidActions(model.getProcessInstance().getBusinessKey(), container
-                    .getWorkFlowDepartment(), container.getAmountRule(), container.getAdditionalRule(), model
-                    .getProcessInstance().getStatus(), container.getPendingActions(), model.getCreatedDate());
-        else
-            // FIXME This May not work
-            validActions = customizedWorkFlowService.getNextValidActions(model.getProcessInstance().getBusinessKey(),
-                    container.getWorkFlowDepartment(), container.getAmountRule(), container.getAdditionalRule(),
-                    State.DEFAULT_STATE_VALUE_CREATED, container.getPendingActions(), model.getCreatedDate());
-        return validActions;
-    }
-    
-    protected String getPendingActions() {
-        return null;
-    }
 
-    public CustomizedWorkFlowService getCustomizedWorkFlowService() {
-        return customizedWorkFlowService;
-    }
 
-    public void setCustomizedWorkFlowService(CustomizedWorkFlowService customizedWorkFlowService) {
-        this.customizedWorkFlowService = customizedWorkFlowService;
-    }
-
-    public DepartmentService getDepartmentService() {
-        return departmentService;
-    }
-
-    public void setDepartmentService(DepartmentService departmentService) {
-        this.departmentService = departmentService;
-    }
-
-    public State getState() {
-        return state;
-    }
-
-    public void setState(State state) {
-        this.state = state;
-    }
-
-    public String getWorkFlowAction() {
-        return workFlowAction;
-    }
-
-    public void setWorkFlowAction(String workFlowAction) {
-        this.workFlowAction = workFlowAction;
-    }
-
-    public String getApproverComments() {
-        return approverComments;
-    }
-
-    public void setApproverComments(String approverComments) {
-        this.approverComments = approverComments;
-    }
-
-    public String getCurrentState() {
-        return currentState;
-    }
-
-    public void setCurrentState(String currentState) {
-        this.currentState = currentState;
-    }
-
-    public String getCurrentDesignation() {
-        return currentDesignation;
-    }
-
-    public void setCurrentDesignation(String currentDesignation) {
-        this.currentDesignation = currentDesignation;
-    }
-
-    public String getAdditionalRule() {
-        return additionalRule;
-    }
-
-    public void setAdditionalRule(String additionalRule) {
-        this.additionalRule = additionalRule;
-    }
-
-    public BigDecimal getAmountRule() {
-        return amountRule;
-    }
-
-    public void setAmountRule(BigDecimal amountRule) {
-        this.amountRule = amountRule;
-    }
-
-    public String getWorkFlowDepartment() {
-        return workFlowDepartment;
-    }
-
-    public void setWorkFlowDepartment(String workFlowDepartment) {
-        this.workFlowDepartment = workFlowDepartment;
-    }
-
-    public String getApproverName() {
-        return approverName;
-    }
-
-    public void setApproverName(String approverName) {
-        this.approverName = approverName;
-    }
-
-    public String getApproverDepartment() {
-        return approverDepartment;
-    }
-
-    public void setApproverDepartment(String approverDepartment) {
-        this.approverDepartment = approverDepartment;
-    }
-
-    public String getApproverDesignation() {
-        return approverDesignation;
-    }
-
-    public void setApproverDesignation(String approverDesignation) {
-        this.approverDesignation = approverDesignation;
-    }
-
-    public Long getApproverPositionId() {
-        return approverPositionId;
-    }
-
-    public void setApproverPositionId(Long approverPositionId) {
-        this.approverPositionId = approverPositionId;
-    }
-
-    public void setPendingActions(String pendingActions) {
-        this.pendingActions = pendingActions;
-    }
-
-    @Transactional
-    public WorkflowEntity transitionWorkFlow(final WorkflowEntity voucherHeader, WorkflowContainer workflowBean) {
-       
-        return voucherHeader;
-    }
 
 }

@@ -50,7 +50,8 @@ import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.utils.StringUtils;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
-import org.egov.model.voucher.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.utils.FinancialConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -99,17 +100,26 @@ public class PreApprovedActionHelper {
     public CVoucherHeader sendForApproval(CVoucherHeader voucherHeader, WorkflowBean workflowBean)
     {
         try {
-            if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())
+            if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction())
                     && voucherHeader.getCurrentTask() == null)
             {
                 voucherHeader.setStatus(FinancialConstants.CREATEDVOUCHERSTATUS);
             }
             else
             {
-                voucherHeader = journalVoucherActionHelper.transitionWorkFlow(voucherHeader, workflowBean);
+               journalVoucherActionHelper.transitionWorkFlow(voucherHeader, workflowBean);
                
             }
             voucherService.persist(voucherHeader);
+            if(workflowBean.getWorkflowAction().equalsIgnoreCase(WorkflowConstants.ACTION_APPROVE))
+            {
+                voucherHeader.setStatus(FinancialConstants.CREATEDVOUCHERSTATUS);
+                
+            }
+            
+            
+            
+            
 
         } catch (final ValidationException e) {
 

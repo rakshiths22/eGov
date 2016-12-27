@@ -57,7 +57,7 @@ import org.egov.model.budget.Budget;
 import org.egov.model.budget.BudgetDetail;
 import org.egov.model.budget.BudgetProposalBean;
 import org.egov.model.service.BudgetDefinitionService;
-import org.egov.model.voucher.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.pims.commons.Position;
 import org.egov.utils.FinancialConstants;
 import org.hibernate.Query;
@@ -135,7 +135,7 @@ public class BudgetDetailActionHelper {
             beNextYear.setAnticipatoryAmount(reCurrentYear.getAnticipatoryAmount());
             beNextYear = budgetDetailService.setRelatedEntitesOn(beNextYear);
             beNextYear.setUniqueNo(budgetDetailService.generateUniqueNo(beNextYear));
-            if (workflowBean.getWorkFlowAction().equalsIgnoreCase(FinancialConstants.BUTTONSAVE))
+            if (workflowBean.getWorkflowAction().equalsIgnoreCase(FinancialConstants.BUTTONSAVE))
                 beNextYear.setStatus(egwStatusHibernateDAO.getStatusByModuleAndCode(FinancialConstants.BUDGETDETAIL,
                         FinancialConstants.WORKFLOW_STATE_NEW));
             else
@@ -203,7 +203,7 @@ public class BudgetDetailActionHelper {
 
             bd = budgetDetailService.transitionWorkFlow(bd, workflowBean);
 
-            if (workflowBean.getWorkFlowAction().contains("Verify"))
+            if (workflowBean.getWorkflowAction().contains("Verify"))
                 be.setStatus(egwStatusHibernateDAO.getStatusByModuleAndCode(FinancialConstants.BUDGETDETAIL,
                         FinancialConstants.BUDGETDETAIL_VERIFIED_STATUS));
             else

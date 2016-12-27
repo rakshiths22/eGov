@@ -64,14 +64,12 @@ import org.egov.deduction.model.EgRemittanceDetail;
 import org.egov.deduction.model.EgRemittanceGldtl;
 import org.egov.eis.entity.Assignment;
 import org.egov.eis.service.AssignmentService;
-import org.egov.infra.admin.master.entity.User;
 import org.egov.infra.config.core.ApplicationThreadLocals;
 import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
-import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
-import org.egov.infra.workflow.service.SimpleWorkflowService;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.model.advance.EgAdvanceRequisition;
 import org.egov.model.bills.EgBillregister;
@@ -81,13 +79,10 @@ import org.egov.model.payment.Paymentheader;
 import org.egov.model.recoveries.Recovery;
 import org.egov.model.voucher.CommonBean;
 import org.egov.model.voucher.VoucherDetails;
-import org.egov.model.voucher.WorkflowBean;
-import org.egov.pims.commons.Position;
 import org.egov.services.payment.MiscbilldetailService;
 import org.egov.services.payment.PaymentService;
 import org.egov.utils.FinancialConstants;
 import org.hibernate.HibernateException;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -262,7 +257,7 @@ public class PaymentActionHelper {
     @Transactional
     public Paymentheader sendForApproval(Paymentheader paymentheader, WorkflowBean workflowBean) {
 
-        if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())
+        if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction())
                 && paymentheader.getCurrentTask() == null)
         {
             paymentheader.getVoucherheader().setStatus(

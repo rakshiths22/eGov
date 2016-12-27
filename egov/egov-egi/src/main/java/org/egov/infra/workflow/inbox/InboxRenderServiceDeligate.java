@@ -108,9 +108,10 @@ public class InboxRenderServiceDeligate<T extends StateAware> {
     }
 
     public List<T> fetchInboxItems(final Long userId, final List<Long> owners) {
+        List<String> enabledTypes = workflowTypeService.getEnabledWorkflowType(true);
         final List<T> assignedWFItems = new ArrayList<>();
         if(!owners.isEmpty()){
-        	final List<String> wfTypes = stateService.getAssignedWorkflowTypeNames(owners);
+        	final List<String> wfTypes = stateService.getAssignedWorkflowTypeNames(owners,enabledTypes);
             for (final String wfType : wfTypes) {
                 final Optional<InboxRenderService<T>> inboxRenderService = this.getInboxRenderService(wfType);
                 if (inboxRenderService.isPresent())
@@ -122,8 +123,9 @@ public class InboxRenderServiceDeligate<T extends StateAware> {
 
     public List<T> fetchInboxDraftItems(final Long userId, final List<Long> owners) {
         final List<T> draftWfItems = new ArrayList<>();
+        List<String> enabledTypes = workflowTypeService.getEnabledWorkflowType(true);
         if(!owners.isEmpty()){
-        	final List<String> wfTypes = stateService.getAssignedWorkflowTypeNames(owners);
+        	final List<String> wfTypes = stateService.getAssignedWorkflowTypeNames(owners,enabledTypes);
             for (final String wfType : wfTypes) {
                 final Optional<InboxRenderService<T>> inboxRenderService = getInboxRenderService(wfType);
                 if (inboxRenderService.isPresent())

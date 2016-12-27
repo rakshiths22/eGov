@@ -54,41 +54,39 @@
 		</div>
 	</c:if>
 		<div class="panel-body">
-		
-			 <c:if test="${currentState!= 'null' && !'Closed'.equalsIgnoreCase(currentState)}">
-				<form:hidden path="" id="currentState" name="currentState" value="${currentState}"/>
-			</c:if> 
-			 <c:if test="${currentState!= 'null' && 'Closed'.equalsIgnoreCase(currentState)}">
-				<form:hidden path="" id="currentState" name="currentState" value=""/>
-			</c:if> 
-																																																									
+		 
+	<input type="hidden"  id="currentState" name="workflowBean.currentState"  value="${workflowBean.currentState}"/>
 	
-			<form:hidden path="" id="currentDesignation" name="currentDesignation" value="${currentDesignation}"/>
-			<form:hidden path="" id="additionalRule" name="additionalRule" value="${additionalRule}"/>
-			<form:hidden  path="" id="amountRule" name="amountRule" value="${amountRule}"/>
-			<form:hidden path="" id="workFlowDepartment" name="workFlowDepartment" value="${workFlowDepartment}"/>
-			<form:hidden path="" id="pendingActions" name="pendingActions" value="${pendingActions}"/>
-			<%-- <form:hidden path="" id="approverName" name="approverName" /> --%>
+	<input type="hidden" name="workflowBean.currentDesignationId" value="${workflowBean.currentDesignationId}" id="currentDesignation"/>
+	<input type="hidden" name="workflowBean.additionalRule" value="${ workflowBean.additionalRule}" id="additionalRule"/>
+	<input type="hidden" name="workflowBean.amountRule" value="${workflowBean.amountRule }" id="amountRule"/>
+	<input type="hidden" name="workflowBean.worklfowDepartment" value="${workflowBean.workflowDepartment }" id="workflowDepartment"/>
+	<input type="hidden" name="workflowBean.pendingActions" value="${workflowBean.pendingActions}" id="pendingActions"/>
+	<input type="hidden" name="workflowBean.approverName" value="${workflowBean.approverName}" id="approverName"/>
+	<input type="hidden" name="workflowBean.businessKey" value="${workflowBean.businessKey }" id="businessKey"/>
+	<input type="hidden" name="workflowBean.workflowId" value="${workflowBean.workflowId }" id="workflowId"/>
+	
+  	
 
 				<div class="row show-row"  id="approverDetailHeading">
-				<c:if test="${nextAction !='END'}" > 
+				<c:if test="${workflowBean.nextAction !='END'}" > 
 					<div class="show-row form-group" >
 						<label class="col-sm-3 control-label text-right"><spring:message code="lbl.approverdepartment"/><span class="mandatory"></span></label>
 						<div class="col-sm-3 add-margin">
-							<form:select path="approvalDepartment" data-first-option="false" name="approvalDepartment"
+							<form:select path="approvalDepartment" data-first-option="false" name="workflowBean.approvalDepartment"
 								id="approvalDepartment" cssClass="form-control"
 								cssErrorClass="form-control error" required="required">
 								<form:option value="">
 									<spring:message code="lbl.select" />
 								</form:option>
-								<form:options items="${approvalDepartmentList}" itemValue="id"
+								<form:options items="${workflowBean.departmentList}" itemValue="id"
 									itemLabel="name" />     
 							</form:select>
 						</div>
 						<label class="col-sm-2 control-label text-right"><spring:message code="lbl.approverdesignation"/><span class="mandatory"></span></label>
 						<div class="col-sm-3 add-margin">
 						<input type="hidden" id="approvalDesignationValue" value="${approvalDesignation }" />
-							<form:select path="" data-first-option="false" name="approvalDesignation"
+							<form:select path="" data-first-option="false" name="workflowBean.approvalDesignation"
 								id="approvalDesignation" cssClass="form-control" onfocus="callAlertForDepartment();"
 								cssErrorClass="form-control error" required="required">  
 								<form:option value="">
@@ -103,7 +101,7 @@
 						<div class="col-sm-3 add-margin">
 						<input type="hidden" id="approvalPositionValue" value="${approvalPosition }" />
 						<form:select path="" data-first-option="false" 
-							id="approvalPosition" name="approvalPosition" cssClass="form-control" onfocus="callAlertForDesignation();" 
+							id="approvalPosition" name="workflowBean.approverPositionId" cssClass="form-control" onfocus="callAlertForDesignation();" 
 							cssErrorClass="form-control error" required="required">  
 							<form:option value="">
 									<spring:message code="lbl.select" />
@@ -115,7 +113,7 @@
 					<div class="show-row form-group">
 						<label class="col-sm-3 control-label text-right"><spring:message code="lbl.comments"/></label>
 						<div class="col-sm-8 add-margin">
-							<form:textarea class="form-control" path="approvalComent"  id="approvalComent" name="approvalComent" />
+							<textarea class="form-control" id="workflowComments" name="workflowBean.workflowComments" ></textarea>
 						</div>
 					</div>
 				</div>

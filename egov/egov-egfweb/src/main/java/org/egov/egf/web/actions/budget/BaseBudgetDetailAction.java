@@ -84,7 +84,7 @@ import org.egov.infstr.utils.EgovMasterDataCaching;
 import org.egov.model.budget.Budget;
 import org.egov.model.budget.BudgetDetail;
 import org.egov.model.budget.BudgetGroup;
-import org.egov.model.voucher.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.pims.commons.Position;
 import org.egov.services.budget.BudgetDetailActionHelper;
 import org.egov.services.budget.BudgetDetailHelperBean;
@@ -124,7 +124,7 @@ public abstract class BaseBudgetDetailAction extends BaseWorkFlowAction {
     protected List<String> headerFields = new ArrayList<String>();
     protected List<String> gridFields = new ArrayList<String>();
     protected List<String> mandatoryFields = new ArrayList<String>();
-    public WorkflowBean workflowBean = new WorkflowBean();
+    
    
     protected boolean headerDisabled = false;
     protected List<BudgetAmountView> budgetAmountView = new ArrayList<BudgetAmountView>();
@@ -214,29 +214,10 @@ public abstract class BaseBudgetDetailAction extends BaseWorkFlowAction {
             budgetDetail = budgetDetailList.get(0);
             validateAmounts(budgetDetailList);
             Assignment assignment = new Assignment();
-            if (!FinancialConstants.BUTTONSAVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
-
-                final List<Assignment> assignmentList = assignmentService
-                        .findAllAssignmentsByHODDeptAndDates(budgetDetail.getExecutingDepartment().getId(), new Date());
-                if (assignmentList.isEmpty())
-                    throw new ValidationException(Arrays.asList(new ValidationError(HOD_NOT_FOUND, HOD_NOT_FOUND)));
-                assignment = assignmentList.get(0);
-                approverPositionId = assignment.getPosition().getId();
-            } else
-                approverPositionId = getPosition().getId();
-            populateWorkflowBean();
-            financialYear = financialYearService.findOne(financialYear.getId());
-            final EgwStatus egwStatus = egwStatusHibernateDAO.getStatusByModuleAndCode(FinancialConstants.BUDGETDETAIL,
-                    FinancialConstants.BUDGETDETAIL_CREATED_STATUS);
-            budgetDetailActionHelper.create(new BudgetDetailHelperBean(addNewDetails, beAmounts, budgetDetailList,
-                    egwStatus, budgetDetail, searchbudgetGroupid, searchfunctionid, workflowBean));
-            setAsOnDateOnSelectedBudget();
+            
 
             showMessage = true;
-            if (FinancialConstants.BUTTONSAVE.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
-                addActionMessage(getText(SAVE));
-            else
-                addActionMessage(getText("budgetdetail.forwarded") + assignment.getEmployee().getName());
+          
             dropdownData.put(BUDGETLIST, Collections.emptyList());
             budgetDetail = new BudgetDetail();
             budgetDetail.setExecutingDepartment(null);
@@ -865,13 +846,7 @@ public abstract class BaseBudgetDetailAction extends BaseWorkFlowAction {
         this.searchbudgetGroupid = searchbudgetGroupid;
     }
 
-    public WorkflowBean getWorkflowBean() {
-        return workflowBean;
-    }
-
-    public void setWorkflowBean(final WorkflowBean workflowBean) {
-        this.workflowBean = workflowBean;
-    }
+     
 
     public boolean isAddNewDetails() {
         return addNewDetails;

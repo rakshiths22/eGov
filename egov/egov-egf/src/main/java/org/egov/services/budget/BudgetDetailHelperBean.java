@@ -44,7 +44,7 @@ import java.util.List;
 
 import org.egov.commons.EgwStatus;
 import org.egov.model.budget.BudgetDetail;
-import org.egov.model.voucher.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 
 public class BudgetDetailHelperBean {
     public Boolean addNewDetails;

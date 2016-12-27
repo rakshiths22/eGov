@@ -55,21 +55,17 @@ import org.egov.commons.CFunction;
 import org.egov.commons.CVoucherHeader;
 import org.egov.eis.entity.Assignment;
 import org.egov.eis.service.AssignmentService;
-import org.egov.infra.admin.master.entity.User;
 import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
-import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
-import org.egov.infra.workflow.service.SimpleWorkflowService;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.model.voucher.VoucherDetails;
 import org.egov.model.voucher.VoucherTypeBean;
-import org.egov.model.voucher.WorkflowBean;
-import org.egov.pims.commons.Position;
 import org.egov.utils.FinancialConstants;
 import org.hibernate.HibernateException;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -80,7 +76,7 @@ import com.exilant.GLEngine.Transaxtion;
 
 @Transactional(readOnly = true)
 @Service
-public class JournalVoucherActionHelper {
+public class JournalVoucherActionHelper extends BaseWorkFlow {
     final private static Logger LOGGER = Logger.getLogger(JournalVoucherActionHelper.class);
     private static final String FAILED = "Transaction failed";
     private static final String EXCEPTION_WHILE_SAVING_DATA = "Exception while saving data";
@@ -116,14 +112,13 @@ public class JournalVoucherActionHelper {
                 voucherService.createBillForVoucherSubType(billDetailslist, subLedgerlist, voucherHeader, voucherTypeBean,
                         new BigDecimal(voucherTypeBean.getTotalAmount()));
             }
-            if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())
-                    && voucherHeader.getCurrentTask() == null)
+            if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction()))
             {
                 voucherHeader.setStatus(FinancialConstants.CREATEDVOUCHERSTATUS);
             }
             else
             {
-                voucherHeader = transitionWorkFlow(voucherHeader, workflowBean);
+               transitionWorkFlow(voucherHeader, workflowBean);
                  
             }
             voucherService.create(voucherHeader);
@@ -175,7 +170,7 @@ public class JournalVoucherActionHelper {
                 voucherHeader.setStatus(FinancialConstants.PREAPPROVEDVOUCHERSTATUS);
 
             }
-            voucherHeader = transitionWorkFlow(voucherHeader, workflowBean);
+            //voucherHeader = transitionWorkFlow(voucherHeader, workflowBean);
             voucherService.persist(voucherHeader);
         } catch (final ValidationException e) {
 
@@ -191,11 +186,7 @@ public class JournalVoucherActionHelper {
         return voucherHeader;
     }
 
-    @Transactional
-    public CVoucherHeader transitionWorkFlow(final CVoucherHeader voucherHeader, WorkflowBean workflowBean) {
-       
-        return voucherHeader;
-    }
+   
 
     private Assignment getWorkflowInitiator(final CVoucherHeader voucherHeader) {
         Assignment wfInitiator = assignmentService.findByEmployeeAndGivenDate(voucherHeader.getCreatedBy().getId(), new Date())

@@ -154,8 +154,8 @@
 				<div class="subheadsmallnew" /></div>
 				<s:hidden id="voucherDate" name="voucherDate" />
 				<s:hidden id="cutOffDate" name="cutOffDate" />
-				<%@ include file='../workflow/commonWorkflowMatrix.jsp'%>
-				<%@ include file='../workflow/commonWorkflowMatrix-button.jsp'%>
+				<%@ include file='../workflow/commonworkflow.jsp'%>
+				<%@ include file='../workflow/commonworkflow-button.jsp'%>
 				<br />
 			</div>
 		</div>

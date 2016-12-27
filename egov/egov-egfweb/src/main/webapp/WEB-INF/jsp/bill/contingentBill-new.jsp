@@ -551,14 +551,12 @@ document.getElementById(tab+"["+idx+"]."+field).options[<s:property value="#stat
 							<div align="center" class="error-block" id="Errors"
 								style="font: bold; text-align: center"></div>
 						</font>
-						<%-- <s:if test='%{! "END".equalsIgnoreCase(nextLevel)}'>
-	<%@include file="../voucher/workflowApproval-contingent.jsp"%>
-</s:if> --%>
+						 
 						<s:hidden name="billDate" id="billDate" />
 						<s:hidden id="cutOffDate" name="cutOffDate" />
 						<s:hidden name="nextLevel" id="nextLevel" />
-						<%@ include file='../bill/commonWorkflowMatrix.jsp'%>
-						<%@ include file='../payment/commonWorkflowMatrix-button.jsp'%>
+						<%@ include file='../workflow/commonworkflow.jsp'%>
+						<%@ include file='../workflow/commonworkflow-button.jsp'%>
 					</div>
 				</div>
 			</div>

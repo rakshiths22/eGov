@@ -40,10 +40,11 @@
 
 package org.egov.infra.workflow.entity;
 
-import org.egov.infra.admin.master.entity.User;
-import org.egov.infra.persistence.entity.AbstractAuditable;
-import org.egov.pims.commons.Position;
-import org.hibernate.validator.constraints.Length;
+import static org.egov.infra.workflow.entity.State.SEQ_STATE;
+
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -60,11 +61,12 @@ import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
-import static org.egov.infra.workflow.entity.State.SEQ_STATE;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.egov.infra.workflow.multitenant.model.Task;
+import org.egov.pims.commons.Position;
+import org.hibernate.validator.constraints.Length;
 
 @Entity
 @Table(name = "EG_WF_STATES")
@@ -106,6 +108,9 @@ public class State extends AbstractAuditable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "INITIATOR_POS")
     private Position initiatorPosition;
+    
+    
+    private String myLinkId;
 
     public State() {
     }
@@ -248,5 +253,31 @@ public class State extends AbstractAuditable {
     public enum StateStatus {
         STARTED, INPROGRESS, ENDED
     }
+
+    public Task mapToTask() {
+       Task t=new Task();
+       t.setBusinesskey(this.getType());
+       t.setComments(this.comments);
+       t.setCreatedDate(this.getCreatedDate());
+       t.setId(this.getId().toString());
+       t.setStatus(this.getValue());
+       t.setDescription(this.getNatureOfTask());
+       t.setDetails(this.getExtraInfo()==null?"hellow":this.getExtraInfo());
+       t.setSender(this.senderName);
+       t.setUrl(this.getMyLinkId());  
+       return t;
+       
+        
+    }
+
+    public String getMyLinkId() {
+        return myLinkId;
+    }
+
+    public void setMyLinkId(String myLinkId) {
+        this.myLinkId = myLinkId;
+    }
+
+    
 
 }

@@ -43,6 +43,7 @@
 package org.egov.egf.web.actions.voucher;
 
 import java.math.BigDecimal;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -88,7 +89,7 @@ import org.egov.infra.workflow.multitenant.service.BaseWorkFlowAction;
 import org.egov.infstr.utils.EgovMasterDataCaching;
 import org.egov.model.contra.ContraBean;
 import org.egov.model.voucher.VoucherDetails;
-import org.egov.model.voucher.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.pims.commons.Position;
 import org.egov.pims.service.EisUtilService;
 import org.egov.services.financingsource.FinancingSourceService;
@@ -105,9 +106,12 @@ public class BaseVoucherAction extends BaseWorkFlowAction {
     protected final String INVALIDPAGE = "invalidPage";
     private static final String FAILED = "Transaction failed";
     private static final String EXCEPTION_WHILE_SAVING_DATA = "Exception while saving data";
+    public final SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Constants.LOCALE);
+    public  DateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
     private static final Logger LOGGER = Logger.getLogger(BaseVoucherAction.class);
     // sub class should add getter and setter this workflowBean
-    public WorkflowBean workflowBean = new WorkflowBean();
+    protected String cutOffDate;
+   
     public CVoucherHeader voucherHeader = new CVoucherHeader();
     protected List<String> headerFields = new ArrayList<String>();
     protected List<String> mandatoryFields = new ArrayList<String>();
@@ -159,7 +163,6 @@ public class BaseVoucherAction extends BaseWorkFlowAction {
     public String newform()
     {
         return NEW;
-
     }
 
     @Override
@@ -193,6 +196,21 @@ public class BaseVoucherAction extends BaseWorkFlowAction {
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("Number of mandate MIS attributes are :" + mandatoryFields.size());
     }
+    
+    public void prepareNewform()
+    {
+        List<AppConfigValues> cutOffDateconfigValue = appConfigValuesService.getConfigValuesByModuleAndKey("EGF",
+                "DataEntryCutOffDate");
+        if (cutOffDateconfigValue != null && !cutOffDateconfigValue.isEmpty())
+        {
+            try {
+             Date   date = df.parse(cutOffDateconfigValue.get(0).getValue());
+                cutOffDate = formatter.format(date);
+            } catch (ParseException e) {
+
+            }
+        }
+    }
 
     @Deprecated
     protected void getHeaderMandateFields() {
@@ -210,12 +228,6 @@ public class BaseVoucherAction extends BaseWorkFlowAction {
         mandatoryFields.add("voucherdate");
     }
 
-    public void populateWorkflowBean() {
-        /*workflowBean.setApproverPositionId(approverPositionId);
-        workflowBean.setApproverComments(approverComments);
-        workflowBean.setWorkFlowAction(workFlowAction);
-        workflowBean.setCurrentState(currentState);*/
-    }
 
     public boolean isOneFunctionCenter() {
         setOneFunctionCenterValue();
@@ -911,6 +923,14 @@ public class BaseVoucherAction extends BaseWorkFlowAction {
 
     public FinancingSourceService getFinancingSourceService() {
         return financingSourceService;
+    }
+    
+    public String getCutOffDate() {
+        return cutOffDate;
+    }
+
+    public void setCutOffDate(String cutOffDate) {
+        this.cutOffDate = cutOffDate;
     }
 
 }

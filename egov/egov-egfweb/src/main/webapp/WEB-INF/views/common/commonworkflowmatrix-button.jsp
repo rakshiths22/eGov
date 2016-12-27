@@ -46,7 +46,7 @@
 		<tr>
 			<td id="actionButtons">
 				<c:if test="${mode != 'readOnly' }">
-					<c:forEach items="${validActionList}" var="validButtons">
+					<c:forEach items="${workflowBean.validActions}" var="validButtons">
 						<input type="submit" id="${validButtons}" class="btn btn-primary btn-wf-primary"  value="${validButtons}"/>
 					</c:forEach>
 				</c:if>

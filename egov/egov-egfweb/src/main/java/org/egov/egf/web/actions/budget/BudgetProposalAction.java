@@ -80,7 +80,7 @@ import org.egov.model.budget.Budget;
 import org.egov.model.budget.BudgetDetail;
 import org.egov.model.budget.BudgetGroup;
 import org.egov.model.budget.BudgetProposalBean;
-import org.egov.model.voucher.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.pims.commons.Position;
 import org.egov.pims.service.EisUtilService;
 import org.egov.services.budget.BudgetDetailActionHelper;
@@ -891,7 +891,7 @@ public class BudgetProposalAction extends BaseWorkFlowAction {
         Long approverPositionId=null;
         if (!assignment.isEmpty())
             approverPositionId = assignment.get(0).getPosition().getId();
-        populateWorkflowBean();
+     
 
         if (actionName.contains("Forward")) {
             if (!assignment.isEmpty())
@@ -1313,11 +1313,5 @@ public class BudgetProposalAction extends BaseWorkFlowAction {
         this.validId = validId;
     }
 
-    public WorkflowBean getWorkflowBean() {
-        return workflowBean;
-    }
-
-    public void setWorkflowBean(final WorkflowBean workflowBean) {
-        this.workflowBean = workflowBean;
-    }
+  
 }

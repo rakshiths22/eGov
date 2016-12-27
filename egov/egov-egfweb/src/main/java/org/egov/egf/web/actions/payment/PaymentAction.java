@@ -92,7 +92,7 @@ import org.egov.model.bills.Miscbilldetail;
 import org.egov.model.instrument.InstrumentHeader;
 import org.egov.model.payment.PaymentBean;
 import org.egov.model.payment.Paymentheader;
-import org.egov.model.voucher.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.payment.services.PaymentActionHelper;
 import org.egov.services.payment.PaymentService;
 import org.egov.services.voucher.VoucherService;
@@ -949,7 +949,7 @@ public class PaymentAction extends BasePaymentAction {
             paymentActionHelper.setbillRegisterFunction(billregister, cFunctionobj);
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Starting createPayment...");
-            populateWorkflowBean();
+           
             if (parameters.get("department") != null)
                 billregister.getEgBillregistermis().setEgDepartment(
                         departmentService.getDepartmentById(Long.valueOf(parameters.get("department")[0].toString())));
@@ -970,7 +970,7 @@ public class PaymentAction extends BasePaymentAction {
                 }
             }
             if (cutOffDate1 != null && voucherDate.compareTo(cutOffDate1) <= 0
-                    && FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+                    && FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction()))
             {
 
                 addActionMessage(getMessage("payment.transaction.success", new String[] { paymentheader.getVoucherheader()
@@ -980,7 +980,7 @@ public class PaymentAction extends BasePaymentAction {
             {
                 addActionMessage(getMessage("payment.transaction.success", new String[] { paymentheader.getVoucherheader()
                         .getVoucherNumber() }));
-                if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+                if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkflowAction()))
                     addActionMessage(getMessage("payment.voucher.approved",
                             new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask()
                                     .getOwnerPosition()) }));
@@ -1021,18 +1021,18 @@ public class PaymentAction extends BasePaymentAction {
         if (paymentheader.getId() == null)
             paymentheader = getPayment();
         // this is to check if is not the create mode
-        populateWorkflowBean();
+     
         paymentheader = paymentActionHelper.sendForApproval(paymentheader, workflowBean);
         paymentActionHelper.getPaymentBills(paymentheader);
-        if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+        if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkflowAction()))
             addActionMessage(getText("payment.voucher.rejected",
                     new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
-        if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+        if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkflowAction()))
             addActionMessage(getMessage("payment.voucher.approved",
                     new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
-        if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+        if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkflowAction()))
             addActionMessage(getText("payment.voucher.cancelled"));
-        else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
+        else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction())) {
             if ("Closed".equals(paymentheader.getCurrentTask().getStatus()))
                 addActionMessage(getMessage("payment.voucher.final.approval"));
             else
@@ -2156,15 +2156,7 @@ public class PaymentAction extends BasePaymentAction {
     public void setEgwStatusHibernateDAO(final EgwStatusHibernateDAO egwStatusHibernateDAO) {
         this.egwStatusHibernateDAO = egwStatusHibernateDAO;
     }
-
-    public WorkflowBean getWorkflowBean() {
-        return workflowBean;
-    }
-
-    public void setWorkflowBean(WorkflowBean workflowBean) {
-        this.workflowBean = workflowBean;
-    }
-
+ 
     public String getCurrentTask() {
         return paymentheader.getCurrentTask().getStatus();
     }

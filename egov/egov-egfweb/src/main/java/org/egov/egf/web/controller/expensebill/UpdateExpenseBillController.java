@@ -53,6 +53,7 @@ import org.egov.eis.web.contract.WorkflowContainer;
 import org.egov.infra.admin.master.service.AppConfigValueService;
 import org.egov.infra.exception.ApplicationException;
 import org.egov.infra.validation.exception.ValidationException;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infstr.models.EgChecklists;
 import org.egov.model.bills.EgBilldetails;
@@ -111,6 +112,7 @@ public class UpdateExpenseBillController extends BaseBillController {
     @RequestMapping(value = "/update/{billId}", method = RequestMethod.GET)
     public String updateForm(final Model model, @PathVariable final String billId,
             final HttpServletRequest request) throws ApplicationException {
+       // populateWorkflowBean(request);
         final EgBillregister egBillregister = expenseBillService.getById(Long.parseLong(billId));
         setDropDownValues(model);
         model.addAttribute("stateType", egBillregister.getClass().getSimpleName());
@@ -118,8 +120,11 @@ public class UpdateExpenseBillController extends BaseBillController {
             model.addAttribute("currentState", egBillregister.getCurrentTask().getStatus());
        /* model.addAttribute("workflowHistory",
                 financialUtils.getHistory(egBillregister.getCurrentTask(), egBillregister.getStateHistory()));*/
-
-        prepareWorkflow(model, egBillregister, null);
+        WorkflowBean workflowBean = new WorkflowBean();
+        workflowBean.setBusinessKey(egBillregister.getClass().getSimpleName());
+        WorkflowBean prepareWorkflow = prepareWorkflow(model, egBillregister, workflowBean);
+        
+        model.addAttribute("workflowBean", prepareWorkflow);
         egBillregister.getBillDetails().addAll(egBillregister.getEgBilldetailes());
         prepareBillDetailsForView(egBillregister);
         final List<CChartOfAccounts> expensePayableAccountList = chartOfAccountsService
@@ -143,10 +148,11 @@ public class UpdateExpenseBillController extends BaseBillController {
         }
     }
 
+   
     @RequestMapping(value = "/update/{billId}", method = RequestMethod.POST)
     public String update(@ModelAttribute(EG_BILLREGISTER) final EgBillregister egBillregister,
             final BindingResult resultBinder, final RedirectAttributes redirectAttributes, final Model model,
-            final HttpServletRequest request, @RequestParam final String workFlowAction)
+            final HttpServletRequest request, @ModelAttribute WorkflowBean workflowBean,@RequestParam String workFlowAction)
             throws ApplicationException, IOException {
 
         String mode = "";

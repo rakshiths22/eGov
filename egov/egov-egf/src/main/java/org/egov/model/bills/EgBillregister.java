@@ -401,7 +401,7 @@ public class EgBillregister extends WorkflowEntity implements java.io.Serializab
 
     @Override
     public String getStateDetails() {
-        return getCurrentTask().getComments().isEmpty() ? billnumber : billnumber + "-" + getCurrentTask().getComments();
+        return billnumber ;
     }
 
     public User getApprover() {

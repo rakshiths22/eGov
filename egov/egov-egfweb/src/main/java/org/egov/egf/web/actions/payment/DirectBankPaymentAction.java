@@ -94,7 +94,7 @@ import org.egov.model.instrument.InstrumentHeader;
 import org.egov.model.payment.Paymentheader;
 import org.egov.model.voucher.CommonBean;
 import org.egov.model.voucher.VoucherDetails;
-import org.egov.model.voucher.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.payment.services.PaymentActionHelper;
 import org.egov.services.contra.ContraService;
 import org.egov.services.payment.MiscbilldetailService;
@@ -141,7 +141,7 @@ public class DirectBankPaymentAction extends BasePaymentAction {
     @Autowired
     private PaymentActionHelper paymentActionHelper;
     private static final String DD_MMM_YYYY = "dd-MMM-yyyy";
-    private final SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Constants.LOCALE);
+    
     public Map<String, String> modeOfPaymentMap;
     private static final String MDP_CHEQUE = FinancialConstants.MODEOFPAYMENT_CHEQUE;
     private static final String MDP_RTGS = FinancialConstants.MODEOFPAYMENT_RTGS;
@@ -174,8 +174,8 @@ public class DirectBankPaymentAction extends BasePaymentAction {
     @Autowired
     @Qualifier("miscbilldetailService")
     private MiscbilldetailService miscbilldetailService;
-    private String cutOffDate;
-    DateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
+  
+    
     DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
     SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd");
     Date date;
@@ -211,6 +211,7 @@ public class DirectBankPaymentAction extends BasePaymentAction {
     }
 
     public void prepareNewform() {
+        super.prepareNewform();
         addDropdownData("bankList", Collections.EMPTY_LIST);
         addDropdownData("accNumList", Collections.EMPTY_LIST);
 
@@ -222,17 +223,7 @@ public class DirectBankPaymentAction extends BasePaymentAction {
     public String newform() {
         if (LOGGER.isInfoEnabled())
             LOGGER.info("Resetting all........................... ");
-        List<AppConfigValues> cutOffDateconfigValue = appConfigValuesService.getConfigValuesByModuleAndKey("EGF",
-                "DataEntryCutOffDate");
-        if (cutOffDateconfigValue != null && !cutOffDateconfigValue.isEmpty())
-        {
-            try {
-                date = df.parse(cutOffDateconfigValue.get(0).getValue());
-                cutOffDate = formatter.format(date);
-            } catch (ParseException e) {
-
-            }
-        }
+       
         voucherHeader.reset();
         commonBean.reset();
         commonBean.setModeOfPayment(MDP_CHEQUE);
@@ -280,7 +271,7 @@ public class DirectBankPaymentAction extends BasePaymentAction {
                         billVhId = (CVoucherHeader) persistenceService.getSession().load(CVoucherHeader.class,
                                 voucherHeader.getId());
                 voucherHeader.setId(null);
-                populateWorkflowBean();
+                
                 paymentheader = paymentActionHelper.createDirectBankPayment(paymentheader, voucherHeader, billVhId, commonBean,
                         billDetailslist, subLedgerlist, workflowBean);
                 showMode = "create";
@@ -295,7 +286,7 @@ public class DirectBankPaymentAction extends BasePaymentAction {
                     }
                 }
                 if (cutOffDate1 != null && voucherDate.compareTo(cutOffDate1) <= 0
-                        && FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+                        && FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction()))
                 {
                     if (paymentheader.getVoucherheader().getVouchermis().getBudgetaryAppnumber() == null)
                     {
@@ -893,26 +884,26 @@ public class DirectBankPaymentAction extends BasePaymentAction {
         if (paymentheader.getId() == null)
             paymentheader = getPayment();
 
-        populateWorkflowBean();
+     
         paymentheader = paymentActionHelper.sendForApproval(paymentheader, workflowBean);
 
-        if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+        if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkflowAction()))
             addActionMessage(getText("payment.voucher.rejected",
                     new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask()
                             .getOwnerPosition()) }));
-        if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+        if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkflowAction()))
             addActionMessage(getText("payment.voucher.approved", new String[] { paymentService
                     .getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
-        if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkFlowAction()))
+        if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkflowAction()))
             addActionMessage(getText("payment.voucher.cancelled"));
-        else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkFlowAction())) {
+        else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction())) {
             if ("Closed".equals(paymentheader.getCurrentTask().getStatus()))
                 addActionMessage(getText("payment.voucher.final.approval"));
             else
                 addActionMessage(getText("payment.voucher.approved",
                         new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask()
                                 .getOwnerPosition()) }));
-            setAction(workflowBean.getWorkFlowAction());
+            setAction(workflowBean.getWorkflowAction());
 
         }
         showMode = "view";
@@ -1078,23 +1069,10 @@ public class DirectBankPaymentAction extends BasePaymentAction {
         this.chartOfAccounts = chartOfAccounts;
     }
 
-    public WorkflowBean getWorkflowBean() {
-        return workflowBean;
-    }
-
-    public void setWorkflowBean(WorkflowBean workflowBean) {
-        this.workflowBean = workflowBean;
-    }
-
+     
     public String getCurrentTask() {
         return paymentheader.getCurrentTask().getStatus();
     }
 
-    public String getCutOffDate() {
-        return cutOffDate;
-    }
-
-    public void setCutOffDate(String cutOffDate) {
-        this.cutOffDate = cutOffDate;
-    }
+   
 }
