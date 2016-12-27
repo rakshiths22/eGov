@@ -22,6 +22,11 @@
         <apache-tiles-version>3.0.7</apache-tiles-version>
         <postgres-version>9.4.1212</postgres-version>
         <flyway-core-version>4.0.3</flyway-core-version>
+        <spring-security-version>4.2.0.RELEASE</spring-security-version>
+        <spring-security-oauth2-version>2.0.12.RELEASE</spring-security-oauth2-version>
+        <antisamy-version>1.5.3</antisamy-version>
+        <xerces-version>2.11.0.SP4</xerces-version>
+        <jasypt-version>1.9.2</jasypt-version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -137,11 +142,6 @@
             <version>4.3.4.RELEASE</version>
         </dependency>
         <dependency>
-            <groupId>org.springframework.security.oauth</groupId>
-            <artifactId>spring-security-oauth2</artifactId>
-            <version>2.0.12.RELEASE</version>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-jpa</artifactId>
           	<version>1.10.5.RELEASE</version>
@@ -156,8 +156,55 @@
             <artifactId>spring-data-elasticsearch</artifactId>
            <version>2.0.5.RELEASE</version>
         </dependency>
+        
         <!-- SPRING DEPENDENCIES END -->
 
+		<!-- SECURITY START -->
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-core</artifactId>
+                <version>${spring-security-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-acl</artifactId>
+                <version>${spring-security-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-web</artifactId>
+                <version>${spring-security-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-config</artifactId>
+                <version>${spring-security-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security.oauth</groupId>
+                <artifactId>spring-security-oauth2</artifactId>
+                <version>${spring-security-oauth2-version}</version>
+            </dependency>
+            
+             <dependency>
+                <groupId>org.owasp.antisamy</groupId>
+                <artifactId>antisamy</artifactId>
+                <version>${antisamy-version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>xerces</groupId>
+                        <artifactId>xercesImpl</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.jasypt</groupId>
+                <artifactId>jasypt</artifactId>
+                <version>${jasypt-version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <!-- SECURITY END -->
+            
 		<!-- HIBERNATE DEPENDENCIES START -->
             <dependency>
                 <groupId>org.hibernate</groupId>

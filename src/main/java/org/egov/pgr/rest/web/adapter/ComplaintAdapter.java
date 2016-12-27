@@ -64,7 +64,7 @@ public class ComplaintAdapter extends DataAdapter<Complaint> {
         jo.addProperty("lastModifiedBy", complaint.getLastModifiedBy().getUsername());
         jo.addProperty("lastModifiedDate", complaint.getLastModifiedDate().toString());
         jo.addProperty("complainantName", complaint.getComplainant().getName());
-        jo.addProperty("complainantMobileNo", complaint.getComplainant().getMobile());
+        jo.addProperty("complainantMobile", complaint.getComplainant().getMobile());
         jo.addProperty("complainantEmail",
                 StringUtils.isNotBlank(complaint.getComplainant().getEmail()) ? complaint.getComplainant().getEmail() : "");
         jo.addProperty("citizenFeedback", complaint.getCitizenFeedback() != null ? complaint.getCitizenFeedback().name() : "");
@@ -97,6 +97,7 @@ public class ComplaintAdapter extends DataAdapter<Complaint> {
         for (FileStoreMapper file : supportDocs) {
             JsonObject fileobj = new JsonObject();
             fileobj.addProperty("fileId", file.getFileStoreId());
+            fileobj.addProperty("fileName", file.getFileName());
             fileobj.addProperty("fileContentType", file.getContentType());
             jsonArry.add(fileobj);
         }
