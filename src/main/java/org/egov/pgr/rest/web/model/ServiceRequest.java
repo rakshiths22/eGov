@@ -3,6 +3,7 @@ package org.egov.pgr.rest.web.model;
 import java.util.Objects;
 
 import org.egov.infra.utils.StringUtils;
+import org.egov.pgr.entity.enums.ComplaintStatus;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -15,9 +16,9 @@ public class ServiceRequest   {
 
   @JsonProperty("status")
   private Boolean status = null;
-
-  @JsonProperty("status_notes")
-  private String statusNotes = null;
+  
+  @JsonProperty("status_details")
+  private ComplaintStatus statusDetails = null;
 
   @JsonProperty("service_name")
   private String complaintTypeName = null;
@@ -78,6 +79,12 @@ public class ServiceRequest   {
 
   @JsonProperty("account_id")
   private String accountId = null;
+  
+  @JsonProperty("approval_position")
+  private Long approvalPosition = null;
+  
+  @JsonProperty("approval_comment")
+  private String approvalComment = null;
 
   public String getCrn() {
 	return crn;
@@ -95,12 +102,12 @@ public void setStatus(Boolean status) {
 	this.status = status;
 }
 
-public String getStatusNotes() {
-	return statusNotes;
+public ComplaintStatus getStatusDetails() {
+	return statusDetails;
 }
 
-public void setStatusNotes(String statusNotes) {
-	this.statusNotes = statusNotes;
+public void setStatusDetails(ComplaintStatus statusDetails) {
+	this.statusDetails = statusDetails;
 }
 
 public String getComplaintTypeName() {
@@ -142,8 +149,6 @@ public String getServiceNotice() {
 public void setServiceNotice(String serviceNotice) {
 	this.serviceNotice = serviceNotice;
 }
-
-
 
 public String getCreatedDate() {
 	return createdDate;
@@ -265,6 +270,22 @@ public void setAccountId(String accountId) {
 	this.accountId = accountId;
 }
 
+public Long getApprovalPosition() {
+	return approvalPosition;
+}
+
+public void setApprovalPosition(Long approvalPosition) {
+	this.approvalPosition = approvalPosition;
+}
+
+public String getApprovalComment() {
+	return approvalComment;
+}
+
+public void setApprovalComment(String approvalComment) {
+	this.approvalComment = approvalComment;
+}
+
 public boolean validate(ServiceRequest serviceRequest){
 	if(StringUtils.isNotBlank(serviceRequest.getComplaintTypeCode()) &&
 			StringUtils.isNotBlank(serviceRequest.getDetails()) &&
@@ -288,7 +309,7 @@ public boolean validate(ServiceRequest serviceRequest){
     ServiceRequest serviceRequest = (ServiceRequest) o;
     return Objects.equals(this.crn, serviceRequest.crn) &&
         Objects.equals(this.status, serviceRequest.status) &&
-        Objects.equals(this.statusNotes, serviceRequest.statusNotes) &&
+        Objects.equals(this.statusDetails, serviceRequest.statusDetails) &&
         Objects.equals(this.complaintTypeName, serviceRequest.complaintTypeName) &&
         Objects.equals(this.complaintTypeCode, serviceRequest.complaintTypeCode) &&
         Objects.equals(this.details, serviceRequest.details) &&
@@ -313,7 +334,7 @@ public boolean validate(ServiceRequest serviceRequest){
 
   @Override
   public int hashCode() {
-    return Objects.hash(crn, status, statusNotes, complaintTypeName, complaintTypeCode, details, agencyResponsible, serviceNotice, createdDate, lastModifiedDate, escalationDate, landmarkDetails, crossHierarchyId, zipcode, lat, lng, mediaUrl, firstName, lastName, phone, email, deviceId, accountId);
+    return Objects.hash(crn, status, statusDetails, complaintTypeName, complaintTypeCode, details, agencyResponsible, serviceNotice, createdDate, lastModifiedDate, escalationDate, landmarkDetails, crossHierarchyId, zipcode, lat, lng, mediaUrl, firstName, lastName, phone, email, deviceId, accountId);
   }
 
   @Override
@@ -323,7 +344,7 @@ public boolean validate(ServiceRequest serviceRequest){
     
     sb.append("    serviceRequestId: ").append(toIndentedString(crn)).append("\n");
     sb.append("    status: ").append(toIndentedString(status)).append("\n");
-    sb.append("    statusNotes: ").append(toIndentedString(statusNotes)).append("\n");
+    sb.append("    statusNotes: ").append(toIndentedString(statusDetails)).append("\n");
     sb.append("    serviceName: ").append(toIndentedString(complaintTypeName)).append("\n");
     sb.append("    serviceCode: ").append(toIndentedString(complaintTypeCode)).append("\n");
     sb.append("    description: ").append(toIndentedString(details)).append("\n");
