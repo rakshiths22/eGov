@@ -152,7 +152,7 @@ public class UpdateExpenseBillController extends BaseBillController {
     @RequestMapping(value = "/update/{billId}", method = RequestMethod.POST)
     public String update(@ModelAttribute(EG_BILLREGISTER) final EgBillregister egBillregister,
             final BindingResult resultBinder, final RedirectAttributes redirectAttributes, final Model model,
-            final HttpServletRequest request, @ModelAttribute WorkflowBean workflowBean,@RequestParam String workFlowAction)
+            final HttpServletRequest request   )
             throws ApplicationException, IOException {
 
         String mode = "";
@@ -185,7 +185,7 @@ public class UpdateExpenseBillController extends BaseBillController {
         if (resultBinder.hasErrors()) {
             setDropDownValues(model);
             model.addAttribute("stateType", egBillregister.getClass().getSimpleName());
-            prepareWorkflow(model,(WorkflowEntity) egBillregister,null);
+            prepareWorkflow(model,(WorkflowEntity) egBillregister, null);
             model.addAttribute(APPROVAL_DESIGNATION, request.getParameter(APPROVAL_DESIGNATION));
             model.addAttribute(APPROVAL_POSITION, request.getParameter(APPROVAL_POSITION));
             model.addAttribute(NET_PAYABLE_ID, request.getParameter(NET_PAYABLE_ID));
@@ -203,9 +203,8 @@ public class UpdateExpenseBillController extends BaseBillController {
             }
         } else {
             try {
-                if (null != workFlowAction)
-                    updatedEgBillregister = expenseBillService.update(egBillregister, approvalPosition, approvalComment, null,
-                            workFlowAction, mode);
+                
+                    updatedEgBillregister = expenseBillService.update(egBillregister, mode);
             } catch (final ValidationException e) {
                 setDropDownValues(model);
                 model.addAttribute("stateType", egBillregister.getClass().getSimpleName());
@@ -229,15 +228,9 @@ public class UpdateExpenseBillController extends BaseBillController {
 
             redirectAttributes.addFlashAttribute(EG_BILLREGISTER, updatedEgBillregister);
 
-            // For Get Configured ApprovalPosition from workflow history
-            if (approvalPosition == null || approvalPosition.equals(Long.valueOf(0)))
-                approvalPosition = expenseBillService.getApprovalPositionByMatrixDesignation(
-                        egBillregister, null, mode, workFlowAction);
+           
 
-            final String approverDetails = null;/*//financialUtils.getApproverDetails(workFlowAction,
-                    updatedEgBillregister.getCurrentTask(), updatedEgBillregister.getId(), approvalPosition);*/
-
-            return "redirect:/expensebill/success?approverDetails= " + approverDetails + "&billNumber="
+            return "redirect:/expensebill/success?approverDetails= " + "" + "&billNumber="
                     + updatedEgBillregister.getBillnumber();
         }
     }

@@ -61,6 +61,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
+import org.egov.infra.persistence.entity.AbstractAuditable;
 import org.egov.infra.workflow.entity.StateAware;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 
@@ -74,7 +75,8 @@ public class CVoucherHeader extends WorkflowEntity {
     @Id
     @GeneratedValue(generator = SEQ_VOUCHERHEADER, strategy = GenerationType.SEQUENCE)
     private Long id;
-
+    
+    private WorkflowEntity workflowEntity;
     private String name;
     private String type;
     private String description;
@@ -334,12 +336,6 @@ public class CVoucherHeader extends WorkflowEntity {
         this.moduleId = moduleId;
     }
 
-    @Override
-    public String getStateDetails() {
-
-        return getCurrentTask().getComments().isEmpty() ? voucherNumber : voucherNumber + "-" + getCurrentTask().getComments();
-    }
-
     public Set<CGeneralLedger> getGeneralledger() {
         return generalLedger;
     }
@@ -489,6 +485,11 @@ public class CVoucherHeader extends WorkflowEntity {
 
     public void setVoucherNumType(final String voucherNumType) {
         this.voucherNumType = voucherNumType;
+    }
+
+    @Override
+    public String getStateDetails() {
+       return voucherNumber;
     }
 
 }

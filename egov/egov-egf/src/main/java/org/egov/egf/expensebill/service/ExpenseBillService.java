@@ -63,6 +63,8 @@ import org.egov.infra.script.service.ScriptService;
 import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.infra.utils.autonumber.AutonumberServiceBeanResolver;
 import org.egov.infra.validation.exception.ValidationException;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.infstr.models.EgChecklists;
 import org.egov.model.bills.EgBillregister;
 import org.egov.pims.commons.Position;
@@ -129,6 +131,9 @@ public class ExpenseBillService {
 
     @Autowired
     private CheckListService checkListService;
+    
+    @Autowired
+    private BaseWorkFlow baseWorkFlow;
 
      
     @Autowired
@@ -158,8 +163,7 @@ public class ExpenseBillService {
     }
 
     @Transactional
-    public EgBillregister create(final EgBillregister egBillregister, final Long approvalPosition, final String approvalComent,
-            final String additionalRule, final String workFlowAction) {
+    public EgBillregister create(final EgBillregister egBillregister,WorkflowBean workflowBean) {
 
         egBillregister.setBilltype(FinancialConstants.BILLTYPE_FINAL_BILL);
         egBillregister.setExpendituretype(FinancialConstants.STANDARD_EXPENDITURETYPE_CONTINGENT);
@@ -200,16 +204,8 @@ public class ExpenseBillService {
         final EgBillregister savedEgBillregister = expenseBillRepository.save(egBillregister);
 
         createCheckList(savedEgBillregister, checkLists);
-
-        if (workFlowAction.equals(FinancialConstants.CREATEANDAPPROVE))
-            savedEgBillregister.setStatus(financialUtils.getStatusByModuleAndCode(FinancialConstants.CONTINGENCYBILL_FIN,
-                    FinancialConstants.CONTINGENCYBILL_APPROVED_STATUS));
-        else {
-            savedEgBillregister.setStatus(financialUtils.getStatusByModuleAndCode(FinancialConstants.CONTINGENCYBILL_FIN,
-                    FinancialConstants.CONTINGENCYBILL_CREATED_STATUS));
-            createExpenseBillRegisterWorkflowTransition(savedEgBillregister, approvalPosition, approvalComent, additionalRule,
-                    workFlowAction);
-        }
+        baseWorkFlow.transitionWorkFlow(savedEgBillregister, workflowBean);
+        
         savedEgBillregister.getEgBillregistermis().setSourcePath(
                 "/EGF/expensebill/view/" + savedEgBillregister.getId().toString());
 
@@ -242,8 +238,7 @@ public class ExpenseBillService {
     }
 
     @Transactional
-    public EgBillregister update(final EgBillregister egBillregister, final Long approvalPosition, final String approvalComent,
-            final String additionalRule, final String workFlowAction, final String mode) throws ValidationException, IOException {
+    public EgBillregister update(final EgBillregister egBillregister, final String mode) throws ValidationException, IOException {
         EgBillregister updatedegBillregister = null;
         if ("edit".equals(mode)) {
             egBillregister.setPassedamount(egBillregister.getBillamount());
@@ -274,36 +269,13 @@ public class ExpenseBillService {
             deleteCheckList(updatedegBillregister);
             createCheckList(updatedegBillregister, checkLists);
             egBillregister.getEgBillregistermis().setBudgetaryAppnumber(null);
-            try {
-                checkBudgetAndGenerateBANumber(egBillregister);
-            } catch (final ValidationException e) {
-                throw new ValidationException(e.getErrors());
-            }
+            checkBudgetAndGenerateBANumber(egBillregister);
+            
 
         }
-        if (updatedegBillregister != null) {
-            if (workFlowAction.equals(FinancialConstants.CREATEANDAPPROVE))
-                updatedegBillregister.setStatus(financialUtils.getStatusByModuleAndCode(FinancialConstants.CONTINGENCYBILL_FIN,
-                        FinancialConstants.CONTINGENCYBILL_APPROVED_STATUS));
-            else {
-                expenseBillRegisterStatusChange(updatedegBillregister, workFlowAction);
-                createExpenseBillRegisterWorkflowTransition(updatedegBillregister, approvalPosition, approvalComent,
-                        additionalRule,
-                        workFlowAction);
-            }
-            updatedegBillregister = expenseBillRepository.save(updatedegBillregister);
-        } else {
-            if (workFlowAction.equals(FinancialConstants.CREATEANDAPPROVE))
-                egBillregister.setStatus(financialUtils.getStatusByModuleAndCode(FinancialConstants.CONTINGENCYBILL_FIN,
-                        FinancialConstants.CONTINGENCYBILL_APPROVED_STATUS));
-            else {
-                expenseBillRegisterStatusChange(egBillregister, workFlowAction);
-                createExpenseBillRegisterWorkflowTransition(egBillregister, approvalPosition, approvalComent,
-                        additionalRule,
-                        workFlowAction);
-            }
+        
             updatedegBillregister = expenseBillRepository.save(egBillregister);
-        }
+            baseWorkFlow.transitionWorkFlow(updatedegBillregister,null);
 
         return updatedegBillregister;
     }

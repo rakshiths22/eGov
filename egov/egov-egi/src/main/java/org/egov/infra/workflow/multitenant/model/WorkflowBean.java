@@ -39,6 +39,7 @@
  */
 package org.egov.infra.workflow.multitenant.model;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,8 @@ import org.egov.infra.admin.master.entity.Department;
 import org.egov.infra.admin.master.entity.User;
 import org.egov.pims.commons.Designation;
 
-public class WorkflowBean {
+public class WorkflowBean implements Serializable {
+    private static final long serialVersionUID = 1L;
     protected String workflowAction;
     protected String workflowComments;
     protected String workflowDepartment;

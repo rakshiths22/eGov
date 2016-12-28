@@ -59,8 +59,7 @@ public abstract class BaseWorkFlowAction extends BaseFormAction {
 
     private static final long serialVersionUID = 5111571178164448793L;
 
-    protected WorkflowBean workflowBean = new WorkflowBean();
-
+    protected WorkflowBean workflowBean;
     @Autowired
     protected DepartmentService departmentService;
 
@@ -83,12 +82,13 @@ public abstract class BaseWorkFlowAction extends BaseFormAction {
     protected void prepareWorkflow(final Model prepareModel, final WorkflowEntity model, final WorkflowContainer container) {
     }
 
-    protected void prepareWorkflow(final Model prepareModel, final WorkflowEntity model, WorkflowBean workflowBean) {
-        this.workflowBean = baseWorkFlow.prepareWorkflow(prepareModel, model, workflowBean);
-        if(this.workflowBean.getDepartmentList()==null)
+    protected WorkflowBean prepareWorkflow(final Model prepareModel, final WorkflowEntity model, WorkflowBean workflowBean) {
+        workflowBean= baseWorkFlow.prepareWorkflow(prepareModel, model, workflowBean);
+        if(workflowBean.getDepartmentList()==null)
         {
             workflowBean.setDepartmentList(addAllDepartments());
         }
+        return workflowBean;
 
     }
 
@@ -104,7 +104,7 @@ public abstract class BaseWorkFlowAction extends BaseFormAction {
     }
 
     protected String generateActionMessage(WorkflowEntity workflowEntity, WorkflowBean workflowBean2) {
-        WorkflowTypes type = workflowTypeService.getWorkflowTypeByType(workflowBean.getBusinessKey());
+        WorkflowTypes type = workflowTypeService.getWorkflowTypeByType(workflowBean2.getBusinessKey());
         String message="";
         switch(workflowBean2.getWorkflowAction().toLowerCase())   
        {
@@ -131,20 +131,21 @@ public abstract class BaseWorkFlowAction extends BaseFormAction {
    
     }
 
-    public WorkflowBean getWorkflowBean() {
-        return workflowBean;
-    }
-
-    public void setWorkflowBean(final WorkflowBean workflowBean) {
-        this.workflowBean = workflowBean;
-    }
-
+   
     public DepartmentService getDepartmentService() {
         return departmentService;
     }
 
     public void setDepartmentService(final DepartmentService departmentService) {
         this.departmentService = departmentService;
+    }
+
+    public WorkflowBean getWorkflowBean() {
+        return workflowBean;
+    }
+
+    public void setWorkflowBean(WorkflowBean workflowBean) {
+        this.workflowBean = workflowBean;
     }
 
 }

@@ -72,7 +72,9 @@ public class BaseWorkflowMatrixService implements WorkflowInterface {
     public ProcessInstance start(String jurisdiction, ProcessInstance processInstance) {
         WorkFlowMatrix wfMatrix = workflowService.getWfMatrix(processInstance.getBusinessKey(), null,
                 null, null, null, null);
-        Position owner=positionMasterService.getPositionById(Long.valueOf(processInstance.getAssignee()));
+        Position owner=null;
+        if(processInstance.getAssignee()!=null)
+            owner=positionMasterService.getPositionById(Long.valueOf(processInstance.getAssignee()));
         WorkflowEntity entity = processInstance.getEntity();
         State   state = new State();
         state.setType(processInstance.getType());
