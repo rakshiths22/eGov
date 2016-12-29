@@ -44,32 +44,53 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.egov.infra.admin.master.service.CityService;
-import org.egov.infra.config.security.authentication.SecureUser;
+import org.egov.infra.admin.master.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
+import org.springframework.stereotype.Service;
 
+@Service
 public class CustomTokenEnhancer extends TokenEnhancerChain {
 
     @Autowired
-    CityService cityService;
+    private CityService cityService;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public OAuth2AccessToken enhance(final OAuth2AccessToken accessToken, final OAuth2Authentication authentication) {
         final DefaultOAuth2AccessToken token = (DefaultOAuth2AccessToken) accessToken;
-        final SecureUser su = (SecureUser) authentication.getUserAuthentication()
+        final User su = (User) authentication.getUserAuthentication()
                 .getPrincipal();
+        org.egov.infra.admin.master.entity.User user = userService.getUserByUsername(su.getUsername());
         final Map<String, Object> info = new LinkedHashMap<String, Object>();
-        info.put("Id", su.getUserId());
-        info.put("name", su.getUser().getName());
-        info.put("mobileNumber", su.getUser().getMobileNumber());
-        info.put("emailId", su.getUser().getEmailId());
-        info.put("userType", su.getUser().getType());
-        info.put("cityLat", cityService.cityDataForKey("citylat") == null ? 0 : cityService.cityDataForKey("citylat"));
-        info.put("cityLng", cityService.cityDataForKey("citylng") == null ? 0 : cityService.cityDataForKey("citylng"));
+        final Map<String, Object> responseInfo = new LinkedHashMap<String, Object>();
+        final Map<String, Object> userInfo = new LinkedHashMap<String, Object>();
+
+        responseInfo.put("api_id", "");
+        responseInfo.put("ver", "");
+        responseInfo.put("ts", "");
+        responseInfo.put("res_msg_id", "");
+        responseInfo.put("msg_id", "");
+        responseInfo.put("status", "Access Token generated successfully");
+
+        userInfo.put("Id", user.getId());
+        userInfo.put("username", user.getUsername());
+        userInfo.put("mobileNumber", user.getMobileNumber());
+        userInfo.put("emailId", user.getEmailId());
+        userInfo.put("userType", user.getType());
+        userInfo.put("cityLat", cityService.cityDataForKey("citylat") == null ? 0 : cityService.cityDataForKey("citylat"));
+        userInfo.put("cityLng", cityService.cityDataForKey("citylng") == null ? 0 : cityService.cityDataForKey("citylng"));
+        
+        info.put("ResponseInfo", responseInfo);
+        info.put("User", userInfo);
         token.setAdditionalInformation(info);
+
         return super.enhance(token, authentication);
     }
 }

@@ -40,29 +40,30 @@
 
 package org.egov.pgr.rest.web.controller.citizen;
 
-import javax.servlet.http.HttpServletRequest;
-
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.egov.infra.admin.common.service.IdentityRecoveryService;
 import org.egov.infra.admin.master.entity.Device;
 import org.egov.infra.admin.master.entity.User;
 import org.egov.infra.admin.master.repository.DeviceRepository;
 import org.egov.infra.admin.master.service.UserService;
 import org.egov.infra.utils.FileStoreUtils;
-import org.egov.pgr.rest.web.adapter.UserAdapter;
 import org.egov.pgr.rest.web.controller.core.PgrRestController;
 import org.egov.pgr.rest.web.controller.core.PgrRestResponse;
+import org.egov.pgr.rest.web.model.RequestInfo;
+import org.egov.pgr.rest.web.model.ResponseInfo;
+import org.egov.pgr.rest.web.model.UserRequest;
+import org.egov.pgr.rest.web.model.UserResponse;
 import org.egov.portal.entity.Citizen;
 import org.egov.portal.service.CitizenService;
-import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -86,10 +87,14 @@ public class CitizenController extends PgrRestController {
     @Autowired
     private TokenStore tokenStore;
 
+    @Autowired
+    private IdentityRecoveryService identityRecoveryService;
+
     @RequestMapping(value = "/logout", method = RequestMethod.POST)
-    public ResponseEntity<String> logout(final HttpServletRequest request, final OAuth2Authentication authentication) {
+    public ResponseEntity<String> logout(@RequestParam(value = "tenant_id", required = true) final String tenant_id,
+            @RequestBody final RequestInfo request) {
         try {
-            final OAuth2AccessToken token = tokenStore.getAccessToken(authentication);
+            final OAuth2AccessToken token = null;// tokenStore.getAccessToken(authentication);
             if (token == null)
                 return PgrRestResponse.newInstance().error(getMessage("msg.logout.unknown"));
 
@@ -101,51 +106,106 @@ public class CitizenController extends PgrRestController {
         }
     }
 
-    @RequestMapping(value = "/createCitizen", method = RequestMethod.POST, consumes = { "application/json" })
-    public @ResponseBody ResponseEntity<String> register(@RequestBody final JSONObject citizen) {
-        final PgrRestResponse res = PgrRestResponse.newInstance();
+    @RequestMapping(value = "/users", method = RequestMethod.POST)
+    public UserResponse registerCitizen(@RequestParam(value = "tenant_id", required = true) final String tenant_id,
+            @RequestBody final UserRequest request) {
+        final UserResponse response = new UserResponse();
         try {
             final Citizen citizenCreate = new Citizen();
-            citizenCreate.setUsername(citizen.get("mobileNumber").toString());
-            citizenCreate.setMobileNumber(citizen.get("mobileNumber").toString());
-            citizenCreate.setName(citizen.get("name").toString());
+            citizenCreate.setUsername(request.getUser().getMobileNo());
+            citizenCreate.setMobileNumber(request.getUser().getMobileNo());
+            citizenCreate.setName(request.getUser().getName());
 
-            if (citizen.get("emailId") != null && !citizen.get("emailId").toString().trim().equals(""))
-                citizenCreate.setEmailId(citizen.get("emailId").toString());
+            if (request.getUser().getEmail() != null && !request.getUser().getEmail().isEmpty())
+                citizenCreate.setEmailId(request.getUser().getEmail());
 
-            citizenCreate.setPassword(citizen.get("password").toString());
-            Device device = deviceRepository.findByDeviceUId(citizen.get("deviceId").toString());
+            citizenCreate.setPassword(request.getUser().getPassword());
+            Device device = deviceRepository.findByDeviceUId(request.getUser().getDeviceId());
             if (device == null) {
                 device = new Device();
-                device.setDeviceId(citizen.get("deviceId").toString());
-                device.setType(citizen.get("deviceType").toString());
-                device.setOSVersion(citizen.get("OSVersion").toString());
+                device.setDeviceId(request.getUser().getDeviceId());
+                device.setType(request.getUser().getDeviceType());
+                device.setOSVersion(request.getUser().getOsVersion());
             }
 
             final User user = userservice.getUserByUsername(citizenCreate.getMobileNumber());
 
-            if (user != null)
-                return res.error(getMessage("user.register.duplicate.mobileno"));
+            if (user != null) {
+                response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("user.register.duplicate.mobileno")));
+                return response;
+            }
 
             if (citizenCreate.getEmailId() != null && !citizenCreate.getEmailId().isEmpty()) {
                 final User getUser = userservice.getUserByEmailId(citizenCreate.getEmailId());
-                if (getUser != null)
-                    return res.error(getMessage("user.register.duplicate.email"));
+                if (getUser != null) {
+                    response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("user.register.duplicate.email")));
+                    return response;
+                }
             }
 
-            if (citizen.get("activationCode") != null &&
-                    citizenService.isValidOTP(citizen.get("activationCode").toString(), citizen.get("mobileNumber").toString())) {
+            if (request.getRequestInfo() != null && request.getRequestInfo().getAuthToken() != null &&
+                    citizenService.isValidOTP(request.getRequestInfo().getAuthToken(), request.getUser().getMobileNo())) {
                 citizenCreate.setActive(true);
                 citizenCreate.getDevices().add(device);
                 citizenService.create(citizenCreate);
-                return res.setDataAdapter(new UserAdapter()).success(citizenCreate, getMessage("msg.citizen.reg.success"));
-            } else
-                return res.error(getMessage("msg.pwd.otp.invalid"));
+                response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.citizen.reg.success")));
+                response.setUser(request.getUser());
+                response.getUser().setUserName(request.getUser().getMobileNo());
+                return response;
+            } else {
+                response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.pwd.otp.invalid")));
+                return response;
+            }
 
         } catch (final Exception e) {
             LOGGER.error("EGOV-PGRREST ERROR ", e);
-            return res.error(getMessage("server.error"));
+            response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("server.error")));
+            return response;
         }
     }
 
+    @RequestMapping(value = "/users", method = RequestMethod.PUT)
+    public UserResponse updatePassword(@RequestParam(value = "tenant_id", required = true) final String tenant_id,
+            @RequestBody final UserRequest request) {
+        final UserResponse response = new UserResponse();
+
+        try {
+            final String token = request.getRequestInfo().getAuthToken();
+            String newPassword, confirmPassword;
+
+            if (StringUtils.isEmpty(request.getUser().getMobileNo())) {
+                response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.invalid.request")));
+                return response;
+            }
+
+            // for reset password with otp
+            if (!StringUtils.isEmpty(token)) {
+                newPassword = request.getUser().getNewPassword();
+                confirmPassword = request.getUser().getConfirmPassword();
+
+                if (StringUtils.isEmpty(newPassword)) {
+                    response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.invalid.request")));
+                    return response;
+                } else if (!newPassword.equals(confirmPassword)) {
+                    response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.pwd.not.match")));
+                    return response;
+                } else if (identityRecoveryService.validateAndResetPassword(token, newPassword)) {
+                    response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.pwd.reset.success")));
+                    return response;
+                } else {
+                    response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.pwd.otp.invalid")));
+                    return response;
+                }
+
+            } else {
+                response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.invalid.request")));
+                return response;
+            }
+
+        } catch (final Exception e) {
+            LOGGER.error("EGOV-PGRREST ERROR ", e);
+            response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("server.error")));
+            return response;
+        }
+    }
 }

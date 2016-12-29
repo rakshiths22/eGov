@@ -52,8 +52,8 @@
 	   
 
 	<!-- This is default url to get a token from OAuth -->
-	<http pattern="/oauth/token" create-session="stateless" authentication-manager-ref="clientAuthenticationManager" xmlns="http://www.springframework.org/schema/security" use-expressions="false">
-		 <intercept-url pattern="/oauth/token" access="IS_AUTHENTICATED_FULLY"  />
+	<http pattern="/users/_login" create-session="stateless" authentication-manager-ref="clientAuthenticationManager" xmlns="http://www.springframework.org/schema/security" use-expressions="false">
+		 <intercept-url pattern="/users/_login" access="IS_AUTHENTICATED_FULLY"  />
 		<anonymous enabled="false" />
 		<http-basic entry-point-ref="clientAuthenticationEntryPoint" />
 		<!-- include this only if you need to authenticate clients via request 
@@ -101,6 +101,7 @@
 	<bean id="clientCredentialsTokenEndpointFilter"
 		class="org.springframework.security.oauth2.provider.client.ClientCredentialsTokenEndpointFilter">
 		<property name="authenticationManager" ref="clientAuthenticationManager" />
+		<property name="filterProcessesUrl" value="/users/_login" />
 	</bean>
 
 	<bean id="accessDecisionManager" class="org.springframework.security.access.vote.UnanimousBased"
@@ -169,7 +170,7 @@
 	<!-- <bean id="userApprovalHandler" class="org.springframework.security.oauth2.provider.approval.TokenServicesUserApprovalHandler"> 
 		<property name="tokenServices" ref="tokenServices" /> </bean> -->
 	<oauth:authorization-server
-		client-details-service-ref="clientDetails" token-services-ref="tokenServices">
+		client-details-service-ref="clientDetails" token-services-ref="tokenServices" token-endpoint-url="/users/_login">
 		<oauth:authorization-code />
 		<oauth:implicit />
 		<oauth:refresh-token />

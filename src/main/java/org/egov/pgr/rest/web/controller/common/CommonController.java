@@ -45,9 +45,9 @@ import static org.egov.infra.web.support.json.adapter.HibernateProxyTypeAdapter.
 import java.io.IOException;
 import java.util.Collection;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.egov.infra.admin.common.service.IdentityRecoveryService;
 import org.egov.infra.admin.master.entity.Department;
@@ -55,21 +55,21 @@ import org.egov.infra.admin.master.service.DepartmentService;
 import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.utils.FileStoreUtils;
 import org.egov.pgr.rest.web.adapter.DepartmentAdaptor;
-import org.egov.pgr.rest.web.adapter.UserAdapter;
 import org.egov.pgr.rest.web.controller.core.PgrRestController;
-import org.egov.pgr.rest.web.controller.core.PgrRestResponse;
+import org.egov.pgr.rest.web.model.ResponseInfo;
+import org.egov.pgr.rest.web.model.UserRequest;
+import org.egov.pgr.rest.web.model.UserResponse;
 import org.egov.pgr.utils.constants.PGRConstants;
 import org.egov.portal.entity.Citizen;
 import org.egov.portal.service.CitizenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.GsonBuilder;
@@ -93,70 +93,67 @@ public class CommonController extends PgrRestController {
     @Autowired
     private IdentityRecoveryService identityRecoveryService;
 
-    @RequestMapping(value = "/sendOTP", method = RequestMethod.POST)
-    public @ResponseBody ResponseEntity<String> sendOTP(final HttpServletRequest request) {
-        final PgrRestResponse res = PgrRestResponse.newInstance();
-        final String mobileNo = request.getParameter("identity");
+    @RequestMapping(value = "/otp", method = RequestMethod.POST)
+    public ResponseInfo otp(@RequestParam(value = "tenant_id", required = true) final String tenant_id,
+            @RequestBody UserRequest request) {
+        ResponseInfo response;
         try {
-            if (!mobileNo.matches("\\d{10}"))
-                return res.error(getMessage("msg.invalid.mobileno"));
-            citizenService.sendOTPMessage(mobileNo);
-            return res.setDataAdapter(new UserAdapter()).success(getMessage("sendOTP.success"));
+
+            if (!request.getUser().getMobileNo().matches("\\d{10}")) {
+                response = new ResponseInfo("", "", "", "", "", getMessage("msg.invalid.mobileno"));
+
+                return response;
+            }
+
+            citizenService.sendOTPMessage(request.getUser().getMobileNo());
+            response = new ResponseInfo("", "", "", "", "", getMessage("sendOTP.success"));
+            return response;
         } catch (final Exception e) {
             LOGGER.error("EGOV-PGRREST ERROR ", e);
-            return res.error(getMessage("server.error"));
+            response = new ResponseInfo("", "", "", "", "", getMessage("server.error"));
+            return response;
         }
     }
 
-    @RequestMapping(value = "/recoverPassword", method = RequestMethod.POST)
-    public ResponseEntity<String> passwordRecover(final HttpServletRequest request) {
-        final PgrRestResponse res = PgrRestResponse.newInstance();
+    @RequestMapping(value = "/recover_password/otp", method = RequestMethod.POST)
+    public UserResponse passwordRecoverOTP(@RequestParam(value = "tenant_id", required = true) final String tenant_id,
+            @RequestBody UserRequest request) {
+        UserResponse response = new UserResponse();
         try {
-            final String identity = request.getParameter("identity");
-            final String redirectURL = request.getParameter("redirectURL");
-
-            final String token = request.getParameter("token");
-            String newPassword, confirmPassword;
-
-            if (org.apache.commons.lang.StringUtils.isEmpty(identity))
-                return res.error(getMessage("msg.invalid.request"));
-
-            // for reset password with otp
-            if (!org.apache.commons.lang.StringUtils.isEmpty(token)) {
-                newPassword = request.getParameter("newPassword");
-                confirmPassword = request.getParameter("confirmPassword");
-
-                if (org.apache.commons.lang.StringUtils.isEmpty(newPassword))
-                    return res.error(getMessage("msg.invalid.request"));
-                else if (!newPassword.equals(confirmPassword))
-                    return res.error(getMessage("msg.pwd.not.match"));
-                else if (identityRecoveryService.validateAndResetPassword(token, newPassword))
-                    return res.success("", getMessage("msg.pwd.reset.success"));
-                else
-                    return res.error(getMessage("msg.pwd.otp.invalid"));
-
-            }
+            final String identity = request.getUser().getMobileNo();
+            final String redirectURL = "";
 
             if (identity.matches("\\d+")) {
-                if (!identity.matches("\\d{10}"))
-                    return res.error(getMessage("msg.invalid.mobileno"));
-            } else if (!identity.matches("^[A-Za-z0-9+_.-]+@(.+)$"))
-                return res.error(getMessage("msg.invalid.mail"));
+                if (!identity.matches("\\d{10}")) {
+                    response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.invalid.mobileno")));
+                    return response;
+                }
+            } else if (!identity.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+                response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.invalid.mail")));
+                return response;
+            }
 
             final Citizen citizen = citizenService.getCitizenByUserName(identity);
 
-            if (citizen == null)
-                return res.error(getMessage("user.not.found"));
+            if (citizen == null) {
+                response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("user.not.found")));
+                return response;
+            }
 
             if (identityRecoveryService.generateAndSendUserPasswordRecovery(
-                    identity, redirectURL + "/egi/login/password/reset?token=", true))
-                return res.success("", "OTP for recovering password has been sent to your mobile"
-                        + (org.apache.commons.lang.StringUtils.isEmpty(citizen.getEmailId()) ? "" : " and mail"));
-
-            return res.error("Password send failed");
+                    identity, redirectURL + "/egi/login/password/reset?token=", true)) {
+                response.setResponseInfo(
+                        new ResponseInfo("", "", "", "", "", "OTP for recovering password has been sent to your mobile"
+                                + (StringUtils.isEmpty(citizen.getEmailId()) ? "" : " and mail")));
+                response.setUser(request.getUser());
+                return response;
+            }
+            response.setResponseInfo(new ResponseInfo("", "", "", "", "", "Password send failed"));
+            return response;
         } catch (final Exception e) {
             LOGGER.error("EGOV-PGRREST ERROR ", e);
-            return res.error(getMessage("server.error"));
+            response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("server.error")));
+            return response;
         }
 
     }
