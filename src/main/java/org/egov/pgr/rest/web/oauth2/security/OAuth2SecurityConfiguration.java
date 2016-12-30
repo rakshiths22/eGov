@@ -1,6 +1,5 @@
 package org.egov.pgr.rest.web.oauth2.security;
 
-import org.egov.pgr.rest.web.oauth2.provider.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,9 +24,6 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     private ClientDetailsService clientDetailsService;
 
     @Autowired
-    private CustomUserDetailsService customUserDetailsService;
-
-    @Autowired
     public void globalUserDetails(AuthenticationManagerBuilder auth) throws Exception {
         auth.inMemoryAuthentication();
     }
@@ -38,7 +34,7 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .csrf().disable()
                 .anonymous().disable()
                 .authorizeRequests()
-                .antMatchers("/user/_login").permitAll();
+                .antMatchers("/users/_login").permitAll();
     }
 
     @Override
@@ -60,11 +56,6 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
         handler.setRequestFactory(new DefaultOAuth2RequestFactory(clientDetailsService));
         handler.setClientDetailsService(clientDetailsService);
         return handler;
-    }
-
-    @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(customUserDetailsService);
     }
 
     @Bean

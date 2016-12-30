@@ -67,7 +67,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/rest")
 public class CitizenController extends PgrRestController {
 
     private static final Logger LOGGER = Logger.getLogger(CitizenController.class);

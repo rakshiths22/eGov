@@ -53,20 +53,14 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
                 .authorizedGrantTypes("password", "authorization_code", "refresh_token", "implicit", "client_credentials")
                 .authorities("ROLE_APP", "ROLE_CITIZEN", "ROLE_ADMIN", "ROLE_EMPLOYEE")
                 .scopes("read", "write")
-                .secret("pgr-mobile-secret")
-                .and()
-                .withClient("pgr-web-client")
-                .authorizedGrantTypes("authorization_code")
-                .authorities("ROLE_CITIZEN", "ROLE_ADMIN", "ROLE_EMPLOYEE")
-                .scopes("read", "write", "trust")
-                .autoApprove(true);
+                .secret("pgr-mobile-secret");
     }
 
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints.tokenStore(tokenStore).userApprovalHandler(userApprovalHandler)
                 .authenticationManager(authenticationManager())
-                .pathMapping("/oauth/token", "/user/_login")
+                .pathMapping("/oauth/token", "/users/_login")
                 .tokenEnhancer(customTokenEnhancer);
     }
 

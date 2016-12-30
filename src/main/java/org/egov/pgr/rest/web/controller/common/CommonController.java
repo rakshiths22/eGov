@@ -64,8 +64,6 @@ import org.egov.portal.entity.Citizen;
 import org.egov.portal.service.CitizenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -76,7 +74,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSerializer;
 
 @RestController
-@RequestMapping("/rest")
 public class CommonController extends PgrRestController {
 
     private static final Logger LOGGER = Logger.getLogger(CommonController.class);
@@ -158,14 +155,14 @@ public class CommonController extends PgrRestController {
 
     }
 
-    @RequestMapping(value = "/common/downloadfile", method = RequestMethod.GET)
+    @RequestMapping(value = "/v1/common/downloadfile", method = RequestMethod.GET)
     public void download(@RequestParam("fileStoreId") final String fileStoreId, final HttpServletResponse response)
             throws IOException {
         fileStoreUtils.fetchFileAndWriteToStream(fileStoreId, PGRConstants.MODULE_NAME, false, response);
     }
 
-    @RequestMapping(value = "/common/departments", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public String getDepartments(@ModelAttribute("department") final Department department, final Model model)
+    @RequestMapping(value = "/v1/common/departments", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public String getDepartments()
             throws IOException {
         final String jsonResponse = toJSON(departmentService.getAllDepartments(), Department.class,
                 DepartmentAdaptor.class);
