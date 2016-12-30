@@ -92,4 +92,6 @@
     
     <bean name="restFilter" class="org.egov.pgr.rest.web.filter.RestFilter" />
     
+    <bean id="restTenantResolverFilter" class="org.egov.pgr.rest.web.filter.RestTenantResolverFilter"/>
+    
 </beans>

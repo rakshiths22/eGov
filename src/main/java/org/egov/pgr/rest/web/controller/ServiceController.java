@@ -10,6 +10,8 @@ import java.util.Objects;
 
 import org.egov.pgr.entity.ComplaintType;
 import org.egov.pgr.rest.web.model.Error;
+import org.egov.pgr.rest.web.model.ErrorRes;
+import org.egov.pgr.rest.web.model.RequestInfo;
 import org.egov.pgr.rest.web.model.ResponseInfo;
 import org.egov.pgr.rest.web.model.Service;
 import org.egov.pgr.rest.web.model.ServiceDefinition;
@@ -29,10 +31,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.google.gson.Gson;
 
 @RestController
+@RequestMapping(value = {"/v1", "/a1"})
 public class ServiceController {
 
 	@Autowired
 	private ComplaintTypeService complaintTypeService;
+	
+	private ResponseInfo resInfo = null;
 
 	@RequestMapping(value = "/services", method = RequestMethod.GET, produces = APPLICATION_JSON_VALUE)
 	public ServiceRes getServiceList(@RequestParam String jurisdictionId,
@@ -42,8 +47,11 @@ public class ServiceController {
 			@RequestParam String requester_id, @RequestParam String auth_token)
 					throws IllegalAccessException, InvocationTargetException {
 		try {
+			resInfo = new ResponseInfo(api_id, ver, new Date()
+			.toString(), msg_id, requester_id, "Active");
 			ServiceRes serviceRes = new ServiceRes();
 			List<ComplaintType> complaintTypes = complaintTypeService.findAll();
+			
 			List<Service> serviceList = new ArrayList<>();
 
 			for (ComplaintType complaintType : complaintTypes) {
@@ -53,43 +61,46 @@ public class ServiceController {
 				serviceList.add(service);
 			}
 			serviceRes.setServices(serviceList);
-			serviceRes.setResposneInfo(new ResponseInfo(api_id, ver, new Date()
-			.toString(), msg_id, requester_id, "Active"));
+			serviceRes.setResposneInfo(resInfo);
 			return serviceRes;
 		} catch (Exception exception) {
 			throw exception;
 		}
 	}
 
-
 	@RequestMapping(value = "/servicedetail", method = RequestMethod.GET, produces = APPLICATION_JSON_VALUE)
-	public String getServiceDetail(@RequestParam String jurisdictionId,
-			@RequestParam String serviceCode, @RequestParam String api_id,
+	public String getServiceDetail(@RequestParam String jurisdiction_id,
+			@RequestParam String service_code, @RequestParam String api_id,
 			@RequestParam String ver, @RequestParam String ts,
 			@RequestParam String action, @RequestParam String did,
 			@RequestParam String msg_id,@RequestParam String requester_id, 
 			@RequestParam String auth_token)throws Exception {
-			Gson gson = new Gson();
-			ComplaintType complaintType = complaintTypeService.findByCode(serviceCode);
-			if(Objects.nonNull(complaintType)){
-				ServiceDefinitionRes response = new ServiceDefinitionRes();
-				response.setServiceDefinition(new ServiceDefinition(complaintType.getCode(),complaintType.getAttributes()));
-				response.setResposneInfo(new ResponseInfo(api_id, ver, new Date()
-				.toString(), msg_id, requester_id, "Active"));
+		    try
+		    {
+		    	resInfo = new ResponseInfo(api_id, ver, new Date()
+				.toString(), msg_id, requester_id, "Active");
+				Gson gson = new Gson();
+				ComplaintType complaintType = complaintTypeService.findByCode(service_code);
+					ServiceDefinitionRes response = new ServiceDefinitionRes();
+					response.setServiceDefinition(new ServiceDefinition(complaintType.getCode(),complaintType.getAttributes()));
+					response.setResposneInfo(resInfo);
 
-				return gson.toJson(response, ServiceDefinitionRes.class);
-			}
-			else
+					return gson.toJson(response, ServiceDefinitionRes.class);
+		    }
+			catch(Exception exception)
 			{
-				throw new Exception();
+				throw exception;
 			}
 	}
 	
 	@ExceptionHandler(Exception.class)
-	public ResponseEntity<Error> exceptionHandler(Exception ex) {
+	public ResponseEntity<ErrorRes> handleError(Exception ex) {
+		ErrorRes response = new ErrorRes();
+		response.setResposneInfo(resInfo);
 		Error error = new Error();
 		error.setCode(400);
-		error.setDescription("General server problem");
-		return new ResponseEntity<Error>(error, HttpStatus.BAD_REQUEST);
+		error.setDescription("General Server Error");
+		response.setError(error);
+		return new ResponseEntity<ErrorRes>(response, HttpStatus.BAD_REQUEST);
 	}
 }

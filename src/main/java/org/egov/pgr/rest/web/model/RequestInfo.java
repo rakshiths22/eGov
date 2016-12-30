@@ -1,10 +1,11 @@
 package org.egov.pgr.rest.web.model;
 
+import java.util.Date;
 import java.util.Objects;
 
 import org.egov.infra.utils.StringUtils;
-import org.joda.time.DateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class RequestInfo   {
@@ -14,11 +15,11 @@ public class RequestInfo   {
   @JsonProperty("ver")
   private String ver = null;
 
-//  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+  @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
 //  @JsonSerialize(using = MyDateTimeSerializer.class)
 //  @JsonDeserialize(using = LocalDateDeserializer.class)
   @JsonProperty("ts")
-  private String ts = null;
+  private Date ts = null;
 
   @JsonProperty("action")
   private String action = null;
@@ -64,16 +65,16 @@ public class RequestInfo   {
     this.ver = ver;
   }
 
-  public RequestInfo ts(String ts) {
+  public RequestInfo ts(Date ts) {
     this.ts = ts;
     return this;
   }
 
-  public String getTs() {
+  public Date getTs() {
     return ts;
   }
 
-  public void setTs(String ts) {
+  public void setTs(Date ts) {
     this.ts = ts;
   }
 
