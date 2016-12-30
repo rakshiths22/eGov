@@ -65,6 +65,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping(value = "/masters")
 public class MarriageFeeController {
+    private static final String MARRIAGE_FEE = "marriageFee";
     private static final String MRG_FEE_CREATE = "fee-create";
     private static final String MRG_FEE_SUCCESS = "fee-success";
     private static final String MRG_FEE_SEARCH = "fee-search";
@@ -79,7 +80,7 @@ public class MarriageFeeController {
 
     @RequestMapping(value = "/fee/create", method = RequestMethod.GET)
     public String loadCreateForm(final Model model) {
-        model.addAttribute("marriageFee", new MarriageFee());
+        model.addAttribute(MARRIAGE_FEE, new MarriageFee());
         return MRG_FEE_CREATE;
     }
 
@@ -88,6 +89,7 @@ public class MarriageFeeController {
             final BindingResult errors,
             final RedirectAttributes redirectAttributes) {
 
+        validateMarriageFee(errors, marriageFee);
         if (errors.hasErrors())
             return MRG_FEE_CREATE;
         marriageFee.setFeeType(MarriageFeeCriteriaType.GENERAL);
@@ -98,9 +100,18 @@ public class MarriageFeeController {
 
     }
 
+    private void validateMarriageFee(final BindingResult errors, final MarriageFee marriageFee) {
+        if (marriageFee.getCriteria() == null) {
+            errors.rejectValue("criteria", "Notempty.fee.criteria", null);
+        }
+        if (marriageFee.getFees() == null) {
+            errors.rejectValue("fees", "Notempty.fee.fees", null);
+        }
+    }
+
     @RequestMapping(value = "/fee/success/{id}", method = RequestMethod.GET)
     public String viewFee(@PathVariable final Long id, final Model model) {
-        model.addAttribute("marriageFee", marriageFeeService.getFee(id));
+        model.addAttribute(MARRIAGE_FEE, marriageFeeService.getFee(id));
         return MRG_FEE_SUCCESS;
     }
 
@@ -108,7 +119,7 @@ public class MarriageFeeController {
     public String viewRegistrationunit(@PathVariable("id") final Long id,
             final Model model) {
         final MarriageFee marriageFee = marriageFeeService.getFee(id);
-        model.addAttribute("marriageFee", marriageFee);
+        model.addAttribute(MARRIAGE_FEE, marriageFee);
         return MRG_FEE_VIEW;
     }
 
@@ -120,33 +131,32 @@ public class MarriageFeeController {
     }
 
     @RequestMapping(value = "/fee/searchResult/{mode}", method = RequestMethod.POST, produces = MediaType.TEXT_PLAIN_VALUE)
-    public @ResponseBody String searchFeeResult(
-            @PathVariable("mode") final String mode, final Model model,
+    @ResponseBody
+    public String searchFeeResult(@PathVariable("mode") final String mode, final Model model,
             @ModelAttribute final MarriageFee fee) {
 
-        List<MarriageFee> searchResultList = null;
-        if (mode.equalsIgnoreCase("edit"))
+        List<MarriageFee> searchResultList;
+        if ("edit".equalsIgnoreCase(mode))
             searchResultList = marriageFeeService
                     .searchRegistrationFeesWithGeneralType(fee);
         else
             searchResultList = marriageFeeService.searchFee(fee);
-        final String result = new StringBuilder("{ \"data\":")
+        return new StringBuilder("{ \"data\":")
                 .append(toJSON(searchResultList, MarriageFee.class,
-                        FeeJsonAdaptor.class)).append("}").toString();
-        return result;
+                        FeeJsonAdaptor.class))
+                .append("}").toString();
     }
 
     @RequestMapping(value = "/fee/edit/{id}", method = RequestMethod.GET)
     public String editFee(@PathVariable("id") final Long id, final Model model) {
-        model.addAttribute("marriageFee", marriageFeeService.getFee(id));
+        model.addAttribute(MARRIAGE_FEE, marriageFeeService.getFee(id));
         return MRG_FEE_UPDATE;
     }
 
     @RequestMapping(value = "/fee/update", method = RequestMethod.POST)
-    public String updateFee(
-            @Valid @ModelAttribute final MarriageFee marriageFee,
-            final BindingResult errors,
-            final RedirectAttributes redirectAttributes) {
+    public String updateFee(@Valid @ModelAttribute final MarriageFee marriageFee,
+            final BindingResult errors, final RedirectAttributes redirectAttributes) {
+        validateMarriageFee(errors, marriageFee);
         if (errors.hasErrors())
             return MRG_FEE_UPDATE;
         marriageFeeService.update(marriageFee);
