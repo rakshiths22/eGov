@@ -54,13 +54,14 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.egov.infra.config.core.ApplicationThreadLocals;
 import org.egov.infra.config.properties.ApplicationProperties;
+import org.egov.infra.utils.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class RestTenantResolverFilter implements Filter  {
 	
 	@Autowired
     private ApplicationProperties applicationProperties;
-
+	
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
@@ -70,6 +71,10 @@ public class RestTenantResolverFilter implements Filter  {
     	String tenant = request.getParameter("tenant_id");
     	if(tenant == null)
     		tenant = request.getParameter("jurisdiction_id");
+    	
+    	if(StringUtils.isBlank(tenant)){
+    		throw new ServletException("Enter TenantId or jurisdictionId");
+    	}
     	
         ApplicationThreadLocals.setTenantID(applicationProperties.getProperty("tenant." +tenant));
         ApplicationThreadLocals.setDomainName(domainName);

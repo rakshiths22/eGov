@@ -45,6 +45,7 @@ import java.util.List;
 
 import org.egov.infra.admin.master.entity.User;
 import org.egov.infra.admin.master.service.UserService;
+import org.egov.infra.config.security.authentication.SecureUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -72,6 +73,8 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         final String userName = authentication.getName();
         final String password = authentication.getCredentials().toString();
         User user;
+        
+        SecureUser su ;
 
         if (userName.contains("@") && userName.contains("."))
             user = userService.getUserByEmailId(userName);
@@ -92,8 +95,12 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
              */
             final List<SimpleGrantedAuthority> authorities = new ArrayList<>();
             user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority(role.getName())));
-            org.springframework.security.core.userdetails.User su = new org.springframework.security.core.userdetails.User(
-                    userName, userName, authorities);
+			/*
+			 * org.springframework.security.core.userdetails.User Springuser =
+			 * new org.springframework.security.core.userdetails.User( userName,
+			 * userName, authorities);
+			 */
+            	su = new SecureUser(user);
 
             final List<GrantedAuthority> grantedAuths = new ArrayList<>();
             grantedAuths.add(new SimpleGrantedAuthority("ROLE_" + user.getType()));

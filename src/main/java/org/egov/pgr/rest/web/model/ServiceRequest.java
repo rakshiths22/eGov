@@ -1,10 +1,12 @@
 package org.egov.pgr.rest.web.model;
 
+import java.util.Date;
 import java.util.Objects;
 
 import org.egov.infra.utils.StringUtils;
 import org.egov.pgr.entity.enums.ComplaintStatus;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -35,14 +37,17 @@ public class ServiceRequest   {
   @JsonProperty("service_notice")
   private String serviceNotice = null;
 
+  @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
   @JsonProperty("requested_datetime")
-  private String createdDate = null;
+  private Date createdDate = null;
 
+  @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
   @JsonProperty("updated_datetime")
-  private String lastModifiedDate = null;
+  private Date lastModifiedDate = null;
 
+  @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
   @JsonProperty("expected_datetime")
-  private String escalationDate = null;
+  private Date escalationDate = null;
 
   @JsonProperty("address")
   private String landmarkDetails = null;
@@ -150,27 +155,27 @@ public void setServiceNotice(String serviceNotice) {
 	this.serviceNotice = serviceNotice;
 }
 
-public String getCreatedDate() {
+public Date getCreatedDate() {
 	return createdDate;
 }
 
-public void setCreatedDate(String createdDate) {
+public void setCreatedDate(Date createdDate) {
 	this.createdDate = createdDate;
 }
 
-public String getLastModifiedDate() {
+public Date getLastModifiedDate() {
 	return lastModifiedDate;
 }
 
-public void setLastModifiedDate(String lastModifiedDate) {
+public void setLastModifiedDate(Date lastModifiedDate) {
 	this.lastModifiedDate = lastModifiedDate;
 }
 
-public String getEscalationDate() {
+public Date getEscalationDate() {
 	return escalationDate;
 }
 
-public void setEscalationDate(String escalationDate) {
+public void setEscalationDate(Date escalationDate) {
 	this.escalationDate = escalationDate;
 }
 

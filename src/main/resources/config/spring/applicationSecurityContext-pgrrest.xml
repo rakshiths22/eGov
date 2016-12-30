@@ -83,6 +83,10 @@
 		<csrf disabled="true"/>	
 	</http>
 	
+	<bean id="userDetailsService" class="org.egov.infra.config.security.authentication.UserDetailService">
+		<constructor-arg ref="userService"/>
+	</bean>
+
 	<bean id="oauthAuthenticationEntryPoint"
 		class="org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint">
 		<property name="realmName" value="test" />
@@ -126,9 +130,8 @@
 		<authentication-provider ref="customAuthenticationProvider" />
 	</authentication-manager>
 
-	<bean id="customAuthenticationProvider"
-		class="org.egov.pgr.rest.web.oauth2.provider.CustomAuthenticationProvider">
-	</bean>
+	<bean id="customAuthenticationProvider"	class="org.egov.pgr.rest.web.oauth2.provider.CustomAuthenticationProvider">
+		</bean>
 
     <bean id="customTokenEnhancer"
         class="org.egov.pgr.rest.web.oauth2.provider.CustomTokenEnhancer">

@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.google.gson.Gson;
 
 @RestController
-@RequestMapping(value = {"/v1", "/a1"})
+@RequestMapping(value = {"/v1","/a1"})
 public class ServiceController {
 
 	@Autowired
@@ -84,7 +84,6 @@ public class ServiceController {
 					ServiceDefinitionRes response = new ServiceDefinitionRes();
 					response.setServiceDefinition(new ServiceDefinition(complaintType.getCode(),complaintType.getAttributes()));
 					response.setResposneInfo(resInfo);
-
 					return gson.toJson(response, ServiceDefinitionRes.class);
 		    }
 			catch(Exception exception)
