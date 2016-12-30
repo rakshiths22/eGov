@@ -69,6 +69,11 @@ import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.actions.BaseFormAction;
 import org.egov.infra.workflow.entity.StateHistory;
+import org.egov.infra.workflow.multitenant.model.ProcessInstance;
+import org.egov.infra.workflow.multitenant.model.Task;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.model.bills.EgBillPayeedetails;
 import org.egov.model.bills.EgBilldetails;
@@ -159,6 +164,8 @@ public class ExpenseBillPrintAction extends BaseFormAction {
     EgBillregister cbill = new EgBillregister();
     @Autowired
     private BudgetControlTypeService budgetControlTypeService;
+    @Autowired
+    private BaseWorkFlow baseWorkFlow;
 
     // private InboxService inboxService;
 
@@ -250,8 +257,8 @@ public class ExpenseBillPrintAction extends BaseFormAction {
         if (cbill.getBilldate() != null)
             paramMap.put("billDate", sdf.format(cbill.getBilldate()));
         paramMap.put("voucherDescription", getVoucherDescription());
-        if (cbill != null && cbill.getCurrentTask() != null)
-           // loadInboxHistoryData(cbill.getStateHistory(), paramMap);
+        if (cbill != null && cbill.getWorkflowId() != null)
+           loadInboxHistoryData(baseWorkFlow.getWorkflowHistory(cbill,new WorkflowBean()), paramMap);
 
         if (billRegistermis != null) {
             paramMap.put("billDate", Constants.DDMMYYYYFORMAT2.format(billRegistermis.getEgBillregister().getBilldate()));
@@ -417,37 +424,32 @@ public class ExpenseBillPrintAction extends BaseFormAction {
         return voucher == null || voucher.getDescription() == null ? "" : voucher.getDescription();
     }
 
-	void loadInboxHistoryData(List<StateHistory> stateHistory,
+	void loadInboxHistoryData(List<Task> taskHistory,
 			final Map<String, Object> paramMap)
 			throws ApplicationRuntimeException {
 		final List<String> history = new ArrayList<String>();
 		final List<String> workFlowDate = new ArrayList<String>();
 
-		/*if (!stateHistory.isEmpty()) {
-			for (final StateHistory historyState : stateHistory)
-
-				if (!"NEW".equalsIgnoreCase(historyState.getValue())) {
-					history.add(historyState.getSenderName());
+		if (taskHistory!=null) {
+			for (final Task task:taskHistory)
+			{
+				if (!"NEW".equalsIgnoreCase(task.getStatus())) {
+					history.add(task.getSender());
 					workFlowDate.add(Constants.DDMMYYYYFORMAT2
-							.format(historyState.getLastModifiedDate()));
-					if (historyState.getValue().equalsIgnoreCase("Rejected")) {
+							.format(task.getCreatedDate()));
+					if (task.getStatus().equalsIgnoreCase(WorkflowConstants.STATUS_REJECTED)) {
 						history.clear();
 						workFlowDate.clear();
 					}
 				}
-
-			history.add(cbill.getCurrentTask().getSenderName());
-			workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(cbill.getCurrentTask()
-					.getLastModifiedDate()));
-		} else {
-			history.add(cbill.getCurrentTask().getSenderName());
-			workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(cbill.getCurrentTask()
-					.getLastModifiedDate()));
-		}
+			}  
+			 
+		} 
+	 
 		for (int i = 0; i < history.size(); i++) {
 			paramMap.put("workFlow_" + i, history.get(i));
 			paramMap.put("workFlowDate_" + i, workFlowDate.get(i));
-		}*/
+		}
 		 
 	}
 

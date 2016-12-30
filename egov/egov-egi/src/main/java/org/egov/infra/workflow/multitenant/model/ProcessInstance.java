@@ -19,6 +19,16 @@ public class ProcessInstance {
     private String status = null;
     
     private String action=null;
+    private String businessKey = null;
+
+    private String assignee = null;
+
+    private String group = null;
+
+    private WorkflowEntity entity = null;
+    
+
+    private Map<String,Attribute> attributes = new HashMap<String,Attribute>();
 
     public String getAction() {
         return action;
@@ -110,15 +120,7 @@ public class ProcessInstance {
 
     
 
-    private String businessKey = null;
-
-    private String assignee = null;
-
-    private String group = null;
-
-    private WorkflowEntity entity = null;
-
-    private Map<String,Attribute> attributes = new HashMap<String,Attribute>();
+   
 
     public Map<String, Attribute> getAttributes() {
         return attributes;

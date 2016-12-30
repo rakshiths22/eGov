@@ -352,10 +352,10 @@
 					</br>
 				</table>
 				<s:hidden name="cutOffDate" id="cutOffDate" />
-				<%@ include file='../payment/commonWorkflowMatrix.jsp'%>
+				<%@ include file='../workflow/commonworkflow.jsp'%>
 			</div>
 			<div align="center">
-				<%@ include file='../payment/commonWorkflowMatrix-button.jsp'%>
+				<%@ include file='../workflow/commonworkflow-button.jsp'%>
 			</div>
 		</s:push>
 		<s:hidden name="showMode" />

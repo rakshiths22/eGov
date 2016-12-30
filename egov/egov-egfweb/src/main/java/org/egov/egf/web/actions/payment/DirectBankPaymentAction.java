@@ -54,6 +54,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -89,12 +90,14 @@ import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infra.workflow.service.SimpleWorkflowService;
 import org.egov.infstr.services.PersistenceService;
+import org.egov.model.bills.EgBillregister;
 import org.egov.model.bills.Miscbilldetail;
 import org.egov.model.instrument.InstrumentHeader;
 import org.egov.model.payment.Paymentheader;
 import org.egov.model.voucher.CommonBean;
 import org.egov.model.voucher.VoucherDetails;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.payment.services.PaymentActionHelper;
 import org.egov.services.contra.ContraService;
 import org.egov.services.payment.MiscbilldetailService;
@@ -208,6 +211,9 @@ public class DirectBankPaymentAction extends BasePaymentAction {
         addDropdownData("designationList", Collections.EMPTY_LIST);
         addDropdownData("userList", Collections.EMPTY_LIST);
         typeOfAccount = FinancialConstants.TYPEOFACCOUNT_PAYMENTS + "," + FinancialConstants.TYPEOFACCOUNT_RECEIPTS_PAYMENTS;
+        workflowBean.setBusinessKey(paymentheader.getClass().getSimpleName());
+        prepareWorkflow(null, paymentheader, workflowBean);
+        
     }
 
     public void prepareNewform() {
@@ -259,74 +265,22 @@ public class DirectBankPaymentAction extends BasePaymentAction {
         String voucherDate = formatter1.format(voucherHeader.getVoucherDate());
         String cutOffDate1 = null;
         try {
-            if (!validateDBPData(billDetailslist, subLedgerlist)) {
+            if (validateDBPData(billDetailslist, subLedgerlist)) {
+                throw new ValidationException(Arrays.asList(new ValidationError("engine.validation.failed", "Validation Faild")));
+            }
                 if (commonBean.getModeOfPayment().equalsIgnoreCase(FinancialConstants.MODEOFPAYMENT_RTGS)) {
-                    if (LOGGER.isInfoEnabled())
-                        LOGGER.info("calling Validate RTGS");
                     validateRTGS();
                 }
-
-                if (showMode != null && showMode.equalsIgnoreCase("nonbillPayment"))
-                    if (voucherHeader.getId() != null)
-                        billVhId = (CVoucherHeader) persistenceService.getSession().load(CVoucherHeader.class,
-                                voucherHeader.getId());
                 voucherHeader.setId(null);
-                
                 paymentheader = paymentActionHelper.createDirectBankPayment(paymentheader, voucherHeader, billVhId, commonBean,
                         billDetailslist, subLedgerlist, workflowBean);
+                
                 showMode = "create";
-
-                if (!cutOffDate.isEmpty() && cutOffDate != null)
-                {
-                    try {
-                        date = sdf.parse(cutOffDate);
-                        cutOffDate1 = formatter1.format(date);
-                    } catch (ParseException e) {
-
-                    }
-                }
-                if (cutOffDate1 != null && voucherDate.compareTo(cutOffDate1) <= 0
-                        && FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-                {
-                    if (paymentheader.getVoucherheader().getVouchermis().getBudgetaryAppnumber() == null)
-                    {
-                        addActionMessage(getText("directbankpayment.transaction.success")
-                                + paymentheader.getVoucherheader().getVoucherNumber());
-                    } else {
-                        addActionMessage(getText("directbankpayment.transaction.success")
-                                + paymentheader.getVoucherheader().getVoucherNumber()
-                                + " and "
-                                + getText("budget.recheck.sucessful", new String[] { paymentheader.getVoucherheader()
-                                        .getVouchermis()
-                                        .getBudgetaryAppnumber() }));
-                    }
-                }
-                else
-                {
-                    if (paymentheader.getVoucherheader().getVouchermis().getBudgetaryAppnumber() == null)
-                    {
-                        addActionMessage(getText("directbankpayment.transaction.success")
-                                + paymentheader.getVoucherheader().getVoucherNumber());
-                    } else {
-                        addActionMessage(getText("directbankpayment.transaction.success")
-                                + paymentheader.getVoucherheader().getVoucherNumber()
-                                + " and "
-                                + getText("budget.recheck.sucessful", new String[] { paymentheader.getVoucherheader()
-                                        .getVouchermis()
-                                        .getBudgetaryAppnumber() }));
-                    }
-                    addActionMessage(getText("payment.voucher.approved", new String[] { paymentService
-                            .getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
-                }
-            }
-            else
-                throw new ValidationException(Arrays.asList(new ValidationError("engine.validation.failed", "Validation Faild")));
+                addActionMessage(generateMessage(paymentheader, workflowBean));
 
         } catch (final ValidationException e) {
-            LOGGER.error(e.getMessage(), e);
-            final List<ValidationError> errors = new ArrayList<ValidationError>();
-            errors.add(new ValidationError("exp", e.getErrors().get(0).getMessage()));
-            throw new ValidationException(errors);
+           throw e;
+           
         } catch (final NumberFormatException e) {
             LOGGER.error(e.getMessage(), e);
             throw e;
@@ -337,127 +291,54 @@ public class DirectBankPaymentAction extends BasePaymentAction {
         } finally {
             if (subLedgerlist.size() == 0)
                 subLedgerlist.add(new VoucherDetails());
-            // loadApproverUser(FinancialConstants.STANDARD_VOUCHER_TYPE_PAYMENT);
         }
         return VIEW;
     }
 
-    // @ValidationErrorPage(value="/error/error,jsp")
-
-    public void prepareNonBillPayment()
-    {
-        addDropdownData("bankList", Collections.EMPTY_LIST);
-        addDropdownData("accNumList", Collections.EMPTY_LIST);
-        commonBean.setModeOfPayment(MDP_CHEQUE);
-    }
-
-    @ValidationErrorPage(value = NEW)
-    @SkipValidation
-    public String nonBillPayment()
-    {
-        voucherHeader = (CVoucherHeader) persistenceService.getSession().load(CVoucherHeader.class, voucherHeader.getId());
-        final String vName = voucherHeader.getName();
-        String appconfigKey = "";
-        if (vName.equalsIgnoreCase(FinancialConstants.JOURNALVOUCHER_NAME_CONTRACTORJOURNAL))
-            appconfigKey = "worksBillPurposeIds";
-        else if (vName.equalsIgnoreCase(FinancialConstants.JOURNALVOUCHER_NAME_SUPPLIERJOURNAL))
-            appconfigKey = "purchaseBillPurposeIds";
-        else if (vName.equalsIgnoreCase(FinancialConstants.JOURNALVOUCHER_NAME_SALARYJOURNAL))
-            appconfigKey = "salaryBillPurposeIds";
-        final AppConfigValues appConfigValues = appConfigValuesService.getConfigValuesByModuleAndKey(
-                FinancialConstants.MODULE_NAME_APPCONFIG, appconfigKey).get(0);
-        final String purposeValue = appConfigValues.getValue();
-        final CGeneralLedger netPay = (CGeneralLedger) persistenceService.find(
-                "from CGeneralLedger where voucherHeaderId.id=? and glcodeId.purposeId=?", voucherHeader.getId(), purposeValue);
-        if (netPay == null)
-            throw new ValidationException(Arrays.asList(new ValidationError("net.payable.not.selected.or.selected.wrongly",
-                    "Either Net payable code is not selected or wrongly selected in voucher .Payment creation Failed")));
-        billDetailslist = new ArrayList<VoucherDetails>();
-        subLedgerlist = new ArrayList<VoucherDetails>();
-        final VoucherDetails vd = new VoucherDetails();
-        vd.setGlcodeDetail(netPay.getGlcode());
-        vd.setGlcodeIdDetail(netPay.getGlcodeId().getId());
-        vd.setAccounthead(netPay.getGlcodeId().getName());
-        vd.setDebitAmountDetail(BigDecimal.valueOf(netPay.getCreditAmount()));
-        if (netPay.getFunctionId() != null)
+     
+    private String generateMessage(Paymentheader paymentheader, WorkflowBean workflowBean) {
+        String message="";
+        switch(workflowBean.getWorkflowAction().toLowerCase())   
         {
-            vd.setFunctionIdDetail(Long.valueOf(netPay.getFunctionId()));
-            CFunction function = (CFunction) persistenceService.getSession().load(CFunction.class,
-                    Long.valueOf(netPay.getFunctionId()));
-            vd.setFunctionDetail(function.getId().toString());
-        }
-        commonBean.setAmount(BigDecimal.valueOf(netPay.getCreditAmount()));
-        billDetailslist.add(vd);
-        final Set<CGeneralLedgerDetail> generalLedgerDetails = netPay.getGeneralLedgerDetails();
-        final int i = 0;
-        for (final CGeneralLedgerDetail gldetail : generalLedgerDetails)
-        {
-            final VoucherDetails vdetails = new VoucherDetails();
-            vdetails.setSubledgerCode(netPay.getGlcode());
-            vdetails.setAmount(gldetail.getAmount());
-            // vdetails.setDebitAmountDetail(vdetails.getAmount());
-            vdetails.setGlcodeDetail(netPay.getGlcode());
-            vdetails.setGlcode(netPay.getGlcodeId());
-            vdetails.setSubledgerCode(netPay.getGlcode());
-            vdetails.setAccounthead(netPay.getGlcodeId().getName());
-            final Accountdetailtype detailType = (Accountdetailtype) persistenceService.getSession().load(
-                    Accountdetailtype.class,
-                    gldetail.getDetailTypeId());
-            vdetails.setDetailTypeName(detailType.getName());
-            vdetails.setDetailType(detailType);
-            vdetails.setDetailKey(gldetail.getDetailKeyId().toString());
-            vdetails.setDetailKeyId(gldetail.getDetailKeyId());
-
-            final String table = detailType.getFullQualifiedName();
-            Class<?> service;
-            try {
-                service = Class.forName(table);
-            } catch (final ClassNotFoundException e1) {
-                LOGGER.error(e1.getMessage(), e1);
-                throw new ValidationException(Arrays.asList(new ValidationError("application.error", "application.error")));
-            }
-            String simpleName = service.getSimpleName();
-            // simpleName=simpleName.toLowerCase()+"Service";
-            simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1) + "Service";
-            final WebApplicationContext wac = WebApplicationContextUtils.getWebApplicationContext(ServletActionContext
-                    .getServletContext());
-            final PersistenceService entityPersistenceService = (PersistenceService) wac.getBean(simpleName);
-            String dataType = "";
-            try {
-                final Class aClass = Class.forName(table);
-                final java.lang.reflect.Method method = aClass.getMethod("getId");
-                dataType = method.getReturnType().getSimpleName();
-            } catch (final Exception e) {
-                throw new ApplicationRuntimeException(e.getMessage());
-            }
-            EntityType entity = null;
-            if (dataType.equals("Long"))
-                entity = (EntityType) entityPersistenceService
-                        .findById(Long.valueOf(gldetail.getDetailKeyId().toString()), false);
-            else
-                entity = (EntityType) entityPersistenceService.findById(gldetail.getDetailKeyId(), false);
-            vdetails.setDetailCode(entity.getCode());
-            vdetails.setDetailName(entity.getName());
-            vdetails.setDetailKey(entity.getName());
-            if (i == 0)
-                commonBean.setPaidTo(entity.getName());
-            subLedgerlist.add(vdetails);
+        case  WorkflowConstants.ACTION_APPROVE :
+            message=getText("directbankpayment.approved.success", new String[] {paymentheader.getVoucherheader().getVoucherNumber()});
+            break;
+        case  WorkflowConstants.ACTION_REJECT :
+            message=getText("directbankpayment.reject", new String[] {paymentheader.getVoucherheader().getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
+            break;   
+        case  WorkflowConstants.ACTION_FORWARD :
+            message=getText("directbankpayment.create.success",
+                    new String[] {paymentheader.getVoucherheader().getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
+            break;    
+        case  WorkflowConstants.ACTION_CANCEL :
+            message=getText("directbankpayment.cancel",
+                    new String[] {paymentheader.getVoucherheader().getVoucherNumber()});
+            break; 
+        case  WorkflowConstants.ACTION_SAVE :
+            message=getText("directbankpayment.saved.success",
+                    new String[] {paymentheader.getVoucherheader().getVoucherNumber()});
+            break;   
 
         }
-        if (subLedgerlist.size() == 0)
-            subLedgerlist.add(new VoucherDetails());
-        loadAjaxedDropDowns();
-        return NEW;
+        return message;
     }
+    
 
     private void validateRTGS() {
         {
+            if (LOGGER.isInfoEnabled())
+                LOGGER.info("calling Validate RTGS");
+     
             EntityType entity = null;
             final List<ValidationError> errors = new ArrayList<ValidationError>();
             Relation rel = null;
             String type = null;
             // handle null
             if (subLedgerlist != null && !subLedgerlist.isEmpty())
+            {
+                throw new ValidationException(Arrays.asList(new ValidationError("no.subledger.cannot.create.rtgs.payment",
+                        "There is no subledger selected cannot create RTGS Payment")));
+            }
                 for (final VoucherDetails voucherDetail : subLedgerlist) {
                     try {
                         type = voucherDetail.getDetailTypeName();
@@ -505,9 +386,8 @@ public class DirectBankPaymentAction extends BasePaymentAction {
                         throw new ValidationException(errors);
                     }
                 }
-            else
-                throw new ValidationException(Arrays.asList(new ValidationError("no.subledger.cannot.create.rtgs.payment",
-                        "There is no subledger selected cannot create RTGS Payment")));
+           
+               
         }
 
     }
@@ -885,27 +765,12 @@ public class DirectBankPaymentAction extends BasePaymentAction {
             paymentheader = getPayment();
 
      
-        paymentheader = paymentActionHelper.sendForApproval(paymentheader, workflowBean);
+        paymentheader = paymentActionHelper.transitionWorkflow(paymentheader, workflowBean);
+        addActionMessage(generateMessage(paymentheader, workflowBean));
+       
+           // setAction(workflowBean.getWorkflowAction());
 
-        if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-            addActionMessage(getText("payment.voucher.rejected",
-                    new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask()
-                            .getOwnerPosition()) }));
-        if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-            addActionMessage(getText("payment.voucher.approved", new String[] { paymentService
-                    .getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
-        if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-            addActionMessage(getText("payment.voucher.cancelled"));
-        else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction())) {
-            if ("Closed".equals(paymentheader.getCurrentTask().getStatus()))
-                addActionMessage(getText("payment.voucher.final.approval"));
-            else
-                addActionMessage(getText("payment.voucher.approved",
-                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask()
-                                .getOwnerPosition()) }));
-            setAction(workflowBean.getWorkflowAction());
-
-        }
+      
         showMode = "view";
         return viewInboxItem();
     }

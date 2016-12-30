@@ -41,6 +41,7 @@
 package org.egov.infra.workflow.entity;
 
 import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.workflow.multitenant.model.Task;
 import org.egov.pims.commons.Position;
 import org.hibernate.annotations.Immutable;
 
@@ -269,5 +270,21 @@ public class StateHistory implements Serializable {
     public void setInitiatorPosition(Position initiatorPosition) {
         this.initiatorPosition = initiatorPosition;
     }
+    
+    public Task map() {
+        Task t=new Task();
+        t.setBusinesskey(this.getState().getType());
+        t.setComments(this.comments);
+        t.setCreatedDate(this.getCreatedDate());
+        t.setId(this.getId().toString());
+        t.setStatus(this.getValue());
+        t.setDescription(this.getNatureOfTask());
+        t.setDetails(this.extraInfo==null?"hello":this.extraInfo);
+        t.setSender(this.senderName);
+        t.setOwner(this.getOwnerPosition().getId().toString());
+        return t;
+        
+         
+     }
 
 }

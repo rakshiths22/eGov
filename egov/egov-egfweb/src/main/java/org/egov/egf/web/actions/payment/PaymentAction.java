@@ -1022,7 +1022,7 @@ public class PaymentAction extends BasePaymentAction {
             paymentheader = getPayment();
         // this is to check if is not the create mode
      
-        paymentheader = paymentActionHelper.sendForApproval(paymentheader, workflowBean);
+        paymentheader = paymentActionHelper.transitionWorkflow(paymentheader, workflowBean);
         paymentActionHelper.getPaymentBills(paymentheader);
         if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkflowAction()))
             addActionMessage(getText("payment.voucher.rejected",

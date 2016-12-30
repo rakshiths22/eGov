@@ -40,6 +40,10 @@
 
 package org.egov.payment.services;
 
+import static org.egov.utils.FinancialConstants.CONTINGENCYBILL_APPROVED_STATUS;
+import static org.egov.utils.FinancialConstants.CONTINGENCYBILL_CANCELLED_STATUS;
+import static org.egov.utils.FinancialConstants.CONTINGENCYBILL_FIN;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,6 +74,8 @@ import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.model.advance.EgAdvanceRequisition;
 import org.egov.model.bills.EgBillregister;
@@ -113,7 +119,9 @@ public class PaymentActionHelper {
     @Autowired
     protected AssignmentService assignmentService;
 
-    
+    @Autowired
+    private BaseWorkFlow baseWorkFlow;
+
 
     @Autowired
     @Qualifier("createVoucher")
@@ -129,6 +137,8 @@ public class PaymentActionHelper {
     {
         try {
             voucherHeader = createVoucherAndledger(voucherHeader, commonBean, billDetailslist, subLedgerlist);
+            voucherHeader.setState_id(null);
+            voucherHeader.setWorkflowId(null);
             paymentheader = paymentService.createPaymentHeader(voucherHeader,
                     Integer.valueOf(commonBean.getAccountNumberId()), commonBean
                             .getModeOfPayment(), commonBean.getAmount());
@@ -136,12 +146,12 @@ public class PaymentActionHelper {
                 billVhId = (CVoucherHeader) persistenceService.getSession().load(CVoucherHeader.class,
                         commonBean.getDocumentId());
             createMiscBillDetail(billVhId, commonBean, voucherHeader);
-            paymentheader = sendForApproval(paymentheader, workflowBean);
+            paymentheader = transitionWorkflow(paymentheader, workflowBean);
+            paymentService.persist(paymentheader);
         } catch (final ValidationException e) {
             LOGGER.error(e.getMessage(), e);
-            final List<ValidationError> errors = new ArrayList<ValidationError>();
-            errors.add(new ValidationError("exp", e.getErrors().get(0).getMessage()));
-            throw new ValidationException(errors);
+           
+            throw e;
         } catch (final Exception e) {
             final List<ValidationError> errors = new ArrayList<ValidationError>();
             errors.add(new ValidationError("exp", e.getMessage()));
@@ -162,12 +172,10 @@ public class PaymentActionHelper {
                     modeOfPayment, totalAmount);
             updateEgRemittanceglDtl(paymentheader.getVoucherheader(), listRemitBean, recovery);
             createMiscBillDetail(paymentheader.getVoucherheader(), remittanceBean, remittedTo);
-            paymentheader = sendForApproval(paymentheader, workflowBean);
+            paymentheader = transitionWorkflow(paymentheader, workflowBean);
         } catch (final ValidationException e) {
             LOGGER.error(e.getMessage(), e);
-            final List<ValidationError> errors = new ArrayList<ValidationError>();
-            errors.add(new ValidationError("exp", e.getErrors().get(0).getMessage()));
-            throw new ValidationException(errors);
+            throw e;
         } catch (final Exception e) {
 
             final List<ValidationError> errors = new ArrayList<ValidationError>();
@@ -255,20 +263,20 @@ public class PaymentActionHelper {
     }
 
     @Transactional
-    public Paymentheader sendForApproval(Paymentheader paymentheader, WorkflowBean workflowBean) {
+    public Paymentheader transitionWorkflow(Paymentheader paymentheader, WorkflowBean workflowBean) {
 
-        if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction())
-                && paymentheader.getCurrentTask() == null)
+        paymentheader=(Paymentheader) baseWorkFlow.transitionWorkFlow(paymentheader, workflowBean);
+        switch(workflowBean.getWorkflowAction().toLowerCase())   
         {
-            paymentheader.getVoucherheader().setStatus(
-                    FinancialConstants.CREATEDVOUCHERSTATUS);
-        }
-        else
-        {
-           // paymentService.transitionWorkFlow(paymentheader, workflowBean);
-           // paymentService.applyAuditing(paymentheader.getCurrentTask());
+        case  WorkflowConstants.ACTION_APPROVE :
+            paymentheader.getVoucherheader().setStatus(FinancialConstants.CREATEDVOUCHERSTATUS);
+            break;
+        case  WorkflowConstants.ACTION_CANCEL :
+            paymentheader.getVoucherheader().setStatus(FinancialConstants.CANCELLEDVOUCHERSTATUS);
+            break; 
         }
         paymentService.persist(paymentheader);
+        System.out.println(paymentheader.getState_id());  
         return paymentheader;
     }
 

@@ -75,8 +75,6 @@ public class CVoucherHeader extends WorkflowEntity {
     @Id
     @GeneratedValue(generator = SEQ_VOUCHERHEADER, strategy = GenerationType.SEQUENCE)
     private Long id;
-    
-    private WorkflowEntity workflowEntity;
     private String name;
     private String type;
     private String description;

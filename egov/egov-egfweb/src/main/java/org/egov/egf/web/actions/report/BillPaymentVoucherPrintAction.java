@@ -61,6 +61,10 @@ import org.egov.infra.utils.DateUtils;
 import org.egov.infra.utils.NumberToWord;
 import org.egov.infra.web.struts.actions.BaseFormAction;
 import org.egov.infra.workflow.entity.StateHistory;
+import org.egov.infra.workflow.multitenant.model.Task;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.model.bills.Miscbilldetail;
 import org.egov.model.instrument.InstrumentHeader;
@@ -128,6 +132,8 @@ public class BillPaymentVoucherPrintAction extends BaseFormAction {
  private PersistenceService persistenceService;
  @Autowired
     private EgovCommon egovCommon;
+  @Autowired
+  private BaseWorkFlow baseWorkFlow;
 
     public Map<String, Object> getParamMap() {
         final Map<String, Object> paramMap = new HashMap<String, Object>();
@@ -136,8 +142,8 @@ public class BillPaymentVoucherPrintAction extends BaseFormAction {
         paramMap.put("bankName", bankName);
         paramMap.put("bankAccountNumber", bankAccountNumber);
 
-        if (paymentHeader != null && paymentHeader.getCurrentTask() != null)
-            //loadInboxHistoryData(paymentHeader.getStateHistory(), paramMap);
+        if (paymentHeader != null && paymentHeader.getWorkflowId() != null)
+            loadInboxHistoryData(baseWorkFlow.getWorkflowHistory(paymentHeader,new WorkflowBean()), paramMap);
 
         if (miscBillDetailList != null) {
             paramMap.put("partyName", getPartyName());
@@ -436,37 +442,34 @@ public class BillPaymentVoucherPrintAction extends BaseFormAction {
                 .getVoucherDate());
     }
 
-	void loadInboxHistoryData(final List<StateHistory> stateHistory,
-			final Map<String, Object> paramMap)
-			throws ApplicationRuntimeException {
-		final List<String> history = new ArrayList<String>();
-		final List<String> workFlowDate = new ArrayList<String>();
-		if (!stateHistory.isEmpty()) {
-			for (final StateHistory historyState : stateHistory)
-				
-				if (!"NEW".equalsIgnoreCase(historyState.getValue())) {
-					history.add(historyState.getSenderName());
-					workFlowDate.add(Constants.DDMMYYYYFORMAT2
-							.format(historyState.getLastModifiedDate()));
-					if (historyState.getValue().equalsIgnoreCase("Rejected"))
-					{
-						history.clear();
-						workFlowDate.clear();
-					}
-					
-				}
-			
-			//history.add(paymentHeader.getCurrentTask().getSenderName());
-			//workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(paymentHeader.getCurrentTask().getLastModifiedDate()));
-		} else {
-			//history.add(paymentHeader.getCurrentTask().getSenderName());
-			//workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(paymentHeader.getCurrentTask().getLastModifiedDate()));
-		}
-		for (int i = 0; i < history.size(); i++) {
-			paramMap.put("workFlow_" + i, history.get(i));
-			paramMap.put("workFlowDate_" + i, workFlowDate.get(i));
-		}
-	}
+    void loadInboxHistoryData(List<Task> taskHistory,
+            final Map<String, Object> paramMap)
+            throws ApplicationRuntimeException {
+    final List<String> history = new ArrayList<String>();
+    final List<String> workFlowDate = new ArrayList<String>();
+
+    if (taskHistory!=null) {
+            for (final Task task:taskHistory)
+            {
+                    if (!"NEW".equalsIgnoreCase(task.getStatus())) {
+                            history.add(task.getSender());
+                            workFlowDate.add(Constants.DDMMYYYYFORMAT2
+                                            .format(task.getCreatedDate()));
+                            if (task.getStatus().equalsIgnoreCase(WorkflowConstants.STATUS_REJECTED)) {
+                                    history.clear();
+                                    workFlowDate.clear();
+                            }
+                    }
+            }  
+             
+    } 
+
+    for (int i = 0; i < history.size(); i++) {
+            paramMap.put("workFlow_" + i, history.get(i));
+            paramMap.put("workFlowDate_" + i, workFlowDate.get(i));
+    }
+     
+}
 
 	String getVoucherDescription() {
 		return voucher == null || voucher.getDescription() == null ? ""

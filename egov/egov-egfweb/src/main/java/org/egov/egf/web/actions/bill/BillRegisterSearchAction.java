@@ -172,7 +172,7 @@ public class BillRegisterSearchAction extends BaseFormAction {
         query
         .append(
                 "select br.expendituretype , br.billtype ,br.billnumber , br.billdate , br.billamount , br.passedamount ,egwstatus.description,billmis.sourcePath,")
-                .append(" br.id ,br.status.id,egwstatus.description ,br.state.id,br.lastModifiedBy.id ")
+                .append(" br.id ,br.status.id,egwstatus.description ,br.workflowId,br.lastModifiedBy.id ")
                 .append(
                         " from EgBillregister br, EgBillregistermis billmis , EgwStatus egwstatus where   billmis.egBillregister.id = br.id and egwstatus.id = br.status.id  ")
                         .append(" and br.expendituretype=?").append(
@@ -241,8 +241,8 @@ public class BillRegisterSearchAction extends BaseFormAction {
     private List<Object[]> getOwnersForWorkFlowState(final List<Long> stateIds)
     {
         List<Object[]> ownerNamesList = new ArrayList<Object[]>();
-        final String ownerNamesQueryStr = "select a.employee.username,bill.state.id from Assignment a,State state, EgBillregister bill"
-                + " where  bill.state.id=state.id and a.position.id = state.ownerPosition.id and bill.state.id in (:IDS)";
+        final String ownerNamesQueryStr = "select a.employee.username,bill.state_id from Assignment a,State state, EgBillregister bill"
+                + " where  bill.state_id=state.id and a.position.id = state.ownerPosition.id and bill.state_id in (:IDS)";
         int size = stateIds.size();
         if (size > 999)
         {

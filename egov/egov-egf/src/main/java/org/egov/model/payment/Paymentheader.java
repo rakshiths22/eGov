@@ -54,10 +54,7 @@ import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
  */
 public class Paymentheader extends WorkflowEntity implements java.io.Serializable
 {
-
-    /**
-     *
-     */
+   
     private static final long serialVersionUID = 1300661952219397466L;
     private Long id;
     private CVoucherHeader voucherheader;

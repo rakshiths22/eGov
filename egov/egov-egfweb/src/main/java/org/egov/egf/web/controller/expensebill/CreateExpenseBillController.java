@@ -41,6 +41,7 @@ package org.egov.egf.web.controller.expensebill;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Locale;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -86,12 +87,12 @@ public class CreateExpenseBillController extends BaseBillController {
     private static final String APPROVAL_POSITION = "approvalPosition";
 
     private static final String APPROVAL_DESIGNATION = "approvalDesignation";
-    
+
     @Autowired
     private BaseWorkFlow baseWorkFlow;
-    
-  
-    
+
+
+
 
     public CreateExpenseBillController(final AppConfigValueService appConfigValuesService) {
         super(appConfigValuesService);
@@ -131,7 +132,7 @@ public class CreateExpenseBillController extends BaseBillController {
     @RequestMapping(value = "/create", method = RequestMethod.POST)
     public String create(@ModelAttribute("egBillregister") final EgBillregister egBillregister, final Model model,
             final BindingResult resultBinder, final HttpServletRequest request,final RedirectAttributes redirectAttrs)
-            throws IOException {
+                    throws IOException {
         WorkflowBean workflowBean = baseWorkFlow.populateWorkflowBean(request);  
         populateBillDetails(egBillregister);
         validateBillNumber(egBillregister, resultBinder);
@@ -139,51 +140,51 @@ public class CreateExpenseBillController extends BaseBillController {
 
         if (resultBinder.hasErrors()) {
             fillOnErrors(egBillregister, model, request,workflowBean);
-
             return EXPENSEBILL_FORM;
-        } else {
-           
-            EgBillregister savedEgBillregister;
+        }  
 
-            try {
-                
-                savedEgBillregister = expenseBillService.create(egBillregister,workflowBean);
-            } catch (final ValidationException e) {
-                fillOnErrors(egBillregister, model, request,workflowBean);
-                resultBinder.reject("", e.getErrors().get(0).getMessage());
-                return EXPENSEBILL_FORM;
-            }
+        EgBillregister savedEgBillregister;
+
+        try {
+            savedEgBillregister = expenseBillService.create(egBillregister,workflowBean);
             String msg=    generateMessage(egBillregister,workflowBean);
             redirectAttrs.addFlashAttribute(msg);
-             
-            return "redirect:/expensebill/success";
-
+        } catch (final ValidationException e) {
+            fillOnErrors(egBillregister, model, request,workflowBean);
+            resultBinder.reject("", e.getErrors().get(0).getMessage());
+            return EXPENSEBILL_FORM;
         }
+        return "redirect:/expensebill/success";
+
+
     }
 
     private String generateMessage(EgBillregister egBillregister, WorkflowBean workflowBean) {
-      /*  switch(workflowBean2.getWorkflowAction().toLowerCase())   
+        String message="";
+        switch(workflowBean.getWorkflowAction().toLowerCase())   
         {
         case  WorkflowConstants.ACTION_APPROVE :
-            message="Workflow Item "+type.getDisplayName()+"of "+workflowEntity.getStateDetails()+" approved Successfully";
+            message=messageSource.getMessage("msg.expense.bill.approved.success",
+                    new String[] {egBillregister.getBillnumber()},Locale.getDefault());
             break;
         case  WorkflowConstants.ACTION_REJECT :
-            message="Workflow Item "+type.getDisplayName()+"of "+workflowEntity.getStateDetails()+" Rejected Successfully"
-                    +" and sent back to creator";
+            message=messageSource.getMessage("msg.expense.bill.reject", new String[] {egBillregister.getBillnumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()},null);
             break;   
         case  WorkflowConstants.ACTION_FORWARD :
-            message="Workflow Item "+type.getDisplayName()+"of "+workflowEntity.getStateDetails()+" Forwarded Successfully"
-                    + " to "+workflowBean2.getApproverName();
+            message=messageSource.getMessage("msg.expense.bill.create.success",
+                    new String[] {egBillregister.getBillnumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()},null);
             break;    
         case  WorkflowConstants.ACTION_CANCEL :
-            message="Workflow Item "+type.getDisplayName()+"of "+workflowEntity.getStateDetails()+" Cancelled Successfully";
+            message=messageSource.getMessage("msg.expense.bill.cancel",
+                    new String[] {egBillregister.getBillnumber()},Locale.getDefault());
             break; 
         case  WorkflowConstants.ACTION_SAVE :
-            message="Workflow Item "+type.getDisplayName()+"of "+workflowEntity.getStateDetails()+" Saved Successfully";
+            message=messageSource.getMessage("msg.expense.bill.saved.success",
+                    new String[] {egBillregister.getBillnumber()},Locale.getDefault());
             break;   
-            
-        }*/
-       return "";
+
+        }
+        return message;
     }
 
     private void fillOnErrors(final EgBillregister egBillregister, final Model model,HttpServletRequest request, WorkflowBean workflowBean) {
@@ -200,20 +201,9 @@ public class CreateExpenseBillController extends BaseBillController {
     }
 
     @RequestMapping(value = "/success", method = RequestMethod.GET)
-    public String showSuccessPage(@RequestParam("billNumber") final String billNumber, final Model model,
+    public String showSuccessPage(final Model model,
             final HttpServletRequest request) {
-          final EgBillregister expenseBill = expenseBillService.getByBillnumber(billNumber);
-
-        final String message = getMessageByStatus(expenseBill);
-
-        model.addAttribute("message", message);
-
         return "expensebill-success";
-    }
-
-    private String getMessageByStatus(final EgBillregister expenseBill) {
-        String message = "Success"+expenseBill.getBillnumber();
-        return message;
     }
 
 }

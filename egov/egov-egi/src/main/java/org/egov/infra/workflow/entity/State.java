@@ -254,15 +254,15 @@ public class State extends AbstractAuditable {
         STARTED, INPROGRESS, ENDED
     }
 
-    public Task mapToTask() {
+    public Task map() {
        Task t=new Task();
        t.setBusinesskey(this.getType());
        t.setComments(this.comments);
        t.setCreatedDate(this.getCreatedDate());
        t.setId(this.getId().toString());
        t.setStatus(this.getValue());
-       t.setDescription(this.getNatureOfTask());
-       t.setDetails(this.getExtraInfo()==null?"hellow":this.getExtraInfo());
+       t.setNatureOfTask(this.natureOfTask);
+       t.setDetails(this.extraInfo==null?"hello":this.extraInfo);
        t.setSender(this.senderName);
        t.setUrl(this.getMyLinkId());  
        return t;

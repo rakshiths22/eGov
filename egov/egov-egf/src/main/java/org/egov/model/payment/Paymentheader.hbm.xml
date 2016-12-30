@@ -63,8 +63,11 @@
             <column name="concurrenceDate"  />
         </property>
         
-        <property name="workflowId">
+        <property name="state_id">
 			<column name="state_id" />
+		</property>	
+		<property name="workflowId">
+			<column name="processid" />
 		</property>	
         <many-to-one name="createdBy" class="org.egov.infra.admin.master.entity.User" column="CREATEDBY"/>
         <many-to-one name="lastModifiedBy" class="org.egov.infra.admin.master.entity.User" column="LASTMODIFIEDBY"/>

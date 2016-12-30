@@ -49,6 +49,7 @@ import org.apache.commons.lang.math.NumberUtils;
 import org.egov.infra.admin.master.entity.Department;
 import org.egov.infra.admin.master.service.DepartmentService;
 import org.egov.infra.workflow.multitenant.model.ProcessInstance;
+import org.egov.infra.workflow.multitenant.model.Task;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +60,7 @@ import org.springframework.ui.Model;
 @Component
 public  class BaseWorkFlow {
     
-    private WorkflowInterface workflowInterface;
+    
     
     @Autowired
     ApplicationContext applicationContext;
@@ -67,9 +68,9 @@ public  class BaseWorkFlow {
     @Autowired
     protected DepartmentService departmentService;
     
-    public WorkflowEntity transitionWorkFlow(final WorkflowEntity workflowEntity, final WorkflowBean workflowBean) {
+    public WorkflowEntity transitionWorkFlow(WorkflowEntity workflowEntity, WorkflowBean workflowBean) {
         
-        workflowInterface=getWorkflowImplementation(workflowEntity,workflowBean);
+        WorkflowInterface    workflowInterface=getWorkflowImplementation(workflowEntity,workflowBean);
         ProcessInstance pi=setUpProcessInstance(workflowBean,workflowEntity);
         if(pi.getId()==null)
           pi=  workflowInterface.start("", pi);
@@ -177,6 +178,11 @@ public  class BaseWorkFlow {
         
         return workflowBean;
         
+    }
+
+    public List<Task> getWorkflowHistory(WorkflowEntity entity,WorkflowBean workflowBean) {
+        WorkflowInterface workflowImplementation = getWorkflowImplementation(entity,workflowBean);
+        return workflowImplementation.getHistoryDetail(entity.getWorkflowId());
     }
 
 

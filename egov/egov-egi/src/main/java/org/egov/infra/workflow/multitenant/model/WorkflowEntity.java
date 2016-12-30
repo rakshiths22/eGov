@@ -56,21 +56,13 @@ public abstract class WorkflowEntity extends AbstractAuditable {
     @Column(name="processid")
     private String workflowId;
     
-    /**
-     * 
-     */
     @Column(name="state_id")
     private Long state_id;
         
     public Long getState_id() {
         return state_id;
     }
-   
-    @Transient
-    protected WorkflowBean workflowBean;
-
-
-    public void setState_id(Long state_id) {
+     public void setState_id(Long state_id) {
         this.state_id = state_id;
     }
 

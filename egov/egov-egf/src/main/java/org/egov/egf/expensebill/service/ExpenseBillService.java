@@ -39,9 +39,16 @@
  */
 package org.egov.egf.expensebill.service;
 
+import static org.egov.utils.FinancialConstants.BILLTYPE_FINAL_BILL;
+import static org.egov.utils.FinancialConstants.CONTINGENCYBILL_APPROVED_STATUS;
+import static org.egov.utils.FinancialConstants.CONTINGENCYBILL_CANCELLED_STATUS;
+import static org.egov.utils.FinancialConstants.CONTINGENCYBILL_FIN;
+import static org.egov.utils.FinancialConstants.STANDARD_EXPENDITURETYPE_CONTINGENT;
+
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -64,6 +71,7 @@ import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.infra.utils.autonumber.AutonumberServiceBeanResolver;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.infstr.models.EgChecklists;
 import org.egov.model.bills.EgBillregister;
@@ -78,6 +86,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -135,6 +144,10 @@ public class ExpenseBillService {
     @Autowired
     private BaseWorkFlow baseWorkFlow;
 
+    
+    @Autowired
+    @Qualifier("messageSource")
+    private MessageSource messageSource;
      
     @Autowired
     private FundService fundService;
@@ -163,53 +176,55 @@ public class ExpenseBillService {
     }
 
     @Transactional
-    public EgBillregister create(final EgBillregister egBillregister,WorkflowBean workflowBean) {
+    public EgBillregister create(EgBillregister bill,WorkflowBean workflowBean) {
 
-        egBillregister.setBilltype(FinancialConstants.BILLTYPE_FINAL_BILL);
-        egBillregister.setExpendituretype(FinancialConstants.STANDARD_EXPENDITURETYPE_CONTINGENT);
-        egBillregister.setPassedamount(egBillregister.getBillamount());
-        egBillregister.getEgBillregistermis().setEgBillregister(egBillregister);
-        egBillregister.getEgBillregistermis().setLastupdatedtime(new Date());
+        bill.setBilltype(BILLTYPE_FINAL_BILL);
+        bill.setExpendituretype(STANDARD_EXPENDITURETYPE_CONTINGENT);
+        bill.setPassedamount(bill.getBillamount());
+        bill.getEgBillregistermis().setEgBillregister(bill);
+        bill.getEgBillregistermis().setLastupdatedtime(new Date());
 
-        if (egBillregister.getEgBillregistermis().getFund() != null
-                && egBillregister.getEgBillregistermis().getFund().getId() != null)
-            egBillregister.getEgBillregistermis().setFund(
-                    fundService.findOne(egBillregister.getEgBillregistermis().getFund().getId()));
-        if (egBillregister.getEgBillregistermis().getEgBillSubType() != null
-                && egBillregister.getEgBillregistermis().getEgBillSubType().getId() != null)
-            egBillregister.getEgBillregistermis().setEgBillSubType(
-                    egBillSubTypeService.getById(egBillregister.getEgBillregistermis().getEgBillSubType().getId()));
-        if (egBillregister.getEgBillregistermis().getSchemeId() != null)
-            egBillregister.getEgBillregistermis().setScheme(
-                    schemeService.findById(egBillregister.getEgBillregistermis().getSchemeId().intValue(), false));
+        if (bill.getEgBillregistermis().getFund() != null
+                && bill.getEgBillregistermis().getFund().getId() != null)
+            bill.getEgBillregistermis().setFund(
+                    fundService.findOne(bill.getEgBillregistermis().getFund().getId()));
+        if (bill.getEgBillregistermis().getEgBillSubType() != null
+                && bill.getEgBillregistermis().getEgBillSubType().getId() != null)
+            bill.getEgBillregistermis().setEgBillSubType(
+                    egBillSubTypeService.getById(bill.getEgBillregistermis().getEgBillSubType().getId()));
+        if (bill.getEgBillregistermis().getSchemeId() != null)
+            bill.getEgBillregistermis().setScheme(
+                    schemeService.findById(bill.getEgBillregistermis().getSchemeId().intValue(), false));
         else
-            egBillregister.getEgBillregistermis().setScheme(null);
-        if (egBillregister.getEgBillregistermis().getSubSchemeId() != null)
-            egBillregister.getEgBillregistermis().setSubScheme(
-                    subSchemeService.findById(egBillregister.getEgBillregistermis().getSubSchemeId().intValue(), false));
+            bill.getEgBillregistermis().setScheme(null);
+        if (bill.getEgBillregistermis().getSubSchemeId() != null)
+            bill.getEgBillregistermis().setSubScheme(
+                    subSchemeService.findById(bill.getEgBillregistermis().getSubSchemeId().intValue(), false));
         else
-            egBillregister.getEgBillregistermis().setSubScheme(null);
+            bill.getEgBillregistermis().setSubScheme(null);
 
         if (isBillNumberGenerationAuto())
-            egBillregister.setBillnumber(getNextBillNumber(egBillregister));
+            bill.setBillnumber(getNextBillNumber(bill));
 
-        try {
-            checkBudgetAndGenerateBANumber(egBillregister);
-        } catch (final ValidationException e) {
-            throw new ValidationException(e.getErrors());
-        }
+        checkBudgetAndGenerateBANumber(bill);
+        bill= expenseBillRepository.save(bill);
+        createCheckList(bill, bill.getCheckLists());
+        transitionWorkflow(bill,workflowBean);
+        bill.getEgBillregistermis().setSourcePath("/EGF/expensebill/view/" + bill.getId().toString());
+        return expenseBillRepository.save(bill);
+    }
 
-        final List<EgChecklists> checkLists = egBillregister.getCheckLists();
-
-        final EgBillregister savedEgBillregister = expenseBillRepository.save(egBillregister);
-
-        createCheckList(savedEgBillregister, checkLists);
-        baseWorkFlow.transitionWorkFlow(savedEgBillregister, workflowBean);
-        
-        savedEgBillregister.getEgBillregistermis().setSourcePath(
-                "/EGF/expensebill/view/" + savedEgBillregister.getId().toString());
-
-        return expenseBillRepository.save(savedEgBillregister);
+    private void transitionWorkflow(EgBillregister savedEgBillregister, WorkflowBean workflowBean) {
+            baseWorkFlow.transitionWorkFlow(savedEgBillregister, workflowBean);
+            switch(workflowBean.getWorkflowAction().toLowerCase())   
+            {
+            case  WorkflowConstants.ACTION_APPROVE :
+                savedEgBillregister.setStatus(financialUtils.getStatusByModuleAndCode(CONTINGENCYBILL_FIN,CONTINGENCYBILL_APPROVED_STATUS));
+                break;
+            case  WorkflowConstants.ACTION_CANCEL :
+                savedEgBillregister.setStatus(financialUtils.getStatusByModuleAndCode(CONTINGENCYBILL_FIN,CONTINGENCYBILL_CANCELLED_STATUS));
+                break; 
+            }
     }
 
     @Transactional
@@ -238,7 +253,7 @@ public class ExpenseBillService {
     }
 
     @Transactional
-    public EgBillregister update(final EgBillregister egBillregister, final String mode) throws ValidationException, IOException {
+    public EgBillregister update(final EgBillregister egBillregister, final String mode,WorkflowBean workflowBean) throws ValidationException, IOException {
         EgBillregister updatedegBillregister = null;
         if ("edit".equals(mode)) {
             egBillregister.setPassedamount(egBillregister.getBillamount());
@@ -275,7 +290,8 @@ public class ExpenseBillService {
         }
         
             updatedegBillregister = expenseBillRepository.save(egBillregister);
-            baseWorkFlow.transitionWorkFlow(updatedegBillregister,null);
+            transitionWorkflow(updatedegBillregister,workflowBean);
+          
 
         return updatedegBillregister;
     }
@@ -344,4 +360,9 @@ public class ExpenseBillService {
         final EgBillregister bill = getByBillnumber(billnumber);
         return bill == null;
     }
+    
+    
+     
+    
+    
 }

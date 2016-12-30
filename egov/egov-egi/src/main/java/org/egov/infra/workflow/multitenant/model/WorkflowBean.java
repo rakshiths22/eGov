@@ -79,6 +79,7 @@ public class WorkflowBean implements Serializable {
     protected List<Designation> designationList;
     protected List<User> userList;
     protected Map<String,List<Object>> additionalAttributes;
+    private String approverDesignationName;
     
     //add attruibute List here to pass from processInstance
     
@@ -220,6 +221,12 @@ public class WorkflowBean implements Serializable {
     }
     public void setWorkflowId(String workflowId) {
         this.workflowId = workflowId;
+    }
+    public String getApproverDesignationName() {
+       return this.approverDesignationName;
+    }
+    public void setApproverDesignationName(String approverDesignationName) {
+        this.approverDesignationName = approverDesignationName;
     }
 
 }

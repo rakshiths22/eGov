@@ -55,6 +55,7 @@ import org.egov.infra.exception.ApplicationException;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.infstr.models.EgChecklists;
 import org.egov.model.bills.EgBilldetails;
 import org.egov.model.bills.EgBillregister;
@@ -96,6 +97,9 @@ public class UpdateExpenseBillController extends BaseBillController {
 
     @Autowired
     private FinancialUtils financialUtils;
+    
+    @Autowired
+    private BaseWorkFlow baseWorkFlow;
 
     @Autowired
     private CheckListService checkListService;
@@ -203,8 +207,8 @@ public class UpdateExpenseBillController extends BaseBillController {
             }
         } else {
             try {
-                
-                    updatedEgBillregister = expenseBillService.update(egBillregister, mode);
+                  WorkflowBean workflowBean = baseWorkFlow.populateWorkflowBean(request);
+                   updatedEgBillregister = expenseBillService.update(egBillregister, mode,workflowBean);
             } catch (final ValidationException e) {
                 setDropDownValues(model);
                 model.addAttribute("stateType", egBillregister.getClass().getSimpleName());

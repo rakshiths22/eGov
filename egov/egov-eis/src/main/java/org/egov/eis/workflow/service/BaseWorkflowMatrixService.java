@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.egov.eis.service.AssignmentService;
@@ -23,6 +24,7 @@ import org.egov.infra.workflow.multitenant.model.Attribute;
 import org.egov.infra.workflow.multitenant.model.ProcessInstance;
 import org.egov.infra.workflow.multitenant.model.Task;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infra.workflow.multitenant.service.WorkflowInterface;
 import org.egov.infra.workflow.service.StateHistoryService;
@@ -109,7 +111,7 @@ public class BaseWorkflowMatrixService implements WorkflowInterface {
                 null, null, task.getStatus(), null);
 
 
-        if(task.getAction().equals("reject"))
+        if(task.getAction().equalsIgnoreCase(WorkflowConstants.ACTION_REJECT))
         {
             User createdBy = entity.getCreatedBy(); 
             owner=positionMasterService.getPositionByUserId(createdBy.getId());
@@ -117,6 +119,8 @@ public class BaseWorkflowMatrixService implements WorkflowInterface {
 
         State state=   stateService.getStateById(Long.valueOf(task.getId()));
         state.addStateHistory(new StateHistory(state));
+        
+        
         if(wfMatrix.getNextAction().equalsIgnoreCase("END"))
             state.setStatus(State.StateStatus.ENDED);
         else
@@ -129,9 +133,9 @@ public class BaseWorkflowMatrixService implements WorkflowInterface {
         state.setNextAction(wfMatrix.getNextAction());
         state.setType(task.getBusinessKey());
         state.setExtraInfo(entity.getStateDetails());
-        WorkflowTypes type = workflowTypeService.getWorkflowTypeByType(state.getType());
-        state.setMyLinkId(type.getLink().replace(":ID",entity.myLinkId() ));
-        state.setNatureOfTask(type.getDisplayName());
+     //   WorkflowTypes type = workflowTypeService.getWorkflowTypeByType(state.getType());
+       // state.setMyLinkId(type.getLink().replace(":ID",entity.myLinkId() ));
+       // state.setNatureOfTask(type.getDisplayName());
         stateService.create(state);
         if(state.getId()!=null)
             task.setId(state.getId().toString());
@@ -256,20 +260,30 @@ public class BaseWorkflowMatrixService implements WorkflowInterface {
         List<Long> ownerIds=this.eisService.getPositionsForUser(userId, new Date()).parallelStream()
                 .map(position -> position.getId()).collect(Collectors.toList());
         List<State> states = stateService.getStates(ownerIds,types,userId);  
-        WorkflowTypes type=null;
         for(State s:states)
         {  
-            t= s.mapToTask();
-            if(t.getNatureOfTask()==null ||t.getNatureOfTask().isEmpty())
-            {
-                type = workflowTypeService.getWorkflowTypeByType(s.getType());
-                t.setNatureOfTask(type.getDisplayName());
-            }
+            t= s.map();
             tasks.add(t);
         }
         return tasks;
 
 
+    }
+
+    @Override
+    public List<Task> getHistoryDetail(String workflowId) {
+        List<Task> tasks=new ArrayList<Task>();
+        Task t=null;
+        State state  = stateService.getStateById(Long.valueOf(workflowId));
+        Set<StateHistory> history = state.getHistory();
+        for(StateHistory stateHistory:history)
+        {  
+            t= stateHistory.map();
+            tasks.add(t);
+        }
+        t=state.map();
+        tasks.add(t);
+        return tasks;
     }
 
 

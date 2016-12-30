@@ -59,7 +59,7 @@ public abstract class BaseWorkFlowAction extends BaseFormAction {
 
     private static final long serialVersionUID = 5111571178164448793L;
 
-    protected WorkflowBean workflowBean;
+    protected WorkflowBean workflowBean=new WorkflowBean();
     @Autowired
     protected DepartmentService departmentService;
 
