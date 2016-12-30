@@ -40,6 +40,8 @@
 
 package org.egov.pgr.rest.web.controller.citizen;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.egov.infra.admin.common.service.IdentityRecoveryService;
@@ -50,7 +52,6 @@ import org.egov.infra.admin.master.service.UserService;
 import org.egov.infra.utils.FileStoreUtils;
 import org.egov.pgr.rest.web.controller.core.PgrRestController;
 import org.egov.pgr.rest.web.controller.core.PgrRestResponse;
-import org.egov.pgr.rest.web.model.RequestInfo;
 import org.egov.pgr.rest.web.model.ResponseInfo;
 import org.egov.pgr.rest.web.model.UserRequest;
 import org.egov.pgr.rest.web.model.UserResponse;
@@ -59,6 +60,7 @@ import org.egov.portal.service.CitizenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -67,6 +69,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/rest")
 public class CitizenController extends PgrRestController {
 
     private static final Logger LOGGER = Logger.getLogger(CitizenController.class);
@@ -90,10 +93,9 @@ public class CitizenController extends PgrRestController {
     private IdentityRecoveryService identityRecoveryService;
 
     @RequestMapping(value = "/logout", method = RequestMethod.POST)
-    public ResponseEntity<String> logout(@RequestParam(value = "tenant_id", required = true) final String tenant_id,
-            @RequestBody final RequestInfo request) {
+    public ResponseEntity<String> logout(final HttpServletRequest request, final OAuth2Authentication authentication) {
         try {
-            final OAuth2AccessToken token = null;// tokenStore.getAccessToken(authentication);
+            final OAuth2AccessToken token = tokenStore.getAccessToken(authentication);
             if (token == null)
                 return PgrRestResponse.newInstance().error(getMessage("msg.logout.unknown"));
 

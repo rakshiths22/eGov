@@ -66,7 +66,7 @@
 
 	<!-- This is where we tells spring security what URL should be protected 
 		and what roles have access to them -->
-	<http pattern="/rest/**" create-session="never" use-expressions="true"
+	<http pattern="/v1/**" create-session="never" use-expressions="true"
           entry-point-ref="oauthAuthenticationEntryPoint" authentication-manager-ref="authenticationManager"
           access-decision-manager-ref="accessDecisionManager"
           xmlns="http://www.springframework.org/schema/security">
@@ -75,8 +75,7 @@
 		<!-- <intercept-url pattern="/api/test/**" access="isAuthenticated()" /> -->
 		<!-- <intercept-url pattern="/rest/test/**" access="isAuthenticated()"/> -->
 		
-		<intercept-url pattern="/rest/complaint/**" access="hasAnyRole('ROLE_CITIZEN','ROLE_EMPLOYEE')" />
-		<intercept-url pattern="/rest/citizen/**" access="hasAnyRole('ROLE_CITIZEN','ROLE_EMPLOYEE')" />
+		<intercept-url pattern="/v1/**" access="hasAnyRole('ROLE_CITIZEN','ROLE_EMPLOYEE')" />
 		<!-- <intercept-url pattern="/rest/employee/**" access="hasAnyRole('ROLE_EMPLOYEE')" />
 		<intercept-url pattern="/rest/admin/**" access="hasRole('ROLE_ADMIN')" /> -->
 		<custom-filter ref="resourceServerFilter" before="PRE_AUTH_FILTER" />

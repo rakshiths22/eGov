@@ -45,7 +45,7 @@
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-	<!-- <import resource="applicationSecurityContext-pgrrest.xml"/> -->
+	<import resource="applicationSecurityContext-pgrrest.xml"/>
 
 	<import resource="classpath*:config/spring/applicationContext-infra-services.xml"/>
 	<import resource="classpath*:config/spring/applicationContext-eis-services.xml"/>
