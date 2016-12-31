@@ -27,4 +27,6 @@
 
 	<mvc:default-servlet-handler />
  
+ <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerExceptionResolver" />
+ 
 </beans>

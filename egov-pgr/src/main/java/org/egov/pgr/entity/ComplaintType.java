@@ -57,6 +57,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 
 import static org.egov.pgr.entity.ComplaintType.SEQ_COMPLAINTTYPE;
@@ -111,6 +112,7 @@ public class ComplaintType extends AbstractAuditable {
 	@Length(max = 100)
 	private String keywords;
 
+	@Transient
 	private String attributes;
 
 	@Override

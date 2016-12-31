@@ -44,9 +44,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.egov.infra.admin.master.service.CityService;
-import org.egov.infra.admin.master.service.UserService;
+import org.egov.infra.config.security.authentication.SecureUser;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -59,15 +58,12 @@ public class CustomTokenEnhancer extends TokenEnhancerChain {
     @Autowired
     private CityService cityService;
 
-    @Autowired
-    private UserService userService;
-
     @Override
     public OAuth2AccessToken enhance(final OAuth2AccessToken accessToken, final OAuth2Authentication authentication) {
         final DefaultOAuth2AccessToken token = (DefaultOAuth2AccessToken) accessToken;
-        final User su = (User) authentication.getUserAuthentication()
+
+        SecureUser su = (SecureUser) authentication.getUserAuthentication()
                 .getPrincipal();
-        org.egov.infra.admin.master.entity.User user = userService.getUserByUsername(su.getUsername());
         final Map<String, Object> info = new LinkedHashMap<String, Object>();
         final Map<String, Object> responseInfo = new LinkedHashMap<String, Object>();
         final Map<String, Object> userInfo = new LinkedHashMap<String, Object>();
@@ -79,18 +75,19 @@ public class CustomTokenEnhancer extends TokenEnhancerChain {
         responseInfo.put("msg_id", "");
         responseInfo.put("status", "Access Token generated successfully");
 
-        userInfo.put("Id", user.getId());
-        userInfo.put("username", user.getUsername());
-        userInfo.put("mobileNumber", user.getMobileNumber());
-        userInfo.put("emailId", user.getEmailId());
-        userInfo.put("userType", user.getType());
-        
+        userInfo.put("id", su.getUser().getId());
+        userInfo.put("name", su.getUser().getName());
+        userInfo.put("username", su.getUser().getUsername());
+        userInfo.put("mobile_no", su.getUser().getMobileNumber());
+        userInfo.put("email", su.getUser().getEmailId());
+        userInfo.put("type", su.getUser().getType());
+
         info.put("ResponseInfo", responseInfo);
         info.put("User", userInfo);
-        
+
         info.put("cityLat", cityService.cityDataForKey("citylat") == null ? 0 : cityService.cityDataForKey("citylat"));
         info.put("cityLng", cityService.cityDataForKey("citylng") == null ? 0 : cityService.cityDataForKey("citylng"));
-        
+
         token.setAdditionalInformation(info);
 
         return super.enhance(token, authentication);
