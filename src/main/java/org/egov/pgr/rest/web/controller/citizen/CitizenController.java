@@ -124,8 +124,7 @@ public class CitizenController extends PgrRestController {
     }
 
     @RequestMapping(value = "/users", method = RequestMethod.POST)
-    public UserResponse registerCitizen(@RequestParam(value = "tenant_id", required = true) final String tenant_id,
-            @RequestBody final UserRequest request) throws Exception {
+    public UserResponse registerCitizen(@RequestBody final UserRequest request) throws Exception {
         final UserResponse response = new UserResponse();
         try {
             final Citizen citizenCreate = new Citizen();
@@ -185,8 +184,7 @@ public class CitizenController extends PgrRestController {
     }
 
     @RequestMapping(value = "/users", method = RequestMethod.PUT)
-    public UserResponse updatePassword(@RequestParam(value = "tenant_id", required = true) final String tenant_id,
-            @RequestBody final UserRequest request) throws Exception {
+    public UserResponse updatePassword(@RequestBody final UserRequest request) throws Exception {
         final UserResponse response = new UserResponse();
 
         try {

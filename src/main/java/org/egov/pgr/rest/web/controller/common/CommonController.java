@@ -101,8 +101,7 @@ public class CommonController extends PgrRestController {
     private String msg = null;
 
     @RequestMapping(value = "/otp", method = RequestMethod.POST)
-    public ResponseInfo otp(@RequestParam(value = "tenant_id", required = true) final String tenant_id,
-            @RequestBody UserRequest request) throws Exception {
+    public ResponseInfo otp(@RequestBody UserRequest request) throws Exception {
         try {
             resInfo = new ResponseInfo(request.getRequestInfo().getApiId(), request.getRequestInfo().getVer(),
                     new DateTime().toString(), "uief87324", request.getRequestInfo().getMsgId(), "true");
@@ -124,8 +123,7 @@ public class CommonController extends PgrRestController {
     }
 
     @RequestMapping(value = "/recover_password/otp", method = RequestMethod.POST)
-    public UserResponse passwordRecoverOTP(@RequestParam(value = "tenant_id", required = true) final String tenant_id,
-            @RequestBody UserRequest request) throws Exception {
+    public UserResponse passwordRecoverOTP(@RequestBody UserRequest request) throws Exception {
         UserResponse response = new UserResponse();
 
         resInfo = new ResponseInfo(request.getRequestInfo().getApiId(), request.getRequestInfo().getVer(),

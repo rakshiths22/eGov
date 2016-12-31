@@ -123,7 +123,7 @@ public class ServiceRequestController {
     @RequestMapping(value = "/requests/{service_request_id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     public ServiceRequestRes updateServiceRequest(
             @PathVariable String service_request_id,
-            @RequestParam String jurisdictionId,
+            @RequestParam String jurisdiction_id,
             @RequestBody ServiceRequestReq request) throws Exception {
         try {
             RequestInfo requestInfo = request.getRequestInfo();
@@ -132,8 +132,10 @@ public class ServiceRequestController {
             if (request.validate()) {
                 ServiceRequest serviceRequest = request.getServiceRequest();
                 Complaint complaint = complaintService.getComplaintByCRN(service_request_id);
+                Date escalationDate = complaint.getEscalationDate();
                 if (Objects.nonNull(complaint)) {
                     BeanUtils.copyProperties(serviceRequest, complaint);
+                    complaint.setEscalationDate(escalationDate);
                     User user = userService.getUserByUsername(requestInfo.getRequesterId());
                     complaint.getComplainant().setUserDetail(user);
                     complaint.getComplainant().setName(user.getName());
@@ -188,7 +190,7 @@ public class ServiceRequestController {
             throws Exception {
         try {
             List<Complaint> complaintsList = complaintService.getBySearchInputs(
-                    service_code, status, service_request_id, start_date,creater_id);
+                    service_code, status, service_request_id, start_date, creater_id);
             ServiceRequestRes serviceRequestResponse = new ServiceRequestRes();
             ResponseInfo responseInfo = new ResponseInfo(api_id, ver, new DateTime().toString(), "7gduf46t3erhg", "", "true");
             serviceRequestResponse.setResposneInfo(responseInfo);
@@ -202,9 +204,11 @@ public class ServiceRequestController {
                 serviceRequest.setStatusDetails(ComplaintStatus.valueOf(complaint.getStatus().getName()));
                 serviceRequest.setComplaintTypeName(complaint.getComplaintType().getName());
                 serviceRequest.setComplaintTypeCode(complaint.getComplaintType().getCode());
+                serviceRequest.setComplaintTypeId(complaint.getComplaintType().getId().toString());
                 serviceRequest.setFirstName(complaint.getComplainant().getName());
                 serviceRequest.setPhone(complaint.getComplainant().getMobile());
                 serviceRequest.setEmail(complaint.getComplainant().getEmail());
+                serviceRequest.setCrossHierarchyId(complaint.getLocation().getId().toString());
                 serviceRequestResponse.getServiceRequests().add(serviceRequest);
             }
             return serviceRequestResponse;
