@@ -51,17 +51,21 @@ import org.egov.infra.admin.master.repository.DeviceRepository;
 import org.egov.infra.admin.master.service.UserService;
 import org.egov.infra.utils.FileStoreUtils;
 import org.egov.pgr.rest.web.controller.core.PgrRestController;
-import org.egov.pgr.rest.web.controller.core.PgrRestResponse;
+import org.egov.pgr.rest.web.model.Error;
+import org.egov.pgr.rest.web.model.ErrorRes;
 import org.egov.pgr.rest.web.model.ResponseInfo;
 import org.egov.pgr.rest.web.model.UserRequest;
 import org.egov.pgr.rest.web.model.UserResponse;
 import org.egov.portal.entity.Citizen;
 import org.egov.portal.service.CitizenService;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -69,7 +73,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/rest")
 public class CitizenController extends PgrRestController {
 
     private static final Logger LOGGER = Logger.getLogger(CitizenController.class);
@@ -92,24 +95,37 @@ public class CitizenController extends PgrRestController {
     @Autowired
     private IdentityRecoveryService identityRecoveryService;
 
-    @RequestMapping(value = "/logout", method = RequestMethod.POST)
-    public ResponseEntity<String> logout(final HttpServletRequest request, final OAuth2Authentication authentication) {
+    private ResponseInfo resInfo = null;
+
+    private String msg = null;
+
+    @RequestMapping(value = "/v1/logout", method = RequestMethod.POST)
+    public ResponseInfo logout(final HttpServletRequest request, final OAuth2Authentication authentication) throws Exception {
         try {
             final OAuth2AccessToken token = tokenStore.getAccessToken(authentication);
-            if (token == null)
-                return PgrRestResponse.newInstance().error(getMessage("msg.logout.unknown"));
+            resInfo = new ResponseInfo("", "",
+                    new DateTime().toString(), "uief87324", "", "");
+            if (token == null) {
+                msg = getMessage("msg.logout.unknown");
+                throw new Exception("error");
+            }
 
             tokenStore.removeAccessToken(token);
-            return PgrRestResponse.newInstance().success("", getMessage("msg.logout.success"));
+
+            resInfo = new ResponseInfo("", "",
+                    new DateTime().toString(), "uief87324", "", getMessage("msg.logout.success"));
+
+            return resInfo;
         } catch (final Exception ex) {
             LOGGER.error("EGOV-PGRREST ERROR ", ex);
-            return PgrRestResponse.newInstance().error(getMessage("server.error"));
+            msg = getMessage("server.error");
+            throw new Exception("error");
         }
     }
 
     @RequestMapping(value = "/users", method = RequestMethod.POST)
     public UserResponse registerCitizen(@RequestParam(value = "tenant_id", required = true) final String tenant_id,
-            @RequestBody final UserRequest request) {
+            @RequestBody final UserRequest request) throws Exception {
         final UserResponse response = new UserResponse();
         try {
             final Citizen citizenCreate = new Citizen();
@@ -128,19 +144,20 @@ public class CitizenController extends PgrRestController {
                 device.setType(request.getUser().getDeviceType());
                 device.setOSVersion(request.getUser().getOsVersion());
             }
-
+            resInfo = new ResponseInfo(request.getRequestInfo().getApiId(), request.getRequestInfo().getVer(),
+                    new DateTime().toString(), "uief87324", request.getRequestInfo().getMsgId(), "true");
             final User user = userservice.getUserByUsername(citizenCreate.getMobileNumber());
 
             if (user != null) {
-                response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("user.register.duplicate.mobileno")));
-                return response;
+                msg = getMessage("user.register.duplicate.mobileno");
+                throw new Exception("error");
             }
 
             if (citizenCreate.getEmailId() != null && !citizenCreate.getEmailId().isEmpty()) {
                 final User getUser = userservice.getUserByEmailId(citizenCreate.getEmailId());
                 if (getUser != null) {
-                    response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("user.register.duplicate.email")));
-                    return response;
+                    msg = getMessage("user.register.duplicate.email");
+                    throw new Exception("error");
                 }
             }
 
@@ -149,34 +166,37 @@ public class CitizenController extends PgrRestController {
                 citizenCreate.setActive(true);
                 citizenCreate.getDevices().add(device);
                 citizenService.create(citizenCreate);
-                response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.citizen.reg.success")));
+                resInfo.setStatus(getMessage("msg.citizen.reg.success"));
+                response.setResponseInfo(resInfo);
                 response.setUser(request.getUser());
                 response.getUser().setUserName(request.getUser().getMobileNo());
                 return response;
             } else {
-                response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.pwd.otp.invalid")));
-                return response;
+                msg = getMessage("msg.pwd.otp.invalid");
+                throw new Exception("error");
             }
 
         } catch (final Exception e) {
             LOGGER.error("EGOV-PGRREST ERROR ", e);
-            response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("server.error")));
-            return response;
+            if (msg == null || msg.isEmpty())
+                msg = getMessage("server.error");
+            throw e;
         }
     }
 
     @RequestMapping(value = "/users", method = RequestMethod.PUT)
     public UserResponse updatePassword(@RequestParam(value = "tenant_id", required = true) final String tenant_id,
-            @RequestBody final UserRequest request) {
+            @RequestBody final UserRequest request) throws Exception {
         final UserResponse response = new UserResponse();
 
         try {
             final String token = request.getRequestInfo().getAuthToken();
             String newPassword, confirmPassword;
-
+            resInfo = new ResponseInfo(request.getRequestInfo().getApiId(), request.getRequestInfo().getVer(),
+                    new DateTime().toString(), "uief87324", request.getRequestInfo().getMsgId(), "true");
             if (StringUtils.isEmpty(request.getUser().getMobileNo())) {
-                response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.invalid.request")));
-                return response;
+                msg = getMessage("msg.invalid.request");
+                throw new Exception("error");
             }
 
             // for reset password with otp
@@ -185,28 +205,41 @@ public class CitizenController extends PgrRestController {
                 confirmPassword = request.getUser().getConfirmPassword();
 
                 if (StringUtils.isEmpty(newPassword)) {
-                    response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.invalid.request")));
-                    return response;
+                    msg = getMessage("msg.invalid.request");
+                    throw new Exception("error");
                 } else if (!newPassword.equals(confirmPassword)) {
-                    response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.pwd.not.match")));
-                    return response;
+                    msg = getMessage("msg.pwd.not.match");
+                    throw new Exception("error");
                 } else if (identityRecoveryService.validateAndResetPassword(token, newPassword)) {
-                    response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.pwd.reset.success")));
+                    resInfo.setStatus(getMessage("msg.pwd.reset.success"));
+                    response.setResponseInfo(resInfo);
                     return response;
                 } else {
-                    response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.pwd.otp.invalid")));
-                    return response;
+                    msg = getMessage("msg.pwd.otp.invalid");
+                    throw new Exception("error");
                 }
 
             } else {
-                response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.invalid.request")));
-                return response;
+                msg = getMessage("msg.invalid.request");
+                throw new Exception("error");
             }
 
         } catch (final Exception e) {
             LOGGER.error("EGOV-PGRREST ERROR ", e);
-            response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("server.error")));
-            return response;
+            if (msg == null || msg.isEmpty())
+                msg = getMessage("server.error");
+            throw e;
         }
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorRes> handleError(Exception ex) {
+        ErrorRes response = new ErrorRes();
+        response.setResposneInfo(resInfo);
+        Error error = new Error();
+        error.setCode(400);
+        error.setDescription(msg);
+        response.setError(error);
+        return new ResponseEntity<ErrorRes>(response, HttpStatus.BAD_REQUEST);
     }
 }

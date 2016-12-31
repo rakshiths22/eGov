@@ -56,14 +56,20 @@ import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.utils.FileStoreUtils;
 import org.egov.pgr.rest.web.adapter.DepartmentAdaptor;
 import org.egov.pgr.rest.web.controller.core.PgrRestController;
+import org.egov.pgr.rest.web.model.Error;
+import org.egov.pgr.rest.web.model.ErrorRes;
 import org.egov.pgr.rest.web.model.ResponseInfo;
 import org.egov.pgr.rest.web.model.UserRequest;
 import org.egov.pgr.rest.web.model.UserResponse;
 import org.egov.pgr.utils.constants.PGRConstants;
 import org.egov.portal.entity.Citizen;
 import org.egov.portal.service.CitizenService;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -90,51 +96,60 @@ public class CommonController extends PgrRestController {
     @Autowired
     private IdentityRecoveryService identityRecoveryService;
 
+    private ResponseInfo resInfo = null;
+
+    private String msg = null;
+
     @RequestMapping(value = "/otp", method = RequestMethod.POST)
     public ResponseInfo otp(@RequestParam(value = "tenant_id", required = true) final String tenant_id,
-            @RequestBody UserRequest request) {
-        ResponseInfo response;
+            @RequestBody UserRequest request) throws Exception {
         try {
-
+            resInfo = new ResponseInfo(request.getRequestInfo().getApiId(), request.getRequestInfo().getVer(),
+                    new DateTime().toString(), "uief87324", request.getRequestInfo().getMsgId(), "true");
             if (!request.getUser().getMobileNo().matches("\\d{10}")) {
-                response = new ResponseInfo("", "", "", "", "", getMessage("msg.invalid.mobileno"));
+                msg = getMessage("msg.invalid.mobileno");
+                throw new Exception("error");
 
-                return response;
             }
 
             citizenService.sendOTPMessage(request.getUser().getMobileNo());
-            response = new ResponseInfo("", "", "", "", "", getMessage("sendOTP.success"));
-            return response;
+            resInfo.setStatus("sendOTP.success");
+            return resInfo;
         } catch (final Exception e) {
             LOGGER.error("EGOV-PGRREST ERROR ", e);
-            response = new ResponseInfo("", "", "", "", "", getMessage("server.error"));
-            return response;
+            if (msg == null || msg.isEmpty())
+                msg = getMessage("server.error");
+            throw e;
         }
     }
 
     @RequestMapping(value = "/recover_password/otp", method = RequestMethod.POST)
     public UserResponse passwordRecoverOTP(@RequestParam(value = "tenant_id", required = true) final String tenant_id,
-            @RequestBody UserRequest request) {
+            @RequestBody UserRequest request) throws Exception {
         UserResponse response = new UserResponse();
+
+        resInfo = new ResponseInfo(request.getRequestInfo().getApiId(), request.getRequestInfo().getVer(),
+                new DateTime().toString(), "uief87324", request.getRequestInfo().getMsgId(), "true");
+
         try {
             final String identity = request.getUser().getMobileNo();
             final String redirectURL = "";
 
             if (identity.matches("\\d+")) {
                 if (!identity.matches("\\d{10}")) {
-                    response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.invalid.mobileno")));
-                    return response;
+                    msg = getMessage("msg.invalid.mobileno");
+                    throw new Exception("error");
                 }
             } else if (!identity.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-                response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("msg.invalid.mail")));
-                return response;
+                msg = getMessage("msg.invalid.mail");
+                throw new Exception("error");
             }
 
             final Citizen citizen = citizenService.getCitizenByUserName(identity);
 
             if (citizen == null) {
-                response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("user.not.found")));
-                return response;
+                msg = getMessage("user.not.found");
+                throw new Exception("error");
             }
 
             if (identityRecoveryService.generateAndSendUserPasswordRecovery(
@@ -145,12 +160,14 @@ public class CommonController extends PgrRestController {
                 response.setUser(request.getUser());
                 return response;
             }
-            response.setResponseInfo(new ResponseInfo("", "", "", "", "", "Password send failed"));
+            resInfo.setStatus("Password send failed");
+            response.setResponseInfo(resInfo);
             return response;
         } catch (final Exception e) {
             LOGGER.error("EGOV-PGRREST ERROR ", e);
-            response.setResponseInfo(new ResponseInfo("", "", "", "", "", getMessage("server.error")));
-            return response;
+            if (msg == null || msg.isEmpty())
+                msg = getMessage("server.error");
+            throw e;
         }
 
     }
@@ -177,6 +194,17 @@ public class CommonController extends PgrRestController {
         } catch (InstantiationException | IllegalAccessException e) {
             throw new ApplicationRuntimeException("Could not convert object list to json string", e);
         }
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorRes> handleError(Exception ex) {
+        ErrorRes response = new ErrorRes();
+        response.setResposneInfo(resInfo);
+        Error error = new Error();
+        error.setCode(400);
+        error.setDescription(msg);
+        response.setError(error);
+        return new ResponseEntity<ErrorRes>(response, HttpStatus.BAD_REQUEST);
     }
 
 }

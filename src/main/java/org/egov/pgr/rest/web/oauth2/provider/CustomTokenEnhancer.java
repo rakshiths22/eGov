@@ -84,11 +84,13 @@ public class CustomTokenEnhancer extends TokenEnhancerChain {
         userInfo.put("mobileNumber", user.getMobileNumber());
         userInfo.put("emailId", user.getEmailId());
         userInfo.put("userType", user.getType());
-        userInfo.put("cityLat", cityService.cityDataForKey("citylat") == null ? 0 : cityService.cityDataForKey("citylat"));
-        userInfo.put("cityLng", cityService.cityDataForKey("citylng") == null ? 0 : cityService.cityDataForKey("citylng"));
         
         info.put("ResponseInfo", responseInfo);
         info.put("User", userInfo);
+        
+        info.put("cityLat", cityService.cityDataForKey("citylat") == null ? 0 : cityService.cityDataForKey("citylat"));
+        info.put("cityLng", cityService.cityDataForKey("citylng") == null ? 0 : cityService.cityDataForKey("citylng"));
+        
         token.setAdditionalInformation(info);
 
         return super.enhance(token, authentication);

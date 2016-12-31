@@ -51,12 +51,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 
 public abstract class PgrRestController {
 
@@ -80,23 +74,4 @@ public abstract class PgrRestController {
         return PgrRestResponse.newInstance();
     }
 
-    @ExceptionHandler({ HttpMessageNotReadableException.class })
-    public ResponseEntity<String> apiExceptionHandler(HttpMessageNotReadableException ex) {
-        return getResponseHandler().error(ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler({ MissingServletRequestParameterException.class })
-    public ResponseEntity<String> apiExceptionHandler(MissingServletRequestParameterException ex) {
-        return getResponseHandler().error(ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler({ Exception.class })
-    public ResponseEntity<String> apiExceptionHandler(Exception ex) {
-        return getResponseHandler().error(ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler({ MethodArgumentNotValidException.class })
-    public ResponseEntity<String> apiExceptionHandler(MethodArgumentNotValidException ex) {
-        return getResponseHandler().error(ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
 }
