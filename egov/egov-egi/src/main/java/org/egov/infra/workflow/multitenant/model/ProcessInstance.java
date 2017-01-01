@@ -19,6 +19,7 @@ public class ProcessInstance {
     private String status = null;
     
     private String action=null;
+   
     private String businessKey = null;
 
     private String assignee = null;

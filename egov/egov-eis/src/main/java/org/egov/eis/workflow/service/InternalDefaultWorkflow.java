@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 import org.egov.eis.service.AssignmentService;
 import org.egov.eis.service.PositionMasterService;
 import org.egov.infra.admin.master.entity.Department;
-import org.egov.infra.admin.master.entity.User;
 import org.egov.infra.admin.master.service.DepartmentService;
 import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.infra.workflow.entity.State;
@@ -32,14 +31,17 @@ import org.egov.infra.workflow.service.StateService;
 import org.egov.infra.workflow.service.WorkflowTypeService;
 import org.egov.infstr.services.EISServeable;
 import org.egov.pims.commons.Position;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class BaseWorkflowMatrixService implements WorkflowInterface {
+public class InternalDefaultWorkflow implements WorkflowInterface {
 
+    private static Logger LOG=LoggerFactory.getLogger(InternalDefaultWorkflow.class);
     @Autowired
     @Qualifier("assignmentService")
     private AssignmentService assignmentService;
@@ -87,6 +89,7 @@ public class BaseWorkflowMatrixService implements WorkflowInterface {
         state.setOwnerPosition(owner);
         state.setNextAction(wfMatrix.getNextAction());
         state.setType(processInstance.getBusinessKey());
+        state.setInitiatorPosition(getInitiator());
         WorkflowTypes type = workflowTypeService.getWorkflowTypeByType(state.getType());
         state.setMyLinkId(type.getLink().replace(":ID",entity.myLinkId() ));
         state.setNatureOfTask(type.getDisplayName());
@@ -97,9 +100,28 @@ public class BaseWorkflowMatrixService implements WorkflowInterface {
         return processInstance;
     }
 
+    private Position getInitiator() {
+        Position position=null;
+        try{
+            position= assignmentService.getPrimaryAssignmentForUser(securityUtils.getCurrentUser().getId()).getPosition();
+        }catch(Exception e)
+        {
+            LOG.error("Error while setting initiator position");
+        }
+        return position;
+    }
+    
     @Transactional
     @Override
-    public ProcessInstance update(String jurisdiction, ProcessInstance task) {
+    public ProcessInstance update(String jurisdiction, ProcessInstance pi) {
+        return pi;
+        
+    }
+ 
+
+    @Transactional
+    @Override
+    public Task update(String jurisdiction, Task task) {
         Position owner=null;
         if(task.getAssignee()!=null)
             owner=positionMasterService.getPositionById(Long.valueOf(task.getAssignee()));
@@ -110,22 +132,44 @@ public class BaseWorkflowMatrixService implements WorkflowInterface {
         WorkFlowMatrix wfMatrix = workflowService.getWfMatrix(task.getBusinessKey(),dept ,
                 null, null, task.getStatus(), null);
 
-
+        String nextState = wfMatrix.getNextState();
+        State state=   stateService.getStateById(Long.valueOf(task.getId()));
+        if(wfMatrix.getNextAction().equalsIgnoreCase("END"))
+        {
+            state.setStatus(State.StateStatus.ENDED);
+        }
+        else
+        {
+            state.setStatus(State.StateStatus.INPROGRESS); 
+        }
+       
+        
         if(task.getAction().equalsIgnoreCase(WorkflowConstants.ACTION_REJECT))
         {
-            User createdBy = entity.getCreatedBy(); 
-            owner=positionMasterService.getPositionByUserId(createdBy.getId());
-        } 
-
-        State state=   stateService.getStateById(Long.valueOf(task.getId()));
-        state.addStateHistory(new StateHistory(state));
-        
-        
-        if(wfMatrix.getNextAction().equalsIgnoreCase("END"))
+            owner=state.getInitiatorPosition();
+            if(owner!=null)
+            task.setAssignee(owner.getId().toString());
+            else
+                owner=assignmentService.getPrimaryAssignmentForUser(entity.getCreatedBy().getId()).getPosition();   
+            
+            Attribute approverDesignationName = new Attribute();
+            approverDesignationName.setCode(owner.getDeptDesig().getDesignation().getName());
+            task.getAttributes().put("approverDesignationName",approverDesignationName );
+           
+            Attribute approverName = new Attribute();
+            approverName.setCode(getApproverName(owner));
+            task.getAttributes().put("approverName",approverName );
+            nextState="Rejected";
+        }
+        if(task.getAction().equalsIgnoreCase(WorkflowConstants.ACTION_CANCEL))
+        {
             state.setStatus(State.StateStatus.ENDED);
-        else
-            state.setStatus(State.StateStatus.INPROGRESS); 
-        state.setValue(wfMatrix.getNextState());
+            nextState=State.DEFAULT_STATE_VALUE_CLOSED;
+        }
+       
+        state.addStateHistory(new StateHistory(state));
+   
+        state.setValue(nextState);
         state.setComments(task.getDescription());
         state.setSenderName(securityUtils.getCurrentUser().getName());
         if(owner!=null)
@@ -142,6 +186,16 @@ public class BaseWorkflowMatrixService implements WorkflowInterface {
         stateService.update(state);
 
         return task;
+    }
+
+    private String getApproverName(Position owner) {
+       String approverName=null;
+        try {
+            approverName= assignmentService.getPrimaryAssignmentForPositionAndDate(owner.getId(), new Date()).getEmployee().getName();
+        } catch (Exception e) {
+            LOG.error("error while fetching users name");
+        }
+        return approverName;
     }
 
 
@@ -174,6 +228,9 @@ public class BaseWorkflowMatrixService implements WorkflowInterface {
                 || (  model.getProcessInstance() != null ? model.getProcessInstance().getStatus().equals("Closed")
                         || model.getProcessInstance().getStatus().equals("END") : false)) {
             validActions = Arrays.asList("Forward");
+            validActions = workflowService.getNextValidActions(workflowBean.getBusinessKey(), workflowBean.getWorkflowDepartment(), workflowBean.getAmountRule(), workflowBean.getAdditionalRule(), 
+                    "NEW",
+                    workflowBean.getPendingActions(), model.getCreatedDate());
         } else if (null != model.getProcessInstance()) {
             validActions = workflowService.getNextValidActions(workflowBean.getBusinessKey(), workflowBean.getWorkflowDepartment(), workflowBean.getAmountRule(), workflowBean.getAdditionalRule(), model
                     .getProcessInstance().getStatus(),
@@ -234,7 +291,7 @@ public class BaseWorkflowMatrixService implements WorkflowInterface {
         Attribute nextAction=new Attribute();
         nextAction.setCode(getNextAction(processInstance.getEntity(), wfbean));
         processInstance.getAttributes().put("nextAction",nextAction);
-      //  Attribute departments=new Attribute();
+        //  Attribute departments=new Attribute();
        // departments.setValues(getDepartments(processInstance.getEntity(), wfbean));
         //processInstance.getAttributes().put("departmentList",departments);
         return   processInstance;
@@ -259,15 +316,15 @@ public class BaseWorkflowMatrixService implements WorkflowInterface {
         List<String> types=  workflowTypeService.getEnabledWorkflowType(false);
         List<Long> ownerIds=this.eisService.getPositionsForUser(userId, new Date()).parallelStream()
                 .map(position -> position.getId()).collect(Collectors.toList());
-        List<State> states = stateService.getStates(ownerIds,types,userId);  
+        List<State> states=new ArrayList<State>();
+       if(!types.isEmpty())
+          states = stateService.getStates(ownerIds,types,userId);  
         for(State s:states)
         {  
             t= s.map();
             tasks.add(t);
         }
         return tasks;
-
-
     }
 
     @Override

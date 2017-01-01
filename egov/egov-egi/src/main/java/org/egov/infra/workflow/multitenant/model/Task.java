@@ -2,6 +2,8 @@ package org.egov.infra.workflow.multitenant.model;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.egov.pims.commons.Position;
 
@@ -18,6 +20,8 @@ public class Task {
     private Date lastupdatedSince = null;
 
     private String owner = null;
+    
+    private String assignee = null;
 
     private String module  = null;
 
@@ -27,7 +31,7 @@ public class Task {
 
     private String url = null;
 
-    private String businesskey = null;
+    private String businessKey = null;
     
     private String action = null;
     
@@ -46,7 +50,9 @@ public class Task {
     
     private String natureOfTask;
     
-     
+    
+    
+    private Map<String,Attribute> attributes = new HashMap<String,Attribute>();
 
     public Position getOwnerPosition() {
         return ownerPosition;
@@ -169,12 +175,12 @@ public class Task {
         this.url = url;
     }
 
-    public String getBusinesskey() {
-        return businesskey;
+    public String getBusinessKey() {
+        return businessKey;
     }
 
-    public void setBusinesskey(String businesskey) {
-        this.businesskey = businesskey;
+    public void setBusinessKey(String businesskey) {
+        this.businessKey = businesskey;
     }
 
 
@@ -200,6 +206,22 @@ public class Task {
 
     public void setDetails(String details) {
         this.details = details;
+    }
+
+    public String getAssignee() {
+        return assignee;
+    }
+
+    public void setAssignee(String assignee) {
+        this.assignee = assignee;
+    }
+
+    public Map<String, Attribute> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(Map<String, Attribute> attributes) {
+        this.attributes = attributes;
     }
 
    

@@ -53,6 +53,8 @@ public interface WorkflowTypeRepository extends JpaRepository<WorkflowTypes, Lon
 
     WorkflowTypes findByType(String type);
     @Query("select type from WorkflowTypes where enabled=:isEnabled  ")
-    List<String>  findByTypeAndEnabled(@Param("isEnabled") Boolean enabled);
+    List<String>  findTypeEnabled(@Param("isEnabled") Boolean enabled);
+    @Query("select type from WorkflowTypes where enabled is null  ")
+    List<String>  findTypeByEnabledIsNull();
 
 }

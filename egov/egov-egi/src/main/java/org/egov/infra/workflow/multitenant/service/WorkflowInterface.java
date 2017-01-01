@@ -10,10 +10,8 @@ public interface WorkflowInterface {
      ProcessInstance start(String jurisdiction,ProcessInstance processInstance);
      ProcessInstance getProcess(String jurisdiction,ProcessInstance processInstance);
      List<Task> getTasks(String jurisdiction,ProcessInstance processInstance);
-     ProcessInstance update(String jurisdiction,ProcessInstance task);
+     ProcessInstance update(String jurisdiction,ProcessInstance processInstance);
+     Task update(String jurisdiction,Task task);
      List<Task> getHistoryDetail(String workflowId);
-     
-     
      //complete it first
-     
 }

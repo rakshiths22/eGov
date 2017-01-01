@@ -473,6 +473,8 @@ public class DirectBankPaymentAction extends BasePaymentAction {
         if (bankdetail != null)
             billDetailslist.remove(bankdetail);
         loadAjaxedDropDowns();
+        workflowBean.setBusinessKey(paymentheader.getClass().getSimpleName());
+        prepareWorkflow(null, paymentheader, workflowBean);
         // find it last so that rest of the data loaded
         if ("view".equalsIgnoreCase(showMode))
         {
@@ -935,9 +937,6 @@ public class DirectBankPaymentAction extends BasePaymentAction {
     }
 
      
-    public String getCurrentTask() {
-        return paymentheader.getCurrentTask().getStatus();
-    }
-
+    
    
 }

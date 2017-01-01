@@ -570,8 +570,8 @@ function printVoucher(){
 
 				<s:if test="%{showApprove}">
 					<s:if test="%{showMode!='create' && showMode!='view' }">
-						<%@ include file='../payment/commonWorkflowMatrix.jsp'%>
-						<%@ include file='../workflow/commonWorkflowMatrix-button.jsp'%>
+						<%@ include file='../workflow/commonworkflow.jsp'%>
+						<%@ include file='../workflow/commonworkflow-button.jsp'%>
 						<div class="buttonbottom" id="newbuttondiv" align="center">
 							<s:submit cssClass="button" id="printPreview1"
 								value="Print Preview" onclick="printVoucher()" />

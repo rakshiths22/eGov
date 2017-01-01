@@ -256,7 +256,7 @@ public class State extends AbstractAuditable {
 
     public Task map() {
        Task t=new Task();
-       t.setBusinesskey(this.getType());
+       t.setBusinessKey(this.getType());
        t.setComments(this.comments);
        t.setCreatedDate(this.getCreatedDate());
        t.setId(this.getId().toString());

@@ -273,7 +273,7 @@ public class StateHistory implements Serializable {
     
     public Task map() {
         Task t=new Task();
-        t.setBusinesskey(this.getState().getType());
+        t.setBusinessKey(this.getState().getType());
         t.setComments(this.comments);
         t.setCreatedDate(this.getCreatedDate());
         t.setId(this.getId().toString());

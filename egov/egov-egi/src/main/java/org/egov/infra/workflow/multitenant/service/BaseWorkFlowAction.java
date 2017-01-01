@@ -94,9 +94,7 @@ public abstract class BaseWorkFlowAction extends BaseFormAction {
 
     public WorkflowEntity transitionWorkFlow( WorkflowEntity workflowEntity, final WorkflowBean workflowBean) {
         workflowEntity= baseWorkFlow.transitionWorkFlow(workflowEntity, workflowBean);
-        generateActionMessage(workflowEntity,workflowBean);
-       
-        
+        //generateMessage(workflowEntity,workflowBean);
         return workflowEntity;
         
         

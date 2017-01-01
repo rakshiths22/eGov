@@ -42,6 +42,7 @@ package org.egov.egf.web.controller.expensebill;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -81,6 +82,8 @@ public class CreateExpenseBillController extends BaseBillController {
     private static final String NET_PAYABLE_ID = "netPayableId";
 
     private static final String EXPENSEBILL_FORM = "expensebill-form";
+    
+    private static final String MESSAGE = "message";
 
     private static final String STATE_TYPE = "stateType";
 
@@ -144,17 +147,16 @@ public class CreateExpenseBillController extends BaseBillController {
         }  
 
         EgBillregister savedEgBillregister;
-
+        String msg="";
         try {
             savedEgBillregister = expenseBillService.create(egBillregister,workflowBean);
-            String msg=    generateMessage(egBillregister,workflowBean);
-            redirectAttrs.addFlashAttribute(msg);
+             msg=    generateMessage(egBillregister,workflowBean);
         } catch (final ValidationException e) {
             fillOnErrors(egBillregister, model, request,workflowBean);
             resultBinder.reject("", e.getErrors().get(0).getMessage());
             return EXPENSEBILL_FORM;
         }
-        return "redirect:/expensebill/success";
+        return "redirect:/expensebill/success?message="+msg;
 
 
     }
@@ -202,7 +204,11 @@ public class CreateExpenseBillController extends BaseBillController {
 
     @RequestMapping(value = "/success", method = RequestMethod.GET)
     public String showSuccessPage(final Model model,
-            final HttpServletRequest request) {
+            final HttpServletRequest request ) {
+              
+             String message = request.getParameter(MESSAGE);
+              model.addAttribute(MESSAGE, message);
+        
         return "expensebill-success";
     }
 

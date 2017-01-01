@@ -41,6 +41,7 @@ package org.egov.infra.workflow.multitenant.model;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -58,10 +59,9 @@ public class WorkflowBean implements Serializable {
     protected Long currentDepartmentId;
     protected Long currentPositionId;
     protected String businessKey;
-    
-    protected String workflowId;
+    private String approverDesignationName;
 
-    
+    protected String workflowId;
     public String additionalRule;
     public BigDecimal amountRule;
 
@@ -78,8 +78,8 @@ public class WorkflowBean implements Serializable {
     protected List<Department> departmentList;
     protected List<Designation> designationList;
     protected List<User> userList;
-    protected Map<String,List<Object>> additionalAttributes;
-    private String approverDesignationName;
+    private Map<String,Attribute> attributes = new HashMap<String,Attribute>();
+   
     
     //add attruibute List here to pass from processInstance
     
@@ -228,5 +228,51 @@ public class WorkflowBean implements Serializable {
     public void setApproverDesignationName(String approverDesignationName) {
         this.approverDesignationName = approverDesignationName;
     }
+    public Map<String, Attribute> getAttributes() {
+        return attributes;
+    }
+    public void setAttributes(Map<String, Attribute> attributes) {
+        this.attributes = attributes;
+    }
+    public ProcessInstance mapProcessInstance(WorkflowEntity workflowEntity) {
+        ProcessInstance pi=new ProcessInstance();
+        if(this.getWorkflowId()!=null && !this.getWorkflowId().isEmpty())
+        {
+            pi.setId(this.getWorkflowId());
+        }
+        if(workflowEntity.getWorkflowId()!=null && !workflowEntity.getWorkflowId().isEmpty())
+        {
+            pi.setId(workflowEntity.getWorkflowId());
+        }
+        pi.setBusinessKey(this.getBusinessKey());
+        pi.setEntity(workflowEntity);
+        pi.setStatus(this.getCurrentState());
+        pi.setAction(this.getWorkflowAction());
+        if(this.getApproverPositionId()!=null)  
+            pi.setAsignee(this.getApproverPositionId().toString());
+        pi.setDescription(this.getWorkflowComments());
+        pi.setAttributes(this.getAttributes()); 
+        return pi;     
+    }
 
+    public Task mapTask(WorkflowEntity workflowEntity) {
+        Task task=new Task();
+        if(this.getWorkflowId()!=null && !this.getWorkflowId().isEmpty())
+        {
+            task.setId(this.getWorkflowId());
+        }
+        if(workflowEntity.getWorkflowId()!=null && !workflowEntity.getWorkflowId().isEmpty())
+        {
+            task.setId(workflowEntity.getWorkflowId());
+        }
+        task.setBusinessKey(this.getBusinessKey());
+        task.setEntity(workflowEntity);
+        task.setStatus(this.getCurrentState());
+        task.setAction(this.getWorkflowAction());
+        if(this.getApproverPositionId()!=null)  
+            task.setAssignee(this.getApproverPositionId().toString());
+        task.setDescription(this.getWorkflowComments());
+        task.setAttributes(this.getAttributes()); 
+        return task;     
+    }
 }

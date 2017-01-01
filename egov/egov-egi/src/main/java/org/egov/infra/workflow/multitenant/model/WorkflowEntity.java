@@ -69,9 +69,11 @@ public abstract class WorkflowEntity extends AbstractAuditable {
 
     public abstract String getStateDetails();
     
+    @Deprecated
     @Transient
     private ProcessInstance processInstance;
-    
+   
+    @Deprecated
     @Transient
     private Task currentTask;
     

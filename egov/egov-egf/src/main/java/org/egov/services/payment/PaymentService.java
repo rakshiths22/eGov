@@ -89,6 +89,7 @@ import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.model.bills.EgBillSubType;
 import org.egov.model.bills.EgBillregister;
@@ -195,7 +196,8 @@ public class PaymentService extends PersistenceService<Paymentheader, Long> {
 
 	@Autowired
 	private SecurityUtils securityUtils;
-
+	@Autowired
+	private BaseWorkFlow baseWorkFlow;
 	 
 
 	public PaymentService(Class<Paymentheader> type) {
@@ -413,16 +415,15 @@ public class PaymentService extends PersistenceService<Paymentheader, Long> {
 					.setSourcePath(
 							"/EGF/payment/payment-view.action?" + PAYMENTID
 									+ "=" + paymentheader.getId());
-			 if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction())
-		                    && voucherHeader.getCurrentTask() == null)
+			 if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction()))
 		            {
 		                paymentheader.getVoucherheader().setStatus(
 		                        FinancialConstants.CREATEDVOUCHERSTATUS);
 		            }
 		            else
 		            {
-		               // paymentheader = transitionWorkFlow(paymentheader, workflowBean);
-		               // applyAuditing(paymentheader.getCurrentTask());
+		                paymentheader =(Paymentheader) baseWorkFlow.transitionWorkFlow(paymentheader, workflowBean);
+		              
 		                applyAuditing(paymentheader);
 		            }
 			update(paymentheader);

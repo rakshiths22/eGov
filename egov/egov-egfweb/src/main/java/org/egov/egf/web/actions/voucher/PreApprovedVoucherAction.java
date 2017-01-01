@@ -88,7 +88,9 @@ import org.egov.infra.workflow.entity.State;
 import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
 import org.egov.infra.workflow.multitenant.model.Task;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.infra.workflow.multitenant.service.BaseWorkFlowAction;
+import org.egov.infra.workflow.multitenant.service.WorkflowInterface;
 import org.egov.infra.workflow.service.SimpleWorkflowService;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.infstr.utils.EgovMasterDataCaching;
@@ -207,6 +209,8 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
     DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
     SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd");
     Date date;
+    @Autowired
+    private BaseWorkFlow baseWorkFlow;
 
     @Override
     public WorkflowEntity getModel() {
@@ -318,12 +322,7 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
         boolean ismodifyJv = false;
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("voucherHeader==" + voucherHeader);
-        if (voucherHeader != null && voucherHeader.getCurrentTask() != null)
-            if (!validateOwner(voucherHeader.getCurrentTask())) {
-                final List<ValidationError> errors = new ArrayList<ValidationError>();
-                errors.add(new ValidationError("exp", "Invalid User"));
-                throw new ValidationException(errors);
-            }
+        
         final List<AppConfigValues> appList = appConfigValuesService.getConfigValuesByModuleAndKey("EGF",
                 "pjv_saveasworkingcopy_enabled");
         final String pjv_wc_enabled = appList.get(0).getValue();
@@ -343,7 +342,6 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
         }
         getHeaderMandateFields();
         getSession().put("voucherId", parameters.get(VHID)[0]);
-
         if (voucherHeader.getCurrentTask() != null && voucherHeader.getCurrentTask().getStatus().contains("Rejected"))
             if (voucherHeader.getModuleId() == null) {
                 final EgBillregistermis billMis = (EgBillregistermis) persistenceService.find(

@@ -63,7 +63,9 @@ import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
+import org.egov.model.payment.Paymentheader;
 import org.egov.model.voucher.VoucherDetails;
 import org.egov.model.voucher.VoucherTypeBean;
 import org.egov.services.voucher.JournalVoucherActionHelper;
@@ -202,7 +204,7 @@ public class JournalVoucherAction extends BaseVoucherAction
                 voucherHeader = journalVoucherActionHelper.createVoucher(billDetailslist, subLedgerlist, voucherHeader,
                         voucherTypeBean, workflowBean);
                 
-                message=  generateActionMessage(voucherHeader,workflowBean);
+                message=  generateMessage(voucherHeader,workflowBean);
              
                 if (LOGGER.isDebugEnabled())
                     LOGGER.debug("JournalVoucherAction | create  | Success | message === " + message);
@@ -365,11 +367,41 @@ public class JournalVoucherAction extends BaseVoucherAction
         this.cutOffDate = cutOffDate;
     }
 
-    @Override
-    protected String generateActionMessage(WorkflowEntity workflowEntity, WorkflowBean workflowBean2) {
-        // TODO Auto-generated method stub
-        return super.generateActionMessage(workflowEntity, workflowBean2);
-        
+    public String generateMessage(CVoucherHeader voucherHeader, WorkflowBean workflowBean) {
+        String message="";
+        switch(workflowBean.getWorkflowAction().toLowerCase())   
+        {
+        case  WorkflowConstants.ACTION_APPROVE :
+            message=getText("voucher.approved.success", new String[] {voucherHeader.getVoucherNumber()});
+            break;
+        case  WorkflowConstants.ACTION_REJECT :
+            message=getText("voucher.reject", new String[] {voucherHeader.getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
+            break;   
+        case  WorkflowConstants.ACTION_FORWARD :
+            if(voucherHeader.getVouchermis().getBudgetaryAppnumber()!=null)
+            {
+            message=getText("voucher.create.success.with.budgetappropriation",
+                    new String[] {voucherHeader.getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName(),voucherHeader.getVouchermis().getBudgetaryAppnumber()});
+            }else
+            {
+                message=getText("voucher.create.success",
+                        new String[] {voucherHeader.getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});  
+            }
+            break;    
+        case  WorkflowConstants.ACTION_CANCEL :
+            message=getText("voucher.cancel",
+                    new String[] {voucherHeader.getVoucherNumber()});
+            break; 
+        case  WorkflowConstants.ACTION_SAVE :
+            message=getText("voucher.saved.success",
+                    new String[] {voucherHeader.getVoucherNumber()});
+            break;   
+
+        }
+        return message;
     }
+    
+    
+    
 
 }

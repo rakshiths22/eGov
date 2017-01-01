@@ -137,8 +137,6 @@ public class PaymentActionHelper {
     {
         try {
             voucherHeader = createVoucherAndledger(voucherHeader, commonBean, billDetailslist, subLedgerlist);
-            voucherHeader.setState_id(null);
-            voucherHeader.setWorkflowId(null);
             paymentheader = paymentService.createPaymentHeader(voucherHeader,
                     Integer.valueOf(commonBean.getAccountNumberId()), commonBean
                             .getModeOfPayment(), commonBean.getAmount());

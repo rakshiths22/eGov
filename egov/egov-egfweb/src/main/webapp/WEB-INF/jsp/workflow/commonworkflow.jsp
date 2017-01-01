@@ -46,11 +46,14 @@
 <%try{ %>
 <script>
 	function getUsersByDesignationAndDept() {
+		var e = dom.get('approverDesignationId');
+		document.getElementById('approverDesignationName').value=e.options[e.selectedIndex].text;
 		populateapproverPositionId({
 			approverDepartmentId : document
 					.getElementById('approverDepartmentId').value,
 			designationId : document.getElementById('approverDesignationId').value
 		});
+		
 	}
 
 	function callAlertForDepartment() {
@@ -130,6 +133,7 @@
 	<s:hidden id="approverName" name="workflowBean.approverName" />
 	<s:hidden id="businessKey" name="workflowBean.businessKey" />
 	<s:hidden id="workflowId" name="workflowBean.workflowId"  />
+	<s:hidden id="approverDesignationName" name="workflowBean.approverDesignationName"  />
 
 	<s:if test="%{#request.approverOddTextCss==null}">
 		<c:set var="approverOddTextCss" value="greybox" scope="request" />

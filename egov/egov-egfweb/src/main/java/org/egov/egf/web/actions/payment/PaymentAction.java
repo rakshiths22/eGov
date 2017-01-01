@@ -86,6 +86,7 @@ import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infra.workflow.entity.State;
 import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.model.advance.EgAdvanceRequisition;
 import org.egov.model.bills.EgBillregister;
 import org.egov.model.bills.Miscbilldetail;
@@ -93,6 +94,7 @@ import org.egov.model.instrument.InstrumentHeader;
 import org.egov.model.payment.PaymentBean;
 import org.egov.model.payment.Paymentheader;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.payment.services.PaymentActionHelper;
 import org.egov.services.payment.PaymentService;
 import org.egov.services.voucher.VoucherService;
@@ -212,6 +214,7 @@ public class PaymentAction extends BasePaymentAction {
     DateFormat sdf1 = new SimpleDateFormat("dd/MM/yyyy");
     SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd");
     Date date;
+    private BaseWorkFlow baseWorkFlow;
 
     public PaymentAction() {
         if (LOGGER.isDebugEnabled())
@@ -958,7 +961,7 @@ public class PaymentAction extends BasePaymentAction {
                         functionService.findOne(Long.valueOf(parameters.get("function")[0].toString())));
             paymentheader = paymentService.createPayment(parameters, billList, billregister, workflowBean);
             miscBillList = paymentActionHelper.getPaymentBills(paymentheader);
-            // sendForApproval();// this should not be called here as it is public method which is called from jsp submit
+           
 
             if (!cutOffDate.isEmpty() && cutOffDate != null)
             {
@@ -969,24 +972,7 @@ public class PaymentAction extends BasePaymentAction {
                   //
                 }
             }
-            if (cutOffDate1 != null && voucherDate.compareTo(cutOffDate1) <= 0
-                    && FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-            {
-
-                addActionMessage(getMessage("payment.transaction.success", new String[] { paymentheader.getVoucherheader()
-                        .getVoucherNumber() }));
-            }
-            else
-            {
-                addActionMessage(getMessage("payment.transaction.success", new String[] { paymentheader.getVoucherheader()
-                        .getVoucherNumber() }));
-                if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-                    addActionMessage(getMessage("payment.voucher.approved",
-                            new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask()
-                                    .getOwnerPosition()) }));
-
-            }
-
+            generateMessage(paymentheader, workflowBean);
         } catch (final ValidationException e) {
             final List<ValidationError> errors = new ArrayList<ValidationError>();
             errors.add(new ValidationError("exception", e.getErrors().get(0).getMessage()));
@@ -1024,21 +1010,7 @@ public class PaymentAction extends BasePaymentAction {
      
         paymentheader = paymentActionHelper.transitionWorkflow(paymentheader, workflowBean);
         paymentActionHelper.getPaymentBills(paymentheader);
-        if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-            addActionMessage(getText("payment.voucher.rejected",
-                    new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
-        if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-            addActionMessage(getMessage("payment.voucher.approved",
-                    new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
-        if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-            addActionMessage(getText("payment.voucher.cancelled"));
-        else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction())) {
-            if ("Closed".equals(paymentheader.getCurrentTask().getStatus()))
-                addActionMessage(getMessage("payment.voucher.final.approval"));
-            else
-                addActionMessage(getMessage("payment.voucher.approved",
-                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
-        }
+        generateActionMessage(paymentheader, workflowBean);
         if (Constants.ADVANCE_PAYMENT.equalsIgnoreCase(paymentheader.getVoucherheader().getName())) {
             advanceRequisitionList.addAll(paymentActionHelper.getAdvanceRequisitionDetails(paymentheader));
             return "advancePaymentView";
@@ -1054,6 +1026,33 @@ public class PaymentAction extends BasePaymentAction {
             LOGGER.debug("Inside getComments...");
         return getText("payment.comments", new String[] { paymentheader.getPaymentAmount()
                 .setScale(2, BigDecimal.ROUND_HALF_EVEN).toPlainString() });
+    }
+    
+    private String generateMessage(Paymentheader paymentheader, WorkflowBean workflowBean) {
+        String message="";
+        switch(workflowBean.getWorkflowAction().toLowerCase())   
+        {
+        case  WorkflowConstants.ACTION_APPROVE :
+            message=getText("payment.approved.success", new String[] {paymentheader.getVoucherheader().getVoucherNumber()});
+            break;
+        case  WorkflowConstants.ACTION_REJECT :
+            message=getText("payment.reject", new String[] {paymentheader.getVoucherheader().getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
+            break;   
+        case  WorkflowConstants.ACTION_FORWARD :
+            message=getText("payment.create.success",
+                    new String[] {paymentheader.getVoucherheader().getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
+            break;    
+        case  WorkflowConstants.ACTION_CANCEL :
+            message=getText("payment.cancel",
+                    new String[] {paymentheader.getVoucherheader().getVoucherNumber()});
+            break; 
+        case  WorkflowConstants.ACTION_SAVE :
+            message=getText("payment.saved.success",
+                    new String[] {paymentheader.getVoucherheader().getVoucherNumber()});
+            break;   
+
+        }
+        return message;
     }
 
     @SkipValidation
@@ -1081,24 +1080,7 @@ public class PaymentAction extends BasePaymentAction {
         return VIEW;
     }
 
-    @SkipValidation
-    public String advanceView() {
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("Starting advanceView...");
-        paymentheader = getPayment();
-        if (paymentheader.getCurrentTask().getStatus() != null && !paymentheader.getCurrentTask().getStatus().isEmpty()
-                && paymentheader.getCurrentTask().getStatus().contains("Rejected")) {
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Completed advanceView.");
-            return modifyAdvancePayment();
-        }
-        advanceRequisitionList.addAll(paymentActionHelper.getAdvanceRequisitionDetails(paymentheader));
-        getChequeInfo(paymentheader);
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("Completed advanceView.");
-        return "advancePaymentView";
-    }
-
+    
     public void getChequeInfo(Paymentheader paymentheader)
     {
         // if(LOGGER.isInfoEnabled()) LOGGER.info("Inside getChequeInfo");
@@ -1413,7 +1395,7 @@ public class PaymentAction extends BasePaymentAction {
             LOGGER.debug("Completed update...");
         return VIEW;
     }
-
+ 
     @ValidationErrorPage(value = "advancePaymentModify")
     @SkipValidation
     public String updateAdvancePayment() throws Exception {
@@ -1439,8 +1421,7 @@ public class PaymentAction extends BasePaymentAction {
                  * paymentWorkflowService.transition(getValidActions().get(0).getName() + "|" + userId, paymentheader,
                  * paymentheader.getVoucherheader().getDescription());
                  */
-                addActionMessage(getMessage("payment.voucher.approved",
-                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
+               
             } else {
                 if (LOGGER.isDebugEnabled())
                     LOGGER.debug("Completed updateAdvancePayment.");
@@ -2157,10 +2138,7 @@ public class PaymentAction extends BasePaymentAction {
         this.egwStatusHibernateDAO = egwStatusHibernateDAO;
     }
  
-    public String getCurrentTask() {
-        return paymentheader.getCurrentTask().getStatus();
-    }
-
+   
     public String getCutOffDate() {
         return cutOffDate;
     }

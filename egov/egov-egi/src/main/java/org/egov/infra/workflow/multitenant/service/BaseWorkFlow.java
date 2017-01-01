@@ -51,6 +51,7 @@ import org.egov.infra.admin.master.service.DepartmentService;
 import org.egov.infra.workflow.multitenant.model.ProcessInstance;
 import org.egov.infra.workflow.multitenant.model.Task;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -71,19 +72,48 @@ public  class BaseWorkFlow {
     public WorkflowEntity transitionWorkFlow(WorkflowEntity workflowEntity, WorkflowBean workflowBean) {
         
         WorkflowInterface    workflowInterface=getWorkflowImplementation(workflowEntity,workflowBean);
-        ProcessInstance pi=setUpProcessInstance(workflowBean,workflowEntity);
-        if(pi.getId()==null)
+        if(workflowBean.getWorkflowId()==null)
+        {
+        ProcessInstance pi=workflowBean.mapProcessInstance(workflowEntity);
           pi=  workflowInterface.start("", pi);
+          workflowEntity.setWorkflowId(pi.getId()); 
+          if(pi.getAssignee()!=null)
+          workflowBean.setApproverPositionId(Long.valueOf(pi.getAssignee()));
+          if(workflowBean.getWorkflowAction().equalsIgnoreCase(WorkflowConstants.ACTION_REJECT))
+          {
+              workflowBean.setApproverDesignationName(pi.getAttributes().get("approverDesignationName").getCode()); 
+              workflowBean.setApproverName(pi.getAttributes().get("approverName").getCode()); 
+              
+          }
+          workflowBean.setAttributes(pi.getAttributes());
+          
+          if(NumberUtils.isDigits(pi.getId()))
+            workflowEntity.setState_id(Long.valueOf(pi.getId()));
+        }
         else
-         pi=   workflowInterface.update("", pi); 
-        workflowEntity.setWorkflowId(pi.getId()); 
-        if(NumberUtils.isDigits(pi.getId()))
-          workflowEntity.setState_id(Long.valueOf(pi.getId()));
+        {
+            Task  task=workflowBean.mapTask(workflowEntity);
+            task=   workflowInterface.update("", task); 
+       
+        workflowEntity.setWorkflowId(task.getId()); 
+        if(task.getAssignee()!=null)
+        workflowBean.setApproverPositionId(Long.valueOf(task.getAssignee()));
+        if(workflowBean.getWorkflowAction().equalsIgnoreCase(WorkflowConstants.ACTION_REJECT))
+        {
+            workflowBean.setApproverDesignationName(task.getAttributes().get("approverDesignationName").getCode()); 
+            workflowBean.setApproverName(task.getAttributes().get("approverName").getCode()); 
+            
+        }
+        workflowBean.setAttributes(task.getAttributes());
+        if(NumberUtils.isDigits(task.getId()))
+            workflowEntity.setState_id(Long.valueOf(task.getId()));
+        }
+      
         return workflowEntity;
     }
 
     public WorkflowInterface getWorkflowImplementation(WorkflowEntity workflowEntity, WorkflowBean workflowBean2) {
-        return (WorkflowInterface)applicationContext.getBean("baseWorkflowMatrixService");
+        return (WorkflowInterface)applicationContext.getBean("InternalDefaultWorkflow");
      }
     private ProcessInstance setUpProcessInstance(WorkflowBean workflowBean,WorkflowEntity workflowEntity) {
         ProcessInstance pi=new ProcessInstance();
@@ -102,7 +132,7 @@ public  class BaseWorkFlow {
         if(workflowBean.getApproverPositionId()!=null)  
             pi.setAsignee(workflowBean.getApproverPositionId().toString());
         pi.setDescription(workflowBean.getWorkflowComments());
-        
+        pi.setAttributes(workflowBean.getAttributes()); 
         return pi;   
           
       }
@@ -124,7 +154,7 @@ public  class BaseWorkFlow {
         workflowBean.setUserList(Collections.EMPTY_LIST);
         if(pi.getAssignee()!=null)
         workflowBean.setApproverPositionId(Long.valueOf(pi.getAssignee())); 
-          
+        workflowBean.setAttributes(pi.getAttributes());  
        
       }
     
@@ -150,9 +180,6 @@ public  class BaseWorkFlow {
 
     public WorkflowBean populateWorkflowBean(HttpServletRequest request) {
         WorkflowBean workflowBean=new WorkflowBean();
-        
-        
-       
         String amountRule = request.getParameter("workflowBean.amountRule");
         if(amountRule!=null && !amountRule.isEmpty())
             workflowBean.setAmountRule(BigDecimal.valueOf(Long.valueOf(amountRule)));
@@ -163,7 +190,8 @@ public  class BaseWorkFlow {
         String desig = request.getParameter("workflowBean.currentDesignationId");
         if(desig!=null && !desig.isEmpty() )
            workflowBean.setCurrentDesignationId(Long.valueOf(desig));
-        if(request.getParameter("workflowBean.approverPositionId")!=null)
+        String position = request.getParameter("workflowBean.approverPositionId");
+        if(position!=null && !position.isEmpty())
             workflowBean.setApproverPositionId(Long.valueOf(request.getParameter("workflowBean.approverPositionId")));
         if(request.getParameter("workflowBean.workflowAction")!=null)
             workflowBean.setWorkflowAction(request.getParameter("workflowBean.workflowAction"));

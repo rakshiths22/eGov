@@ -149,7 +149,7 @@ public class InboxController {
     }
     
     public WorkflowInterface getWorkflowImplementation(String type) {
-        return (WorkflowInterface)applicationContext.getBean("baseWorkflowMatrixService");
+        return (WorkflowInterface)applicationContext.getBean("internalDefaultWorkflow");
      }
 
     private String createInboxHistoryData(final List<StateHistory> stateHistories) {

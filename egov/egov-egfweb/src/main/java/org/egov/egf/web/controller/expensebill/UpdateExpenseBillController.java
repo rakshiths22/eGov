@@ -41,6 +41,7 @@ package org.egov.egf.web.controller.expensebill;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -54,6 +55,7 @@ import org.egov.infra.admin.master.service.AppConfigValueService;
 import org.egov.infra.exception.ApplicationException;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.infstr.models.EgChecklists;
@@ -62,6 +64,7 @@ import org.egov.model.bills.EgBillregister;
 import org.egov.utils.FinancialConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -87,6 +90,11 @@ public class UpdateExpenseBillController extends BaseBillController {
     private static final String EXPENSEBILL_VIEW = "expensebill-view";
 
     private static final String NET_PAYABLE_ID = "netPayableId";
+    
+    @Autowired
+    @Qualifier("messageSource")
+    private MessageSource messageSource;
+
 
     @Autowired
     private ExpenseBillService expenseBillService;
@@ -160,28 +168,11 @@ public class UpdateExpenseBillController extends BaseBillController {
             throws ApplicationException, IOException {
 
         String mode = "";
+        String message="";
         EgBillregister updatedEgBillregister = null;
+        WorkflowBean workflowBean = baseWorkFlow.populateWorkflowBean(request);
 
-        if (request.getParameter("mode") != null)
-            mode = request.getParameter("mode");
-
-        Long approvalPosition = 0l;
-        String approvalComment = "";
-
-        if (request.getParameter("approvalComent") != null)
-            approvalComment = request.getParameter("approvalComent");
-
-        if (request.getParameter(APPROVAL_POSITION) != null && !request.getParameter(APPROVAL_POSITION).isEmpty())
-            approvalPosition = Long.valueOf(request.getParameter(APPROVAL_POSITION));
-
-        if ((approvalPosition == null || approvalPosition.equals(Long.valueOf(0)))
-                && request.getParameter(APPROVAL_POSITION) != null
-                && !request.getParameter(APPROVAL_POSITION).isEmpty())
-            approvalPosition = Long.valueOf(request.getParameter(APPROVAL_POSITION));
-
-        if (egBillregister.getCurrentTask() != null
-                && (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(egBillregister.getCurrentTask().getStatus())
-                       )) {
+        if (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(workflowBean.getCurrentState())) {
             populateBillDetails(egBillregister);
             validateBillNumber(egBillregister, resultBinder);
             validateLedgerAndSubledger(egBillregister, resultBinder);
@@ -195,9 +186,7 @@ public class UpdateExpenseBillController extends BaseBillController {
             model.addAttribute(NET_PAYABLE_ID, request.getParameter(NET_PAYABLE_ID));
             model.addAttribute(NET_PAYABLE_AMOUNT, request.getParameter(NET_PAYABLE_AMOUNT));
             model.addAttribute("designation", request.getParameter("designation"));
-            if (egBillregister.getCurrentTask() != null
-                    && (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(egBillregister.getCurrentTask().getStatus())
-                   )) {
+            if (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(workflowBean.getCurrentState())) {
                 prepareValidActionListByCutOffDate(model);
                 model.addAttribute("mode", "edit");
                 return "expensebill-update";
@@ -207,8 +196,10 @@ public class UpdateExpenseBillController extends BaseBillController {
             }
         } else {
             try {
-                  WorkflowBean workflowBean = baseWorkFlow.populateWorkflowBean(request);
+                 
                    updatedEgBillregister = expenseBillService.update(egBillregister, mode,workflowBean);
+               message=   generateMessage(updatedEgBillregister, workflowBean);
+                   
             } catch (final ValidationException e) {
                 setDropDownValues(model);
                 model.addAttribute("stateType", egBillregister.getClass().getSimpleName());
@@ -230,12 +221,12 @@ public class UpdateExpenseBillController extends BaseBillController {
                 }
             }
 
-            redirectAttributes.addFlashAttribute(EG_BILLREGISTER, updatedEgBillregister);
+          
 
            
 
-            return "redirect:/expensebill/success?approverDetails= " + "" + "&billNumber="
-                    + updatedEgBillregister.getBillnumber();
+            return "redirect:/expensebill/success?message="+message;
+                    
         }
     }
 
@@ -280,6 +271,35 @@ public class UpdateExpenseBillController extends BaseBillController {
     @Override
     protected void setDropDownValues(final Model model) {
         super.setDropDownValues(model);
+    }
+    
+    
+    private String generateMessage(EgBillregister egBillregister, WorkflowBean workflowBean) {
+        String message="";
+        switch(workflowBean.getWorkflowAction().toLowerCase())   
+        {
+        case  WorkflowConstants.ACTION_APPROVE :
+            message=messageSource.getMessage("msg.expense.bill.approved.success",
+                    new String[] {egBillregister.getBillnumber()},Locale.getDefault());
+            break;
+        case  WorkflowConstants.ACTION_REJECT :
+            message=messageSource.getMessage("msg.expense.bill.reject", new String[] {egBillregister.getBillnumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()},null);
+            break;   
+        case  WorkflowConstants.ACTION_FORWARD :
+            message=messageSource.getMessage("msg.expense.bill.create.success",
+                    new String[] {egBillregister.getBillnumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()},null);
+            break;    
+        case  WorkflowConstants.ACTION_CANCEL :
+            message=messageSource.getMessage("msg.expense.bill.cancel",
+                    new String[] {egBillregister.getBillnumber()},Locale.getDefault());
+            break; 
+        case  WorkflowConstants.ACTION_SAVE :
+            message=messageSource.getMessage("msg.expense.bill.saved.success",
+                    new String[] {egBillregister.getBillnumber()},Locale.getDefault());
+            break;   
+
+        }
+        return message;
     }
 
 }

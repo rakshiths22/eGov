@@ -105,6 +105,7 @@ import org.egov.model.recoveries.Recovery;
 import org.egov.model.service.RecoveryService;
 import org.egov.model.voucher.CommonBean;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.payment.services.PaymentActionHelper;
 import org.egov.pims.commons.Designation;
 import org.egov.services.deduction.RemitRecoveryService;
@@ -367,20 +368,8 @@ public class RemitRecoveryAction extends BasePaymentAction {
                     //
                 }
             }
-            if (cutOffDate1 != null && voucherDate.compareTo(cutOffDate1) <= 0
-                    && FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-            {
-                addActionMessage(getText("remittancepayment.transaction.success")
-                        + paymentheader.getVoucherheader().getVoucherNumber());
-            }
-            else
-            {
-                addActionMessage(getText("remittancepayment.transaction.success")
-                        + paymentheader.getVoucherheader().getVoucherNumber());
-                addActionMessage(getText("payment.voucher.approved",
-                        new String[] { paymentService.getEmployeeNameForPositionId(paymentheader.getCurrentTask().getOwnerPosition()) }));
-            }
-
+          addActionMessage(generateMessage(paymentheader, workflowBean));
+            
         } catch (final ValidationException e) {
             loadAjaxedDropDowns();
             LOGGER.error(e.getMessage(), e);
@@ -393,6 +382,33 @@ public class RemitRecoveryAction extends BasePaymentAction {
             throw new ValidationException(Arrays.asList(new ValidationError(e.getMessage(), e.getMessage())));
         }
         return MESSAGES;
+    }
+    
+    private String generateMessage(Paymentheader paymentheader, WorkflowBean workflowBean) {
+        String message="";
+        switch(workflowBean.getWorkflowAction().toLowerCase())   
+        {
+        case  WorkflowConstants.ACTION_APPROVE :
+            message=getText("payment.approved.success", new String[] {paymentheader.getVoucherheader().getVoucherNumber()});
+            break;
+        case  WorkflowConstants.ACTION_REJECT :
+            message=getText("payment.reject", new String[] {paymentheader.getVoucherheader().getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
+            break;   
+        case  WorkflowConstants.ACTION_FORWARD :
+            message=getText("payment.create.success",
+                    new String[] {paymentheader.getVoucherheader().getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
+            break;    
+        case  WorkflowConstants.ACTION_CANCEL :
+            message=getText("payment.cancel",
+                    new String[] {paymentheader.getVoucherheader().getVoucherNumber()});
+            break; 
+        case  WorkflowConstants.ACTION_SAVE :
+            message=getText("payment.saved.success",
+                    new String[] {paymentheader.getVoucherheader().getVoucherNumber()});
+            break;   
+
+        }
+        return message;
     }
 
     /**
@@ -1036,9 +1052,7 @@ public class RemitRecoveryAction extends BasePaymentAction {
 
    
 
-    public String getCurrentTask() {
-        return paymentheader.getCurrentTask().getStatus();
-    }
+    
 
     public String getCutOffDate() {
         return cutOffDate;
