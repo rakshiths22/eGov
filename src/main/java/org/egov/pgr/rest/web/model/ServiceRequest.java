@@ -1,6 +1,8 @@
 package org.egov.pgr.rest.web.model;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 import org.egov.infra.utils.StringUtils;
@@ -40,15 +42,15 @@ public class ServiceRequest {
     @JsonProperty("service_notice")
     private String serviceNotice = null;
 
-    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
+    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss",timezone = "IST")
     @JsonProperty("requested_datetime")
     private Date createdDate = null;
 
-    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
+    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss",timezone = "IST")
     @JsonProperty("updated_datetime")
     private Date lastModifiedDate = null;
 
-    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
+    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss",timezone = "IST")
     @JsonProperty("expected_datetime")
     private Date escalationDate = null;
 
@@ -93,6 +95,9 @@ public class ServiceRequest {
 
     @JsonProperty("approval_comment")
     private String approvalComment = null;
+    
+    @JsonProperty("values")
+    private List<AttributeValue> values = new ArrayList<>();
 
     public String getCrn() {
         return crn;
@@ -302,7 +307,15 @@ public class ServiceRequest {
         this.complaintTypeId = complaintTypeId;
     }
 
-    public boolean validate(ServiceRequest serviceRequest) {
+    public List<AttributeValue> getValues() {
+		return values;
+	}
+
+	public void setValues(List<AttributeValue> values) {
+		this.values = values;
+	}
+
+	public boolean validate(ServiceRequest serviceRequest) {
         if (StringUtils.isNotBlank(serviceRequest.getComplaintTypeCode()) &&
                 StringUtils.isNotBlank(serviceRequest.getDetails()) &&
                 StringUtils.isNotBlank(serviceRequest.getCrossHierarchyId()))

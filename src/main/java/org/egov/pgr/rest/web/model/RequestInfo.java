@@ -15,9 +15,7 @@ public class RequestInfo   {
   @JsonProperty("ver")
   private String ver = null;
 
-  @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
-//  @JsonSerialize(using = MyDateTimeSerializer.class)
-//  @JsonDeserialize(using = LocalDateDeserializer.class)
+  @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss",timezone = "IST")
   @JsonProperty("ts")
   private Date ts = null;
 

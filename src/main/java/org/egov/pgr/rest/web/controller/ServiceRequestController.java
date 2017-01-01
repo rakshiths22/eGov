@@ -13,6 +13,7 @@ import org.egov.pgr.entity.Complaint;
 import org.egov.pgr.entity.ComplaintType;
 import org.egov.pgr.entity.enums.ComplaintStatus;
 import org.egov.pgr.entity.enums.ReceivingMode;
+import org.egov.pgr.rest.web.model.AttributeValue;
 import org.egov.pgr.rest.web.model.Error;
 import org.egov.pgr.rest.web.model.ErrorRes;
 import org.egov.pgr.rest.web.model.RequestInfo;
@@ -100,6 +101,8 @@ public class ServiceRequestController {
                 }
 
                 complaint.setReceivingMode(ReceivingMode.MOBILE);
+                String locationText = complaint.getLocation().getLocalName() +" "+ complaint.getChildLocation().getName();
+                serviceRequest.getValues().add(new AttributeValue("location_text",locationText));
                 Complaint savedComplaint = complaintService.createComplaint(complaint);
                 serviceRequest.setCrn(savedComplaint.getCrn());
                 serviceRequest.setEscalationDate(savedComplaint.getEscalationDate());
@@ -159,6 +162,8 @@ public class ServiceRequestController {
                     complaint.setReceivingMode(ReceivingMode.WEBSITE);
                     Complaint savedComplaint = complaintService.update(complaint, serviceRequest.getApprovalPosition(),
                             serviceRequest.getApprovalComment());
+                    String locationText = complaint.getLocation().getLocalName() +" "+ complaint.getChildLocation().getName();
+                    serviceRequest.getValues().add(new AttributeValue("location_text",locationText));
                     serviceRequest.setEscalationDate(savedComplaint.getEscalationDate());
                     serviceRequest.setLastModifiedDate(savedComplaint.getLastModifiedDate());
 
@@ -198,6 +203,8 @@ public class ServiceRequestController {
             for (Complaint complaint : complaintsList) {
                 ServiceRequest serviceRequest = new ServiceRequest();
                 BeanUtils.copyProperties(complaint, serviceRequest);
+                String locationText = complaint.getLocation().getLocalName() +" "+ complaint.getChildLocation().getName();
+                serviceRequest.getValues().add(new AttributeValue("location_text",locationText));
                 serviceRequest.setEscalationDate(complaint.getEscalationDate());
                 serviceRequest.setLastModifiedDate(complaint.getLastModifiedDate());
                 serviceRequest.setCreatedDate(complaint.getCreatedDate());
