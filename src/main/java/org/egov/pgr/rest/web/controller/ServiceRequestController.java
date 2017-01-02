@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.commons.lang.StringUtils;
 import org.egov.infra.admin.master.entity.CrossHierarchy;
 import org.egov.infra.admin.master.entity.User;
 import org.egov.infra.admin.master.service.CrossHierarchyService;
@@ -70,8 +71,15 @@ public class ServiceRequestController {
             resInfo = new ResponseInfo(requestInfo.getApiId(), requestInfo.getVer(),
                     new Date().toString(), "uief87324", requestInfo.getMsgId(), "true");
             Authentication authUser = SecurityContextHolder.getContext().getAuthentication();
-            SecureUser secureUser = (SecureUser) authUser.getPrincipal();
-            String name = secureUser.getUserType().name();
+            String name = StringUtils.EMPTY;
+            if(Objects.nonNull(authUser)){
+            	 SecureUser secureUser = (SecureUser) authUser.getPrincipal();
+                 if(Objects.isNull(secureUser))
+                 	name = "ANONYMOUS";
+                 else
+                 	name = secureUser.getUserType().name();
+            }
+           
             if (request.validate()) {
                 ServiceRequest serviceRequest = request.getServiceRequest();
                 Complaint complaint = new Complaint();
@@ -105,8 +113,8 @@ public class ServiceRequestController {
                 serviceRequest.getValues().add(new AttributeValue("location_text",locationText));
                 Complaint savedComplaint = complaintService.createComplaint(complaint);
                 serviceRequest.setCrn(savedComplaint.getCrn());
-                serviceRequest.setEscalationDate(savedComplaint.getEscalationDate());
-                serviceRequest.setLastModifiedDate(savedComplaint.getLastModifiedDate());
+                serviceRequest.setEscalationDate(savedComplaint.getEscalationDate().toString());
+                serviceRequest.setLastModifiedDate(savedComplaint.getLastModifiedDate().toString());
                 serviceRequest.setStatusDetails(ComplaintStatus.valueOf(complaint.getStatus().getName()));
                 ServiceRequestRes serviceRequestResponse = new ServiceRequestRes();
                 ResponseInfo responseInfo = resInfo;
@@ -164,8 +172,8 @@ public class ServiceRequestController {
                             serviceRequest.getApprovalComment());
                     String locationText = complaint.getLocation().getLocalName() +" "+ complaint.getChildLocation().getName();
                     serviceRequest.getValues().add(new AttributeValue("location_text",locationText));
-                    serviceRequest.setEscalationDate(savedComplaint.getEscalationDate());
-                    serviceRequest.setLastModifiedDate(savedComplaint.getLastModifiedDate());
+                    serviceRequest.setEscalationDate(savedComplaint.getEscalationDate().toString());
+                    serviceRequest.setLastModifiedDate(savedComplaint.getLastModifiedDate().toString());
 
                     ServiceRequestRes serviceRequestResponse = new ServiceRequestRes();
                     ResponseInfo responseInfo = resInfo;
@@ -205,9 +213,9 @@ public class ServiceRequestController {
                 BeanUtils.copyProperties(complaint, serviceRequest);
                 String locationText = complaint.getLocation().getLocalName() +" "+ complaint.getChildLocation().getName();
                 serviceRequest.getValues().add(new AttributeValue("location_text",locationText));
-                serviceRequest.setEscalationDate(complaint.getEscalationDate());
-                serviceRequest.setLastModifiedDate(complaint.getLastModifiedDate());
-                serviceRequest.setCreatedDate(complaint.getCreatedDate());
+                serviceRequest.setEscalationDate(complaint.getEscalationDate().toString());
+                serviceRequest.setLastModifiedDate(complaint.getLastModifiedDate().toString());
+                serviceRequest.setCreatedDate(complaint.getCreatedDate().toString());
                 serviceRequest.setStatusDetails(ComplaintStatus.valueOf(complaint.getStatus().getName()));
                 serviceRequest.setComplaintTypeName(complaint.getComplaintType().getName());
                 serviceRequest.setComplaintTypeCode(complaint.getComplaintType().getCode());
