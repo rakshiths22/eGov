@@ -205,6 +205,9 @@ public  class BaseWorkFlow {
         if(request.getParameter("workflowBean.businessKey")!=null)
         workflowBean.setBusinessKey(request.getParameter("workflowBean.businessKey"));
         
+        if(request.getParameter("workflowBean.workflowId")!=null)
+            workflowBean.setWorkflowId(request.getParameter("workflowBean.workflowId"));
+        
         return workflowBean;
         
     }
