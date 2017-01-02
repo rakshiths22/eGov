@@ -72,14 +72,14 @@ public class ServiceRequestController {
                     new Date().toString(), "uief87324", requestInfo.getMsgId(), "true");
             Authentication authUser = SecurityContextHolder.getContext().getAuthentication();
             String name = StringUtils.EMPTY;
-            if(Objects.nonNull(authUser)){
-            	 SecureUser secureUser = (SecureUser) authUser.getPrincipal();
-                 if(Objects.isNull(secureUser))
-                 	name = "ANONYMOUS";
-                 else
-                 	name = secureUser.getUserType().name();
+            if (Objects.nonNull(authUser)) {
+                SecureUser secureUser = (SecureUser) authUser.getPrincipal();
+                if (Objects.isNull(secureUser))
+                    name = "ANONYMOUS";
+                else
+                    name = secureUser.getUserType().name();
             }
-           
+
             if (request.validate()) {
                 ServiceRequest serviceRequest = request.getServiceRequest();
                 Complaint complaint = new Complaint();
@@ -109,12 +109,12 @@ public class ServiceRequestController {
                 }
 
                 complaint.setReceivingMode(ReceivingMode.MOBILE);
-                String locationText = complaint.getLocation().getLocalName() +" "+ complaint.getChildLocation().getName();
-                serviceRequest.getValues().add(new AttributeValue("location_text",locationText));
+                String locationText = complaint.getLocation().getLocalName() + " " + complaint.getChildLocation().getName();
+                serviceRequest.getValues().add(new AttributeValue("location_text", locationText));
                 Complaint savedComplaint = complaintService.createComplaint(complaint);
                 serviceRequest.setCrn(savedComplaint.getCrn());
-                serviceRequest.setEscalationDate(savedComplaint.getEscalationDate().toString());
-                serviceRequest.setLastModifiedDate(savedComplaint.getLastModifiedDate().toString());
+                serviceRequest.setEscalationDate(savedComplaint.getEscalationDate());
+                serviceRequest.setLastModifiedDate(savedComplaint.getLastModifiedDate());
                 serviceRequest.setStatusDetails(ComplaintStatus.valueOf(complaint.getStatus().getName()));
                 ServiceRequestRes serviceRequestResponse = new ServiceRequestRes();
                 ResponseInfo responseInfo = resInfo;
@@ -170,10 +170,10 @@ public class ServiceRequestController {
                     complaint.setReceivingMode(ReceivingMode.WEBSITE);
                     Complaint savedComplaint = complaintService.update(complaint, serviceRequest.getApprovalPosition(),
                             serviceRequest.getApprovalComment());
-                    String locationText = complaint.getLocation().getLocalName() +" "+ complaint.getChildLocation().getName();
-                    serviceRequest.getValues().add(new AttributeValue("location_text",locationText));
-                    serviceRequest.setEscalationDate(savedComplaint.getEscalationDate().toString());
-                    serviceRequest.setLastModifiedDate(savedComplaint.getLastModifiedDate().toString());
+                    String locationText = complaint.getLocation().getLocalName() + " " + complaint.getChildLocation().getName();
+                    serviceRequest.getValues().add(new AttributeValue("location_text", locationText));
+                    serviceRequest.setEscalationDate(savedComplaint.getEscalationDate());
+                    serviceRequest.setLastModifiedDate(savedComplaint.getLastModifiedDate());
 
                     ServiceRequestRes serviceRequestResponse = new ServiceRequestRes();
                     ResponseInfo responseInfo = resInfo;
@@ -211,11 +211,11 @@ public class ServiceRequestController {
             for (Complaint complaint : complaintsList) {
                 ServiceRequest serviceRequest = new ServiceRequest();
                 BeanUtils.copyProperties(complaint, serviceRequest);
-                String locationText = complaint.getLocation().getLocalName() +" "+ complaint.getChildLocation().getName();
-                serviceRequest.getValues().add(new AttributeValue("location_text",locationText));
-                serviceRequest.setEscalationDate(complaint.getEscalationDate().toString());
-                serviceRequest.setLastModifiedDate(complaint.getLastModifiedDate().toString());
-                serviceRequest.setCreatedDate(complaint.getCreatedDate().toString());
+                String locationText = complaint.getLocation().getLocalName() + " " + complaint.getChildLocation().getName();
+                serviceRequest.getValues().add(new AttributeValue("location_text", locationText));
+                serviceRequest.setEscalationDate(complaint.getEscalationDate());
+                serviceRequest.setLastModifiedDate(complaint.getLastModifiedDate());
+                serviceRequest.setCreatedDate(complaint.getCreatedDate());
                 serviceRequest.setStatusDetails(ComplaintStatus.valueOf(complaint.getStatus().getName()));
                 serviceRequest.setComplaintTypeName(complaint.getComplaintType().getName());
                 serviceRequest.setComplaintTypeCode(complaint.getComplaintType().getCode());
