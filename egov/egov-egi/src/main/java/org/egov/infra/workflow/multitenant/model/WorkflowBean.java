@@ -275,4 +275,14 @@ public class WorkflowBean implements Serializable {
         task.setAttributes(this.getAttributes()); 
         return task;     
     }
+    public void map(ProcessInstance processInstance) {
+        
+        this.setBusinessKey(processInstance.getBusinessKey());
+        this.setWorkflowAction(processInstance.getAction());
+        this.setWorkflowId(processInstance.getId());
+        this.setCurrentState(processInstance.getStatus());
+        if(processInstance.getAssignee()!=null)
+            this.setApproverPositionId(Long.valueOf(processInstance.getAssignee()));
+         
+    }
 }

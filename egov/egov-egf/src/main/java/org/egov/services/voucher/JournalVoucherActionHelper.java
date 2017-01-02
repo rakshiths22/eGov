@@ -60,12 +60,16 @@ import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.infstr.services.PersistenceService;
+import org.egov.model.bills.EgBillregistermis;
+import org.egov.model.payment.Paymentheader;
 import org.egov.model.voucher.VoucherDetails;
 import org.egov.model.voucher.VoucherTypeBean;
 import org.egov.utils.FinancialConstants;
 import org.hibernate.HibernateException;
+import org.hibernate.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -97,6 +101,8 @@ public class JournalVoucherActionHelper extends BaseWorkFlow {
     @Autowired
     @Qualifier("chartOfAccounts")
     private ChartOfAccounts chartOfAccounts;
+    @Autowired
+    private BaseWorkFlow baseWorkFlow;
 
     @Transactional
     public CVoucherHeader createVoucher(List<VoucherDetails> billDetailslist, List<VoucherDetails> subLedgerlist,
@@ -118,7 +124,7 @@ public class JournalVoucherActionHelper extends BaseWorkFlow {
             }
             else
             {
-               transitionWorkFlow(voucherHeader, workflowBean);
+                voucherHeader=(CVoucherHeader)transitionWorkFlow(voucherHeader, workflowBean);
                  
             }
             voucherService.create(voucherHeader);
@@ -163,14 +169,13 @@ public class JournalVoucherActionHelper extends BaseWorkFlow {
                     if (LOGGER.isDebugEnabled())
                         LOGGER.debug("Journal Voucher Modify Action | Bill modify | voucher name = "
                                 + voucherHeader.getName());
-                    // cancelBill(voucherHeader.getId());
                     voucherService.updateBillForVSubType(billDetailslist, subLedgerlist, voucherHeader, voucherTypeBean,
                             new BigDecimal(totalamount));
                 }
                 voucherHeader.setStatus(FinancialConstants.PREAPPROVEDVOUCHERSTATUS);
 
             }
-            //voucherHeader = transitionWorkFlow(voucherHeader, workflowBean);
+            voucherHeader=(CVoucherHeader)    transitinWorkflow(voucherHeader,workflowBean);
             voucherService.persist(voucherHeader);
         } catch (final ValidationException e) {
 
@@ -185,15 +190,85 @@ public class JournalVoucherActionHelper extends BaseWorkFlow {
         }
         return voucherHeader;
     }
+    
+    
 
-   
+     
+    private  CVoucherHeader transitinWorkflow(CVoucherHeader vh,WorkflowBean workflowBean)
+    {
+        vh = (CVoucherHeader)baseWorkFlow.transitionWorkFlow(vh, workflowBean);
+        switch(workflowBean.getWorkflowAction().toLowerCase())   
+        {
+        case  WorkflowConstants.ACTION_APPROVE :
+            vh.setStatus(FinancialConstants.CREATEDVOUCHERSTATUS);
+            break;
+        case  WorkflowConstants.ACTION_CANCEL :
+            vh.setStatus(FinancialConstants.CANCELLEDVOUCHERSTATUS);
+            cancelBill(vh.getId());
+            break; 
+        }
+        return vh;
+        
+        
+        
+    }
+    
+    
+    private void cancelBill(final Long vhId) {
+        final StringBuffer billQuery = new StringBuffer();
+        final String statusQuery = "(select stat.id from  egw_status  stat where stat.moduletype=:module and stat.description=:description)";
+        final String cancelQuery = "Update eg_billregister set billstatus=:billstatus , statusid =" + statusQuery
+                + " where  id=:billId";
+        String moduleType = "", description = "", billstatus = "";
+        final EgBillregistermis billMis = (EgBillregistermis) persistenceService.find(
+                "from  EgBillregistermis  mis where voucherHeader.id=?", vhId);
 
-    private Assignment getWorkflowInitiator(final CVoucherHeader voucherHeader) {
-        Assignment wfInitiator = assignmentService.findByEmployeeAndGivenDate(voucherHeader.getCreatedBy().getId(), new Date())
-                .get(0);
-        return wfInitiator;
+        if (billMis != null && billMis.getEgBillregister().getWorkflowId() == null) {
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("....Cancelling Bill Associated with the Voucher....");
+            billQuery.append(
+                    "select bill.expendituretype,bill.id from CVoucherHeader vh,EgBillregister bill ,EgBillregistermis mis")
+                    .append(" where vh.id=mis.voucherHeader and bill.id=mis.egBillregister and vh.id=" + vhId);
+            final Object[] bill = (Object[]) persistenceService.find(billQuery.toString()); // bill[0] contains expendituretype
+                                                                                            // and
+            // bill[1] contaons billid
+
+            if (FinancialConstants.STANDARD_EXPENDITURETYPE_SALARY.equalsIgnoreCase(bill[0].toString())) {
+                billstatus = FinancialConstants.SALARYBILL;
+                description = FinancialConstants.SALARYBILL_CANCELLED_STATUS;
+                moduleType = FinancialConstants.SALARYBILL;
+            }
+            else if (FinancialConstants.STANDARD_EXPENDITURETYPE_CONTINGENT.equalsIgnoreCase(bill[0].toString()))
+            {
+                billstatus = FinancialConstants.CONTINGENCYBILL_CANCELLED_STATUS;
+                description = FinancialConstants.CONTINGENCYBILL_CANCELLED_STATUS;
+                moduleType = FinancialConstants.CONTINGENCYBILL_FIN;
+            }
+            else if (FinancialConstants.STANDARD_EXPENDITURETYPE_PURCHASE.equalsIgnoreCase(bill[0].toString()))
+            {
+                billstatus = FinancialConstants.SUPPLIERBILL_CANCELLED_STATUS;
+                description = FinancialConstants.SUPPLIERBILL_CANCELLED_STATUS;
+                moduleType = FinancialConstants.SUPPLIERBILL;
+            }
+            else if (FinancialConstants.STANDARD_EXPENDITURETYPE_WORKS.equalsIgnoreCase(bill[0].toString()))
+            {
+                billstatus = FinancialConstants.CONTRACTORBILL_CANCELLED_STATUS;
+                description = FinancialConstants.CONTRACTORBILL_CANCELLED_STATUS;
+                moduleType = FinancialConstants.CONTRACTORBILL;
+            }
+
+            final Query billQry = persistenceService.getSession().createSQLQuery(cancelQuery.toString());
+            billQry.setString("module", moduleType);
+            billQry.setString("description", description);
+            billQry.setString("billstatus", billstatus);
+            billQry.setLong("billId", (Long) bill[1]);
+            billQry.executeUpdate();
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("Bill Cancelled Successfully" + bill[1]);
+        }
     }
 
+     
     private HashMap<String, Object> createHeaderAndMisDetails(CVoucherHeader voucherHeader) throws ValidationException
     {
         final HashMap<String, Object> headerdetails = new HashMap<String, Object>();

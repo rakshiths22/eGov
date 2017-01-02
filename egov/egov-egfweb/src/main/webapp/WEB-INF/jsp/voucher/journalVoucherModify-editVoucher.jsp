@@ -167,44 +167,17 @@
 			
 			document.getElementById('subLedgerTable').getElementsByTagName('table')[0].width="90%"
 		</script>
-
-					<br />
-					<div class="subheadsmallnew" /></div>
-					<div id="wfHistoryDiv">
-						<%--   	<c:import url="/WEB-INF/jsp/workflow/workflowHistory.jsp" context="/egi">
-	        <c:param name="stateId" value="${voucherHeader.state.id}"></c:param>
-        </c:import> --%>
-					</div>
-					<s:if test='%{! wfitemstate.equalsIgnoreCase("END")}'>
-						<%@include file="voucherWorkflow.jsp"%>
-					</s:if>
-					<div align="center">
-						<table border="0" width="100%">
-							<tr>
-								<td class="bluebox">&nbsp;</td>
-								<td class="bluebox">Comments</td>
-								<td class="bluebox"><s:textarea name="comments"
-										id="comments" cols="150" rows="3" onblur="checkLength(this)" /></td>
-								<td><s:hidden id="methodName" name="methodName"
-										value="save" /></td>
-								<s:hidden id="vhid" name="vhid" value="%{voucherHeader.id}" />
-								<s:hidden name="actionName" id="actionName" />
-							</tr>
-							<br />
-						</table>
-					</div>
-
-					<br />
-				</div>
-			</div>
+ 
 			<div id="codescontainer"></div>
-			<%@ include file='../workflow/commonWorkflowMatrix.jsp'%>
-			<%@ include file='../workflow/commonWorkflowMatrix-button.jsp'%>
+			<br/>
+			<%@ include file='../workflow/commonworkflow.jsp'%>
+			<%@ include file='../workflow/commonworkflow-button.jsp'%>
 			<div class="buttonbottom" id="buttondiv">
 				<input type="button" class="button" id="print" value="Print Preview"
 					action="journalVoucherPrint" method="print" onclick="printJV()" />
 			</div>
 			<s:hidden id="cgn" name="cgn"></s:hidden>
+			<s:hidden id="id" name="id"></s:hidden>
 			<s:hidden name="saveMode" id="saveMode" />
 			<s:hidden name="actionName" id="actionName" />
 			<input type="hidden" id="voucherTypeBean.voucherNumType"

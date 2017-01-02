@@ -74,6 +74,7 @@ import org.egov.model.bills.EgBillregistermis;
 import org.egov.model.voucher.VoucherDetails;
 import org.egov.model.voucher.VoucherTypeBean;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.pims.commons.Designation;
 import org.egov.pims.commons.Position;
 import org.egov.services.voucher.JournalVoucherActionHelper;
@@ -160,30 +161,14 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
             voucherHeaderId = voucherHeader.getId().toString();
         else
             voucherHeaderId = parameters.get("voucherId")[0];
+        
         isOneFunctionCenter = voucherHeader.getIsRestrictedtoOneFunctionCenter();
         if (voucherHeaderId != null)
             voucherHeader = (CVoucherHeader) getPersistenceService().find(VOUCHERQUERY, Long.valueOf(voucherHeaderId));
         final Map<String, Object> vhInfoMap = voucherService.getVoucherInfo(voucherHeader.getId());
         voucherHeader = (CVoucherHeader) vhInfoMap.get(Constants.VOUCHERHEADER);
-        try {
-            if (voucherHeader != null && voucherHeader.getCurrentTask() != null)
-                if (voucherHeader.getCurrentTask().getStatus().contains("Rejected")) {
-                    positionsForUser = eisService.getPositionsForUser(ApplicationThreadLocals.getUserId(), new Date());
-                }
-                else if (voucherHeader.getCurrentTask().getStatus().contains("Closed")) {
-                    if (LOGGER.isDebugEnabled())
-                        LOGGER.debug("Valid Owner :return true");
-                } else if (parameters.get("showMode")[0].equalsIgnoreCase("view")) {
-                    if (LOGGER.isDebugEnabled())
-                        LOGGER.debug("Valid Owner :return true");
-                } else
-                    throw new ApplicationRuntimeException("Invalid Aceess");
-            setOneFunctionCenterValue();
-        } catch (final ApplicationRuntimeException e) {
-            final List<ValidationError> errors = new ArrayList<ValidationError>();
-            errors.add(new ValidationError("exp", "Invalid Aceess"));
-            throw new ValidationException(errors);
-        }
+        prepareWorkflow(null, voucherHeader, workflowBean);
+        setOneFunctionCenterValue();
         billDetailslist = (List<VoucherDetails>) vhInfoMap.get(Constants.GLDEATILLIST);
         subLedgerlist = (List<VoucherDetails>) vhInfoMap.get("subLedgerDetail");
         getBillInfo();
@@ -207,23 +192,7 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
         }
     }
 
-    private void sendForApproval()
-    {
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("journalVoucherModifyAction | sendForApproval | Start");
-        if (voucherHeader.getId() == null)
-            voucherHeader = (CVoucherHeader) voucherService.findById(Long.parseLong(parameters.get("voucherId")[0]), false);
-        
-        voucherHeader = preApprovedActionHelper.sendForApproval(voucherHeader, workflowBean);
-        if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-            addActionMessage(getText("pjv.voucher.approved",
-                    new String[] { voucherService.getEmployeeNameForPositionId(voucherHeader.getCurrentTask().getOwnerPosition()) }));
-        if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkflowAction())) {
-            addActionMessage(getText("billVoucher.file.canceled"));
-            if (!"JVGeneral".equalsIgnoreCase(voucherHeader.getName()))
-                cancelBill(voucherHeader.getId());
-        }
-    }
+    
 
     private void validateBeforeEdit(final CVoucherHeader voucherHeader) {
 
@@ -235,24 +204,7 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
 
     }
 
-    private void addActionMsg(final String stateValue, final Position pos)
-    {
-
-        if (parameters.get(ACTIONNAME)[0].contains("approve"))
-            if ("END".equals(stateValue))
-                addActionMessage(getText("pjv.voucher.final.approval", new String[] { "The File has been approved" }));
-            else {
-                addActionMessage(getText("pjv.voucher.modified", new String[] { voucherHeader.getVoucherNumber() }));
-                addActionMessage(getText("pjv.voucher.approved",
-                        new String[] { voucherService.getEmployeeNameForPositionId(pos) }));
-            }
-        else if (parameters.get(ACTIONNAME)[0].contains("ao_reject") || parameters.get(ACTIONNAME)[0].contains("aa_reject")
-                || "END".equals(stateValue))
-            addActionMessage(getText("voucher.cancelled"));
-        else
-            addActionMessage(getText("pjv.voucher.rejected", new String[] { voucherService.getEmployeeNameForPositionId(pos) }));
-
-    }
+    
 
     @ValidationErrorPage(value = "editVoucher")
     @SuppressWarnings("deprecation")
@@ -269,15 +221,10 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
         validateBeforeEdit(voucherHeader);
         CVoucherHeader oldVh = voucherHeader;
         
-        if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkflowAction())) {
-            voucherHeader = (CVoucherHeader) voucherService.findById(Long.parseLong(parameters.get(VHID)[0]), false);
-            sendForApproval();
-            return "message";
-        }
+        
         if (null != voucherNumManual && StringUtils.isNotEmpty(voucherNumManual))
             voucherHeader.setVoucherNumber(voucherNumManual);
         voucherHeader.setIsRestrictedtoOneFunctionCenter(isOneFunctionCenter);
-
         removeEmptyRowsAccoutDetail(billDetailslist);
         removeEmptyRowsSubledger(subLedgerlist);
 
@@ -286,6 +233,7 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
                 voucherHeader = journalVoucherActionHelper.editVoucher(billDetailslist, subLedgerlist, voucherHeader,
                         voucherTypeBean, workflowBean, parameters.get("totaldbamount")[0]);
                 target = "success";
+                addActionMessage(generateMessage(voucherHeader, workflowBean));
             }
             else {
                 throw new ValidationException("InValid data", "InValid data");
@@ -298,9 +246,7 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
                 // setOneFunctionCenterValue();
                 resetVoucherHeader();
 
-            if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-                addActionMessage(getText("pjv.voucher.approved",
-                        new String[] { voucherService.getEmployeeNameForPositionId(voucherHeader.getCurrentTask().getOwnerPosition()) }));
+           
         } catch (final ValidationException e) {
             resetVoucherHeader();
             voucherHeader = oldVh;
@@ -573,5 +519,40 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
      * public boolean isRejectedVoucher() { return isRejectedVoucher; } public void setRejectedVoucher(boolean isRejectedVoucher)
      * { this.isRejectedVoucher = isRejectedVoucher; }
      */
-   
+    public String generateMessage(CVoucherHeader voucherHeader, WorkflowBean workflowBean) {
+        String message="";
+        switch(workflowBean.getWorkflowAction().toLowerCase())   
+        {
+        case  WorkflowConstants.ACTION_APPROVE :
+            message=getText("voucher.approved.success", new String[] {voucherHeader.getVoucherNumber()});
+            break;
+        case  WorkflowConstants.ACTION_REJECT :
+            message=getText("voucher.reject", new String[] {voucherHeader.getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
+            break;   
+        case  WorkflowConstants.ACTION_FORWARD :
+            if(voucherHeader.getVouchermis().getBudgetaryAppnumber()!=null)
+            {
+            message=getText("voucher.update.success.with.budgetappropriation",
+                    new String[] {voucherHeader.getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName(),voucherHeader.getVouchermis().getBudgetaryAppnumber()});
+            }else
+            {
+                message=getText("voucher.update.success",
+                        new String[] {voucherHeader.getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});  
+            }
+            break;    
+        case  WorkflowConstants.ACTION_CANCEL :
+            message=getText("voucher.cancel",
+                    new String[] {voucherHeader.getVoucherNumber()});
+            break; 
+        case  WorkflowConstants.ACTION_SAVE :
+            message=getText("voucher.saved.success",
+                    new String[] {voucherHeader.getVoucherNumber()});
+            break;   
+
+        }
+        return message;
+    }
+      
+    
+    
 }

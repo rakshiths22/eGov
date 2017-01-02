@@ -88,17 +88,13 @@
 <div class="buttonbottom" align="center">
 	<s:hidden id="workflowAction" name="workflowBean.workflowAction" />
 	<table style="width: 100%; text-align: center;">
-		<tr>
-			<td><s:iterator value="workflowBean.validActions" var="validAction">
-					<s:if test="%{validAction!=''}">
-						<s:submit type="submit" cssClass="buttonsubmit"
+		<tr><td><s:iterator value="workflowBean.validActions" var="validAction">
+					<s:if test="%{validAction!=''}"><s:submit type="submit" cssClass="buttonsubmit"
 							value="%{validAction}" id="%{validAction}" name="%{validAction}"
-							onclick="return validateWorkFlowApprover('%{validAction}','jsValidationErrors');" />
-					</s:if>
+						onclick="return validateWorkFlowApprover('%{validAction}','jsValidationErrors');" /></s:if>
 				</s:iterator>
-				</td>
-				<td>
-				 <input type="button" name="button2" id="button2" value="Close" class="button" onclick="window.close();" /></td>
+			    	<input type="button" name="button2" id="button2" value="Close" class="button" onclick="window.close();" /> 
+			    	</td>
 		</tr>
 	</table>
 </div>

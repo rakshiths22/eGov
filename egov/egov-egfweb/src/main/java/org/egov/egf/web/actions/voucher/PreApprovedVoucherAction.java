@@ -86,6 +86,7 @@ import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infra.workflow.entity.State;
 import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
+import org.egov.infra.workflow.multitenant.model.ProcessInstance;
 import org.egov.infra.workflow.multitenant.model.Task;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
 import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
@@ -102,12 +103,14 @@ import org.egov.model.bills.EgBillregistermis;
 import org.egov.model.contra.ContraJournalVoucher;
 import org.egov.model.voucher.PreApprovedVoucher;
 import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.pims.commons.Designation;
 import org.egov.pims.commons.Position;
 import org.egov.pims.model.PersonalInformation;
 import org.egov.pims.service.EisUtilService;
 import org.egov.services.bills.BillsService;
 import org.egov.services.contra.ContraService;
+import org.egov.services.voucher.JournalVoucherActionHelper;
 import org.egov.services.voucher.PreApprovedActionHelper;
 import org.egov.services.voucher.VoucherService;
 import org.egov.utils.Constants;
@@ -211,6 +214,9 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
     Date date;
     @Autowired
     private BaseWorkFlow baseWorkFlow;
+    
+    @Autowired
+    private JournalVoucherActionHelper journalVoucherActionHelper;
 
     @Override
     public WorkflowEntity getModel() {
@@ -342,12 +348,16 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
         }
         getHeaderMandateFields();
         getSession().put("voucherId", parameters.get(VHID)[0]);
-        if (voucherHeader.getCurrentTask() != null && voucherHeader.getCurrentTask().getStatus().contains("Rejected"))
+        ProcessInstance currentTask=new ProcessInstance();
+        currentTask.setId(voucherHeader.getWorkflowId());
+        currentTask.setEntity(voucherHeader);
+        currentTask=   baseWorkFlow.getProcess(currentTask);
+        if (currentTask != null && currentTask.getStatus().contains("Rejected"))
             if (voucherHeader.getModuleId() == null) {
                 final EgBillregistermis billMis = (EgBillregistermis) persistenceService.find(
                         "from EgBillregistermis where voucherHeader.id=?", voucherHeader.getId());
                 if (billMis != null) {
-                    if (billMis.getEgBillregister().getCurrentTask() == null) {
+                    if (billMis.getEgBillregister().getWorkflowId() == null) {
                         result = "editVoucher";
                         ismodifyJv = true;
                     }
@@ -358,7 +368,7 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
                     ismodifyJv = true;
                 }
             }
-        // loadApproverUser(type);
+        
         if (!ismodifyJv)
             if ("Y".equals(pjv_wc_enabled))
                 result = VOUCHEREDIT;
@@ -573,14 +583,13 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
         methodName = "update";
         try {
             voucherHeader = (CVoucherHeader) voucherService.findById(Long.parseLong(parameters.get(VHID)[0]), false);
-           
-            transitionWorkFlow(voucherHeader, workflowBean);
+            journalVoucherActionHelper.transitionWorkFlow(voucherHeader, workflowBean);   
             voucherService.persist(voucherHeader);
           
             type = billsService.getBillTypeforVoucher(voucherHeader);
             if (null == type)
                 type = "default";
-
+             addActionMessage(generateMessage(voucherHeader, workflowBean));
             
         } catch (final ValidationException e) {
 
@@ -595,6 +604,41 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
         }
 
         return "message";
+    }
+    
+    
+    public String generateMessage(CVoucherHeader voucherHeader, WorkflowBean workflowBean) {
+        String message="";
+        switch(workflowBean.getWorkflowAction().toLowerCase())   
+        {
+        case  WorkflowConstants.ACTION_APPROVE :
+            message=getText("voucher.approved.success", new String[] {voucherHeader.getVoucherNumber()});
+            break;
+        case  WorkflowConstants.ACTION_REJECT :
+            message=getText("voucher.reject", new String[] {voucherHeader.getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
+            break;   
+        case  WorkflowConstants.ACTION_FORWARD :
+            if(voucherHeader.getVouchermis().getBudgetaryAppnumber()!=null)
+            {
+            message=getText("voucher.create.success.with.budgetappropriation",
+                    new String[] {voucherHeader.getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName(),voucherHeader.getVouchermis().getBudgetaryAppnumber()});
+            }else
+            {
+                message=getText("voucher.create.success",
+                        new String[] {voucherHeader.getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});  
+            }
+            break;    
+        case  WorkflowConstants.ACTION_CANCEL :
+            message=getText("voucher.cancel",
+                    new String[] {voucherHeader.getVoucherNumber()});
+            break; 
+        case  WorkflowConstants.ACTION_SAVE :
+            message=getText("voucher.saved.success",
+                    new String[] {voucherHeader.getVoucherNumber()});
+            break;   
+
+        }
+        return message;
     }
 
     protected void populateWorkflowBean() {

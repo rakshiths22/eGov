@@ -116,6 +116,12 @@ public  class BaseWorkFlow {
     public WorkflowInterface getWorkflowImplementation(WorkflowEntity workflowEntity, WorkflowBean workflowBean2) {
         return (WorkflowInterface)applicationContext.getBean("internalDefaultWorkflow");
      }
+    
+    public WorkflowInterface getWorkflowImplementation(ProcessInstance p) {
+        //this will decide by p.getBusinessKey and p.getId
+        
+        return (WorkflowInterface)applicationContext.getBean("internalDefaultWorkflow");
+     }
     private ProcessInstance setUpProcessInstance(WorkflowBean workflowBean,WorkflowEntity workflowEntity) {
         ProcessInstance pi=new ProcessInstance();
         if(workflowBean.getWorkflowId()!=null && !workflowBean.getWorkflowId().isEmpty())
@@ -215,6 +221,11 @@ public  class BaseWorkFlow {
     public List<Task> getWorkflowHistory(WorkflowEntity entity,WorkflowBean workflowBean) {
         WorkflowInterface workflowImplementation = getWorkflowImplementation(entity,workflowBean);
         return workflowImplementation.getHistoryDetail(entity.getWorkflowId());
+    }
+    
+    public ProcessInstance getProcess(ProcessInstance p)
+    {
+      return  getWorkflowImplementation(p).getProcess("jurisdiction", p);
     }
 
 

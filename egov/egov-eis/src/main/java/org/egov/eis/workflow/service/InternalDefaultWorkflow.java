@@ -223,8 +223,7 @@ public class InternalDefaultWorkflow implements WorkflowInterface {
      */
     private List<String> getValidActions(final WorkflowEntity model, final WorkflowBean workflowBean) {
         List<String> validActions = Collections.emptyList();
-        if (null == model
-                || model.getWorkflowId() == null
+        if (null == model || model.getWorkflowId() == null
                 || (  model.getProcessInstance() != null ? model.getProcessInstance().getStatus().equals("Closed")
                         || model.getProcessInstance().getStatus().equals("END") : false)) {
             validActions = Arrays.asList("Forward");
@@ -284,7 +283,7 @@ public class InternalDefaultWorkflow implements WorkflowInterface {
             processInstance.setStatus(state.getValue());
         }
         processInstance.getEntity().setProcessInstance(processInstance);
-        copy(processInstance,wfbean);
+        wfbean.map(processInstance);
         Attribute validActions=new Attribute();
         validActions.setValues(getValidActions(processInstance.getEntity(), wfbean));
         processInstance.getAttributes().put("validActions",validActions);
