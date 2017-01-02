@@ -61,6 +61,7 @@ import org.springframework.ui.Model;
 @Component
 public  class BaseWorkFlow {
     
+	 
     
     
     @Autowired
@@ -72,7 +73,7 @@ public  class BaseWorkFlow {
     public WorkflowEntity transitionWorkFlow(WorkflowEntity workflowEntity, WorkflowBean workflowBean) {
         
         WorkflowInterface    workflowInterface=getWorkflowImplementation(workflowEntity,workflowBean);
-        if(workflowBean.getWorkflowId()==null)
+        if(workflowBean.getWorkflowId()==null || workflowBean.getWorkflowId().isEmpty() )
         {
         ProcessInstance pi=workflowBean.mapProcessInstance(workflowEntity);
           pi=  workflowInterface.start("", pi);
@@ -113,7 +114,7 @@ public  class BaseWorkFlow {
     }
 
     public WorkflowInterface getWorkflowImplementation(WorkflowEntity workflowEntity, WorkflowBean workflowBean2) {
-        return (WorkflowInterface)applicationContext.getBean("InternalDefaultWorkflow");
+        return (WorkflowInterface)applicationContext.getBean("internalDefaultWorkflow");
      }
     private ProcessInstance setUpProcessInstance(WorkflowBean workflowBean,WorkflowEntity workflowEntity) {
         ProcessInstance pi=new ProcessInstance();
