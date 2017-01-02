@@ -6,31 +6,16 @@ $(document).ready(function(){
 	});
 
 
-$('.btn-primary').click(function(){
+$('.btn-wf-primary').click(function(){
 	var button = $(this).attr('id');
-	if (button != null && button == 'Forward') {
-		if(!$("form").valid())
-			return false;
-		if(validateWorkFlowApprover(button))
-			return true;
-		else
-			return false;
-	} else if(validateWorkFlowApprover(button))
-		return true;
-	else
-		return false;
+		validate(button);
+			if(!$("form").valid())
+				return false;
+			else 
+				return true;
+	 
 });
 
-
-$('.btn-primary').click(function(){
-	var button = $(this).attr('id');
-	if(!validateWorkFlowApprover(button))
-		return false;
-	if($("form").valid()){
-		return true;
-	}else
-		return false;
-});
 
 
 function calculateBillAmount(){

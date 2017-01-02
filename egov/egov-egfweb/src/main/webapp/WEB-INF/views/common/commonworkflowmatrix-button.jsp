@@ -46,8 +46,9 @@
 		<tr>
 			<td id="actionButtons">
 				<c:if test="${mode != 'readOnly' }">
-					<c:forEach items="${workflowBean.validActions}" var="validButtons">
-						<input type="submit" id="${validButtons}" class="btn btn-primary btn-wf-primary"  value="${validButtons}"/>
+					<c:forEach items="${workflowBean.validActions}" var="validButton">
+ 					<input type="submit" id="${validButton}" class="btn btn-primary btn-wf-primary" 
+ 					 value="${validButton}" />
 					</c:forEach>
 				</c:if>
 				<input type="button" name="button2" id="button2" value="Close" class="btn btn-default" onclick="window.close();" />
@@ -55,3 +56,39 @@
 		</tr>
 	</table>
 </div>
+<script>
+function validate(name) {
+	 document.getElementById("workFlowAction").value = name;
+	var approverPosId = document.getElementById("approvalPosition");
+	var button = document.getElementById("workFlowAction").value;
+	if (button != null && button == 'Submit') {
+		$('#approvalDepartment').attr('required', 'required');
+		$('#approvalDesignation').attr('required', 'required');
+		$('#approvalPosition').attr('required', 'required');
+		$('#workflowComments').removeAttr('required');
+	}
+	if (button != null && button == 'Reject') {
+		$('#approvalDepartment').removeAttr('required');
+		$('#approvalDesignation').removeAttr('required');
+		$('#approvalPosition').removeAttr('required');
+		$('#workflowComments').attr('required', 'required');
+	}
+	if (button != null && button == 'Cancel') {
+		$('#approvalDepartment').removeAttr('required');
+		$('#approvalDesignation').removeAttr('required');
+		$('#approvalPosition').removeAttr('required');
+		}
+	if (button != null && button == 'Forward') {
+		$('#approvalDepartment').attr('required', 'required');
+		$('#approvalDesignation').attr('required', 'required');
+		$('#approvalPosition').attr('required', 'required');
+		$('#workflowComments').removeAttr('required');
+	}
+	if (button != null && button == 'Approve') {
+		$('#workflowComments').removeAttr('required');
+	} 
+ 
+	 
+}
+
+</script>

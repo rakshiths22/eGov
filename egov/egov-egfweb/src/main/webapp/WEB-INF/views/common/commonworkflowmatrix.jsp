@@ -65,6 +65,7 @@
 	<input type="hidden" name="workflowBean.approverName" value="${workflowBean.approverName}" id="approverName"/>
 	<input type="hidden" name="workflowBean.businessKey" value="${workflowBean.businessKey }" id="businessKey"/>
 	<input type="hidden" name="workflowBean.workflowId" value="${workflowBean.workflowId }" id="workflowId"/>
+	<input type="hidden" id="approverDesignationName" name="workflowBean.approverDesignationName" value="${workflowBean.approverDesignationName }"   />
 	
   	
 

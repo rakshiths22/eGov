@@ -76,8 +76,10 @@ $(document).ready(function(){
 $('.btn-wf-primary').click(function(){
 	var button = $(this).attr('id');
 	if (button != null && (button == 'Forward')) {
-		if(!validateWorkFlowApprover(button))
+		if(!validateCutOffDate(button))
 			return false;
+		validate($(this).attr('value'))
+		
 		if(!$("form").valid())
 			return false;
 		if(validate()){
@@ -91,7 +93,7 @@ $('.btn-wf-primary').click(function(){
 		$('#approvalDesignation').removeAttr('required');
 		$('#approvalPosition').removeAttr('required');
 		$('#approvalComent').removeAttr('required');
-		if(!validateWorkFlowApprover(button))
+		if(!validateCutOffDate(button))
 			return false;
 		if(!$("form").valid())
 			return false;
@@ -101,7 +103,7 @@ $('.btn-wf-primary').click(function(){
 		}else
 			return false;
 	} else{
-		if(!validateWorkFlowApprover(button))
+		if(!validateCutOffDate(button))
 			return false;
 		if($("form").valid()){
 			deleteHiddenSubledgerRow();
@@ -824,37 +826,8 @@ function calculateBillAmount(){
 	$("#billamount").val(billamount);
 }
 
-function validateWorkFlowApprover(name) {
-	document.getElementById("workFlowAction").value = name;
-	var approverPosId = document.getElementById("approvalPosition");
-	var button = document.getElementById("workFlowAction").value;
-	if (button != null && button == 'Submit') {
-		$('#approvalDepartment').attr('required', 'required');
-		$('#approvalDesignation').attr('required', 'required');
-		$('#approvalPosition').attr('required', 'required');
-		$('#approvalComent').removeAttr('required');
-	}
-	if (button != null && button == 'Reject') {
-		$('#approvalDepartment').removeAttr('required');
-		$('#approvalDesignation').removeAttr('required');
-		$('#approvalPosition').removeAttr('required');
-		$('#approvalComent').attr('required', 'required');
-	}
-	if (button != null && button == 'Cancel') {
-		$('#approvalDepartment').removeAttr('required');
-		$('#approvalDesignation').removeAttr('required');
-		$('#approvalPosition').removeAttr('required');
-		$('#approvalComent').attr('required', 'required');
-	}
-	if (button != null && button == 'Forward') {
-		$('#approvalDepartment').attr('required', 'required');
-		$('#approvalDesignation').attr('required', 'required');
-		$('#approvalPosition').attr('required', 'required');
-		$('#approvalComent').removeAttr('required');
-	}
-	if (button != null && button == 'Approve') {
-		$('#approvalComent').removeAttr('required');
-	}
+function validateCutOffDate(name) {
+	 
 	if (button != null && button == 'Create And Approve') {
 		return validateCutOff();
 	}else
@@ -883,3 +856,6 @@ function validateCutOff()
 	}
 	return false;
 }
+
+
+ 
