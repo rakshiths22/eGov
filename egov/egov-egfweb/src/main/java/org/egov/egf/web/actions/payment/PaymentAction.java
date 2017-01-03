@@ -793,6 +793,9 @@ public class PaymentAction extends BasePaymentAction {
 
             }
         }
+        
+        workflowBean.setBusinessKey(paymentheader.getClass().getSimpleName());
+        prepareWorkflow(null, paymentheader, workflowBean);
         try {
             final String paymentMd = parameters.get("paymentMode")[0];
             if (LOGGER.isDebugEnabled())
@@ -972,7 +975,7 @@ public class PaymentAction extends BasePaymentAction {
                   //
                 }
             }
-            generateMessage(paymentheader, workflowBean);
+            addActionMessage(generateMessage(paymentheader, workflowBean));
         } catch (final ValidationException e) {
             final List<ValidationError> errors = new ArrayList<ValidationError>();
             errors.add(new ValidationError("exception", e.getErrors().get(0).getMessage()));
@@ -1007,10 +1010,10 @@ public class PaymentAction extends BasePaymentAction {
         if (paymentheader.getId() == null)
             paymentheader = getPayment();
         // this is to check if is not the create mode
-     
+        paymentActionHelper.transitionWorkflow(paymentheader, workflowBean);
         paymentheader = paymentActionHelper.transitionWorkflow(paymentheader, workflowBean);
         paymentActionHelper.getPaymentBills(paymentheader);
-        generateActionMessage(paymentheader, workflowBean);
+       addActionMessage(generateMessage(paymentheader, workflowBean));
         if (Constants.ADVANCE_PAYMENT.equalsIgnoreCase(paymentheader.getVoucherheader().getName())) {
             advanceRequisitionList.addAll(paymentActionHelper.getAdvanceRequisitionDetails(paymentheader));
             return "advancePaymentView";
@@ -1062,6 +1065,7 @@ public class PaymentAction extends BasePaymentAction {
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("Starting view...");
         paymentheader = getPayment();
+        prepareWorkflow(null, paymentheader, workflowBean);
         /*
          * if (paymentheader.getCurrentTask().getStatus() != null && !paymentheader.getCurrentTask().getStatus().isEmpty() &&
          * paymentheader.getCurrentTask().getStatus().contains("Rejected")) { if (LOGGER.isDebugEnabled())

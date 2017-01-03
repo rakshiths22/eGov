@@ -439,8 +439,9 @@ function openVoucher(vid)
 				<s:hidden name="paymentid" value="%{paymentheader.id}" />
 				<s:hidden name="actionname" id="actionName" value="%{action}" />
 				<s:if test="%{mode!='view'}">
-					<%@ include file='../payment/commonWorkflowMatrix.jsp'%>
-					<%@ include file='../workflow/commonWorkflowMatrix-button.jsp'%>
+				<%@ include file='../workflow/commonworkflow.jsp'%>
+				<%@ include file='../workflow/commonworkflow-button.jsp'%>\
+				
 					<s:submit cssClass="button" id="printPreview" value="Print Preview"
 						onclick="printVoucher()" />
 				</s:if>

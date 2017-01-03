@@ -256,15 +256,15 @@ public class State extends AbstractAuditable {
 
     public Task map() {
        Task t=new Task();
-       t.setBusinessKey(this.getType());
+       t.setBusinessKey(this.type);
        t.setComments(this.comments);
        t.setCreatedDate(this.getCreatedDate());
-       t.setId(this.getId().toString());
-       t.setStatus(this.getValue());
+       t.setId(this.id.toString());
+       t.setStatus(this.value);
        t.setNatureOfTask(this.natureOfTask);
        t.setDetails(this.extraInfo==null?"hello":this.extraInfo);
        t.setSender(this.senderName);
-       t.setUrl(this.getMyLinkId());  
+       t.setUrl(this.myLinkId);  
        return t;
        
         
