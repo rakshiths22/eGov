@@ -52,6 +52,25 @@
     <artifactId>egov-pgr</artifactId>
     <version>2.1.0-SNAPSHOT</version>
 
+<repositories>
+        <repository>
+            <id>repo.egovernments.org</id>
+            <name>eGov Public Repository Group</name>
+            <url>http://repo.egovernments.org/nexus/content/groups/public/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>JBoss Repository</id>
+            <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+        </repository>
+    </repositories>
+
     <properties>
          <hibernate-version>5.0.7.Final</hibernate-version>
          <hibernate-validator-version>5.2.3.Final</hibernate-validator-version>
