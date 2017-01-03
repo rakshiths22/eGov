@@ -11,3 +11,9 @@ RUN cd /usr/local/src/eGov/egovrest/egov-pgr \
 
 RUN cd /usr/local/src/eGov/egovrest \
  && mvn package -s settings.xml -DskipTests
+
+# deploy application
+RUN DEPLOY_DIR=$JBOSS_HOME/standalone/deployments \
+ && cp /usr/local/src/eGov/egovrest/target/egov-pgrrest.war $DEPLOY_DIR \
+ && cd $DEPLOY_DIR \
+ && touch egov-pgrrest.dodeploy
