@@ -40,51 +40,52 @@
 
 package org.egov.tl.web.controller.uom;
 
-import javax.validation.Valid;
-
 import org.egov.tl.entity.UnitOfMeasurement;
-import org.egov.tl.service.masters.UnitOfMeasurementService;
+import org.egov.tl.service.UnitOfMeasurementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
+
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @Controller
 @RequestMapping("/licenseunitofmeasurement")
-public class UpdateLicenseUomController {
-
-    private final UnitOfMeasurementService unitOfMeasurementService;
+public class SearchUnitOfMeasurementController {
 
     @Autowired
-    public UpdateLicenseUomController(final UnitOfMeasurementService unitOfMeasurementService) {
-        this.unitOfMeasurementService = unitOfMeasurementService;
-    }
+    private UnitOfMeasurementService unitOfMeasurementService;
 
     @ModelAttribute
-    public UnitOfMeasurement unitOfMeasurementModel(@PathVariable final String code) {
-        return unitOfMeasurementService.findUOMByCode(code);
+    public UnitOfMeasurement unitOfMeasurement() {
+        return new UnitOfMeasurement();
     }
 
-    @RequestMapping(value = "/update/{code}", method = RequestMethod.GET)
-    public String categoryUpdateForm(@ModelAttribute @Valid final UnitOfMeasurement unitOfMeasurement, final Model model) {
-        return "uom-update";
+    @ModelAttribute(value = "licenseUom")
+    public List<UnitOfMeasurement> unitOfMeasurements() {
+        return unitOfMeasurementService.getAllUOM();
     }
 
-    @RequestMapping(value = "/update/{code}", method = RequestMethod.POST)
-    public String updateCategory(@ModelAttribute @Valid final UnitOfMeasurement unitOfMeasurement, final BindingResult errors,
-            final RedirectAttributes additionalAttr) {
+    @RequestMapping(value = "/update", method = GET)
+    public String showUpdateUomSearchForm() {
+        return "uom-search-update";
+    }
 
-        if (errors.hasErrors())
-            return "uom-update";
+    @RequestMapping(value = "/view", method = GET)
+    public String showViewUomSearchForm() {
+        return "uom-search-view";
+    }
 
-        unitOfMeasurementService.persistUnitOfMeasurement(unitOfMeasurement);
-        additionalAttr.addFlashAttribute("message", "msg.success.uom.update");
+    @RequestMapping(value = "/view", method = POST)
+    public String showViewUomForm(@ModelAttribute UnitOfMeasurement unitOfMeasurement) {
         return "redirect:/licenseunitofmeasurement/view/" + unitOfMeasurement.getCode();
     }
 
+    @RequestMapping(value = "/update", method = POST)
+    public String showUpdateUomForm(@ModelAttribute UnitOfMeasurement unitOfMeasurement) {
+        return "redirect:/licenseunitofmeasurement/update/" + unitOfMeasurement.getCode();
+    }
 }

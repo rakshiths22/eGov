@@ -41,33 +41,29 @@
 package org.egov.tl.web.controller.uom;
 
 import org.egov.tl.entity.UnitOfMeasurement;
-import org.egov.tl.service.masters.UnitOfMeasurementService;
+import org.egov.tl.service.UnitOfMeasurementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 @Controller
 @RequestMapping("/licenseunitofmeasurement")
-public class ViewUomController {
-
-    private final UnitOfMeasurementService unitOfMeasurementService;
+public class ViewUnitOfMeasurementController {
 
     @Autowired
-    public ViewUomController(final UnitOfMeasurementService unitOfMeasurementService) {
-        this.unitOfMeasurementService = unitOfMeasurementService;
-    }
+    private UnitOfMeasurementService unitOfMeasurementService;
 
     @ModelAttribute
-    public UnitOfMeasurement licenseUomModel(@PathVariable final String code) {
-        return unitOfMeasurementService.findUOMByCode(code);
+    public UnitOfMeasurement unitOfMeasurement(@PathVariable String code) {
+        return unitOfMeasurementService.getUnitOfMeasurementByCode(code);
     }
 
-    @RequestMapping(value = "/view/{code}", method = RequestMethod.GET)
-    public String uomView(@ModelAttribute final UnitOfMeasurement unitOfMeasurement) {
-
+    @RequestMapping(value = "/view/{code}", method = GET)
+    public String viewUom() {
         return "uom-view";
     }
 }

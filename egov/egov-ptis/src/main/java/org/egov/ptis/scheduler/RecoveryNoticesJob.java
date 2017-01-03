@@ -43,8 +43,15 @@ package org.egov.ptis.scheduler;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.security.utils.SecurityUtils;
+import org.egov.ptis.domain.dao.property.BasicPropertyDAO;
 import org.egov.ptis.domain.entity.notice.RecoveryNoticesInfo;
+import org.egov.ptis.domain.entity.property.BasicProperty;
+import org.egov.ptis.domain.service.notice.NoticeService;
 import org.egov.ptis.domain.service.notice.RecoveryNoticeService;
+import org.egov.ptis.notice.PtNotice;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -61,44 +68,73 @@ import org.springframework.transaction.support.TransactionTemplate;
 @DisallowConcurrentExecution
 public class RecoveryNoticesJob extends QuartzJobBean {
 
+    private static final Logger LOGGER = Logger.getLogger(RecoveryNoticesJob.class);
+
     @Autowired
     private RecoveryNoticeService recoveryNoticesService;
 
     @Autowired
     private TransactionTemplate transactionTemplate;
 
+    @Autowired
+    private BasicPropertyDAO basicPropertyDAO;
+
+    @Autowired
+    private NoticeService noticeService;
+
+    @Autowired
+    private SecurityUtils securityUtils;
+
     @Override
     protected void executeInternal(final JobExecutionContext context) throws JobExecutionException {
+        ApplicationThreadLocals.setUserId(securityUtils.getCurrentUser().getId());
         final String assessmentNumbers = (String) context.getJobDetail().getJobDataMap().get("assessmentNumbers");
         final String noticeType = (String) context.getJobDetail().getJobDataMap().get("noticeType");
-        final List<String> assessments = Arrays.asList(assessmentNumbers.split(","));
+        final List<String> assessments = Arrays.asList(assessmentNumbers.split(", "));
+        final TransactionTemplate txTemplate = new TransactionTemplate(transactionTemplate.getTransactionManager());
         for (final String assessmentNo : assessments) {
-            final TransactionTemplate txTemplate = new TransactionTemplate(transactionTemplate.getTransactionManager());
-            txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("Generating " + noticeType + " for assessment : " + assessmentNo);
             try {
+                txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
                 txTemplate.execute(result -> {
-                    List<String> errors = null;
-                    errors = recoveryNoticesService.validateRecoveryNotices(assessmentNo, noticeType);
+                    final List<String> errors = recoveryNoticesService.validateRecoveryNotices(assessmentNo, noticeType);
                     final RecoveryNoticesInfo noticeInfo = recoveryNoticesService
                             .getRecoveryNoticeInfoByAssessmentAndNoticeType(assessmentNo, noticeType);
-                    if (errors.isEmpty()) {
-                        recoveryNoticesService.generateNotice(assessmentNo, noticeType);
-                        noticeInfo.setGenerated(Boolean.TRUE);
-                        recoveryNoticesService.saveRecoveryNoticeInfo(noticeInfo);
-                        return Boolean.TRUE;
-                    } else {
-                        final String error = errors.get(0);
-                        noticeInfo.setError(error);
-                        recoveryNoticesService.saveRecoveryNoticeInfo(noticeInfo);
+                    if (errors.isEmpty())
+                        return generateNotice(noticeType, assessmentNo, noticeInfo);
+                    else {
+                        updateNoticeInfo(errors, noticeInfo);
                         return Boolean.FALSE;
                     }
                 });
             } catch (final Exception e) {
                 txTemplate.execute(result -> {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.error("Exception in Generating " + noticeType + " for assessment : " + assessmentNo);
+                        LOGGER.error(e);
+                    }
                     return Boolean.FALSE;
                 });
             }
         }
+    }
+
+    private void updateNoticeInfo(final List<String> errors, final RecoveryNoticesInfo noticeInfo) {
+        noticeInfo.setError(errors.get(0));
+        recoveryNoticesService.saveRecoveryNoticeInfo(noticeInfo);
+    }
+
+    private Boolean generateNotice(final String noticeType, final String assessmentNo, final RecoveryNoticesInfo noticeInfo) {
+        final BasicProperty basicProperty = basicPropertyDAO.getBasicPropertyByPropertyID(assessmentNo);
+        final PtNotice notice = noticeService.getNoticeByNoticeTypeAndAssessmentNumner(noticeType,
+                basicProperty.getUpicNo());
+        if (notice == null) {
+            recoveryNoticesService.generateNotice(noticeType, basicProperty);
+            noticeInfo.setGenerated(Boolean.TRUE);
+            recoveryNoticesService.saveRecoveryNoticeInfo(noticeInfo);
+        }
+        return Boolean.TRUE;
     }
 
 }

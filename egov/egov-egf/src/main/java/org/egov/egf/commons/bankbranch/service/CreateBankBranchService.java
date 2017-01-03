@@ -88,8 +88,16 @@ public class CreateBankBranchService {
         return bankBranchRepository.findOne(id);
     }
 
+    public List<Bankbranch> getByBankId(final Integer bankId) {
+        return bankBranchRepository.findByBank_Id(bankId);
+    }
+
     public List<Bankbranch> getByIsActive(final Boolean isActive) {
         return bankBranchRepository.findByIsactive(isActive);
+    }
+
+    public List<Bankbranch> getByIsActiveTrueOrderByBranchname() {
+        return bankBranchRepository.findByIsactiveTrueOrderByBranchnameAsc();
     }
 
     @Transactional
@@ -118,12 +126,6 @@ public class CreateBankBranchService {
         final EntityType<Bankbranch> tempBankBranch = m.entity(Bankbranch.class);
 
         final List<Predicate> predicates = new ArrayList<>();
-        if (bankBranch.getBranchname() != null) {
-            final String name = "%" + bankBranch.getBranchname().toLowerCase() + "%";
-            predicates.add(cb.isNotNull(bankBranchs.get("branchname")));
-            predicates.add(cb.like(
-                    cb.lower(bankBranchs.get(tempBankBranch.getDeclaredSingularAttribute("branchname", String.class))), name));
-        }
         if (bankBranch.getBranchcode() != null) {
             final String code = "%" + bankBranch.getBranchcode().toLowerCase() + "%";
             predicates.add(cb.isNotNull(bankBranchs.get("branchcode")));
@@ -151,6 +153,9 @@ public class CreateBankBranchService {
 
         if (bankBranch.getBank() != null && bankBranch.getBank().getId() != null)
             predicates.add(cb.equal(bankBranchs.get("bank").get("id"), bankBranch.getBank().getId()));
+
+        if (bankBranch.getId() != null)
+            predicates.add(cb.equal(bankBranchs.get("id"), bankBranch.getId()));
 
         createQuery.where(predicates.toArray(new Predicate[] {}));
         final TypedQuery<Bankbranch> query = entityManager.createQuery(createQuery);

@@ -73,7 +73,6 @@ import java.util.TreeMap;
 
 import static org.egov.tl.utils.Constants.LOCALITY;
 import static org.egov.tl.utils.Constants.LOCATION_HIERARCHY_TYPE;
-import static org.egov.tl.utils.Constants.TRANSACTIONTYPE_CREATE_LICENSE;
 
 @ParentPackage("egov")
 @Results({
@@ -93,7 +92,7 @@ public class EnterTradeLicenseAction extends BaseLicenseAction<TradeLicense> {
 
     @Autowired
     @Qualifier("tradeLicenseService")
-    private TradeLicenseService tradeLicenseService;
+    private transient TradeLicenseService tradeLicenseService;
 
     public EnterTradeLicenseAction() {
         tradeLicense.setLicensee(new Licensee());
@@ -131,6 +130,8 @@ public class EnterTradeLicenseAction extends BaseLicenseAction<TradeLicense> {
     @Action(value = "/entertradelicense/update")
     @ValidationErrorPageExt(action = "update", makeCall = true, toMethod = "prepareFeeDetails")
     public String update() {
+        if (tradeLicenseService.checkOldLicenseNumberIsDuplicated(tradeLicense))
+            throw new ValidationException("TL-001", "TL-001", tradeLicense.getOldLicenseNumber());
         tradeLicenseService.updateLegacyLicense(tradeLicense, legacyInstallmentwiseFees, legacyFeePayStatus);
         return "viewlicense";
     }
@@ -170,9 +171,9 @@ public class EnterTradeLicenseAction extends BaseLicenseAction<TradeLicense> {
         addDropdownData("localityList", boundaryService.getActiveBoundariesByBndryTypeNameAndHierarchyTypeName(
                 LOCALITY, LOCATION_HIERARCHY_TYPE));
         addDropdownData("tradeTypeList", tradeLicenseService.getAllNatureOfBusinesses());
-        addDropdownData("categoryList", licenseCategoryService.findAll());
+        addDropdownData("categoryList", licenseCategoryService.getCategories());
         addDropdownData("subCategoryList", tradeLicense.getCategory() == null ? Collections.emptyList()
-                : licenseSubCategoryService.findAllSubCategoryByCategory(tradeLicense.getCategory().getId()));
+                : licenseSubCategoryService.getSubCategoriesByCategory(tradeLicense.getCategory().getId()));
         if (license().getAgreementDate() != null)
             setShowAgreementDtl(true);
     }

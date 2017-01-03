@@ -37,47 +37,46 @@
  *
  *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
  */
+package org.egov.collection.integration.models;
 
-package org.egov.tl.web.controller.uom;
+import javax.validation.constraints.NotNull;
 
-import javax.validation.Valid;
-
-import org.egov.tl.entity.UnitOfMeasurement;
-import org.egov.tl.service.masters.UnitOfMeasurementService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-@Controller
-@RequestMapping("/licenseunitofmeasurement")
-public class CreateLicenseUomController {
-
-    @Autowired
-    private UnitOfMeasurementService unitOfMeasurementService;
-
-    @ModelAttribute
-    public UnitOfMeasurement unitOfMeasurementModel() {
-        return new UnitOfMeasurement();
+public class PaymentInfoRequest {
+    private String ulbCode;
+    @NotNull
+    private String userName;
+    private String serviceName;
+    private String consumerCode;
+    
+    public String getUserName() {
+        return userName;
     }
 
-    @RequestMapping(value = "/create", method = RequestMethod.GET)
-    public String createUomForm() {
-        return "uom-create";
+    public void setUserName(final String userName) {
+        this.userName = userName;
     }
 
-    @RequestMapping(value = "/create", method = RequestMethod.POST)
-    public String createUom(@Valid @ModelAttribute final UnitOfMeasurement unitOfMeasurement, final BindingResult errors,
-            final RedirectAttributes additionalAttr) {
+    public String getServiceName() {
+        return serviceName;
+    }
 
-        if (errors.hasErrors())
-            return "uom-create";
-        unitOfMeasurementService.persistUnitOfMeasurement(unitOfMeasurement);
-        additionalAttr.addFlashAttribute("message", "msg.uom.save.success");
+    public void setServiceName(final String serviceName) {
+        this.serviceName = serviceName;
+    }
 
-        return "redirect:/licenseunitofmeasurement/view/" + unitOfMeasurement.getCode();
+    public String getConsumerCode() {
+        return consumerCode;
+    }
+
+    public void setConsumerCode(final String consumerCode) {
+        this.consumerCode = consumerCode;
+    }
+
+    public String getUlbCode() {
+        return ulbCode;
+    }
+
+    public void setUlbCode(String ulbCode) {
+        this.ulbCode = ulbCode;
     }
 }
