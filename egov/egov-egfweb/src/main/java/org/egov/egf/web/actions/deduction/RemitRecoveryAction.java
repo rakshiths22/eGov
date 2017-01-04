@@ -305,6 +305,9 @@ public class RemitRecoveryAction extends BasePaymentAction {
 
             }
         }
+         workflowBean.setBusinessKey(paymentheader.getClass().getSimpleName());
+        prepareWorkflow(null, paymentheader, workflowBean);
+        
         voucherHeader.setType(FinancialConstants.STANDARD_VOUCHER_TYPE_PAYMENT);
         if(voucherHeader.getVouchermis().getDepartmentid()==null )
         {
@@ -548,10 +551,10 @@ public class RemitRecoveryAction extends BasePaymentAction {
     @Action(value = "/deduction/remitRecovery-sendForApproval")
     public String sendForApproval() {
         paymentheader = paymentService.find("from Paymentheader where id=?", Long.valueOf(paymentid));
-       
-      //  paymentheader = paymentActionHelper.sendForApproval(paymentheader, workflowBean);
-
-        
+        paymentActionHelper.transitionWorkflow(paymentheader, workflowBean);
+        paymentActionHelper.getPaymentBills(paymentheader);
+        addActionMessage(generateMessage(paymentheader, workflowBean));
+        // paymentheader = paymentActionHelper.sendForApproval(paymentheader, workflowBean);
 
         return MESSAGES;
     }
@@ -588,6 +591,9 @@ public class RemitRecoveryAction extends BasePaymentAction {
         showApprove = true;
         voucherHeader.setId(paymentheader.getVoucherheader().getId());
         prepareForViewModifyReverse();
+        workflowBean.setBusinessKey(paymentheader.getClass().getSimpleName());
+        prepareWorkflow(null, paymentheader, workflowBean);
+        
         // loadApproverUser(voucherHeader.getType());
         return VIEW;
     }

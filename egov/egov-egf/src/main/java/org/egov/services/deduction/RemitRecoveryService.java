@@ -312,6 +312,7 @@ public class RemitRecoveryService {
             else
                 remitBean.setAmount(remitBean.getDeductionAmount());
             remitBean.setDepartmentId(Long.valueOf(element[8].toString()));
+            if(element[9]!=null)
             remitBean.setFunctionId(Long.valueOf(element[9].toString()));
             final EntityType entity = voucherHibDAO.getEntityInfo(Integer.valueOf(element[5].toString()),
                     Integer.valueOf(element[4].toString()));

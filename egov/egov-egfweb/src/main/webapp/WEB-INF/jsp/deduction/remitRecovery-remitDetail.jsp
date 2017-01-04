@@ -458,8 +458,8 @@ else{
 
 				</div>
 				<s:hidden name="cutOffDate" id="cutOffDate" />
-				<%@ include file='../payment/commonWorkflowMatrix.jsp'%>
-				<%@ include file='../workflow/commonWorkflowMatrix-button.jsp'%>
+				<%@ include file='../workflow/commonworkflow.jsp'%>
+				<%@ include file='../workflow/commonworkflow-button.jsp'%>
 			</div>
 
 
