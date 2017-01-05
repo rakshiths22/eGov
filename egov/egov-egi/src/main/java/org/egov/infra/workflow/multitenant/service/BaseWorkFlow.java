@@ -199,7 +199,14 @@ public  class BaseWorkFlow {
            workflowBean.setCurrentDesignationId(Long.valueOf(desig));
         String position = request.getParameter("workflowBean.approverPositionId");
         if(position!=null && !position.isEmpty())
-            workflowBean.setApproverPositionId(Long.valueOf(request.getParameter("workflowBean.approverPositionId")));
+            workflowBean.setApproverPositionId(Long.valueOf(position));
+        
+        String designation = request.getParameter("workflowBean.approverDesignationId");
+        if(designation!=null && !designation.isEmpty())
+            workflowBean.setApproverDesignationId(Long.valueOf(designation));  
+        String approverName = request.getParameter("workflowBean.approverName");
+            if(approverName!=null && !approverName.isEmpty())
+                workflowBean.setApproverName(approverName);       
         if(request.getParameter("workflowBean.workflowAction")!=null)
             workflowBean.setWorkflowAction(request.getParameter("workflowBean.workflowAction"));
         if(request.getParameter("workflowBean.workflowComments")!=null)

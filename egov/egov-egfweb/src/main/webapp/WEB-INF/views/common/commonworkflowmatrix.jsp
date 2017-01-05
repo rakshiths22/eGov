@@ -42,8 +42,7 @@
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/WEB-INF/tags/cdn.tld" prefix="cdn" %>
-<form:hidden path="" name="stateType" id="stateType" value="${stateType}"/>	
-<form:hidden  path="" id="workFlowAction" name="workflowBean.workflowAction"/>	
+<form:hidden  path="" id="workflowAction" name="workflowBean.workflowAction"/>	
 <div class="panel panel-primary" data-collapsed="0" >	
 	<c:if test="${workflowBean.nextAction !='END'}" > 
 			
@@ -74,8 +73,8 @@
 					<div class="show-row form-group" >
 						<label class="col-sm-3 control-label text-right"><spring:message code="lbl.approverdepartment"/><span class="mandatory"></span></label>
 						<div class="col-sm-3 add-margin">
-							<form:select path="approvalDepartment" data-first-option="false" name="workflowBean.approvalDepartment"
-								id="approvalDepartment" cssClass="form-control"
+							<form:select path="" data-first-option="false" name="workflowBean.approverDepartmentId"
+								id="approverDepartmentId" cssClass="form-control"
 								cssErrorClass="form-control error" required="required">
 								<form:option value="">
 									<spring:message code="lbl.select" />
@@ -86,9 +85,8 @@
 						</div>
 						<label class="col-sm-2 control-label text-right"><spring:message code="lbl.approverdesignation"/><span class="mandatory"></span></label>
 						<div class="col-sm-3 add-margin">
-						<input type="hidden" id="approvalDesignationValue" value="${approvalDesignation }" />
-							<form:select path="" data-first-option="false" name="workflowBean.approvalDesignation"
-								id="approvalDesignation" cssClass="form-control" onfocus="callAlertForDepartment();"
+							<form:select path="" data-first-option="false" name="workflowBean.approverDesignationId"
+								id="approverDesignationId" cssClass="form-control" onfocus="callAlertForDepartment();"
 								cssErrorClass="form-control error" required="required">  
 								<form:option value="">
 									<spring:message code="lbl.select" />
@@ -100,9 +98,8 @@
 					<div class="show-row form-group">
 						<label class="col-sm-3 control-label text-right"><spring:message code="lbl.approver"/><span class="mandatory"></span></label>
 						<div class="col-sm-3 add-margin">
-						<input type="hidden" id="approvalPositionValue" value="${approvalPosition }" />
 						<form:select path="" data-first-option="false" 
-							id="approvalPosition" name="workflowBean.approverPositionId" cssClass="form-control" onfocus="callAlertForDesignation();" 
+							id="approverPositionId" name="workflowBean.approverPositionId" cssClass="form-control" onfocus="callAlertForDesignation();" 
 							cssErrorClass="form-control error" required="required">  
 							<form:option value="">
 									<spring:message code="lbl.select" />

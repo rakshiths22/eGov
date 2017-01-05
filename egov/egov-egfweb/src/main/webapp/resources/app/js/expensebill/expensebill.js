@@ -75,20 +75,7 @@ $(document).ready(function(){
 
 $('.btn-wf-primary').click(function(){
 	var button = $(this).attr('id');
-	if (button != null && (button == 'Forward')) {
-		if(!validateCutOffDate(button))
-			return false;
-		validate($(this).attr('value'))
-		
-		if(!$("form").valid())
-			return false;
-		if(validate()){
-			deleteHiddenSubledgerRow();
-			return true;
-		}else
-			return false;
-		
-	}else if (button != null && (button == 'Create And Approve')) {
+	 if (button != null && (button == 'Create And Approve')) {
 		$('#approvalDepartment').removeAttr('required');
 		$('#approvalDesignation').removeAttr('required');
 		$('#approvalPosition').removeAttr('required');
@@ -102,15 +89,21 @@ $('.btn-wf-primary').click(function(){
 			return true;
 		}else
 			return false;
-	} else{
-		if(!validateCutOffDate(button))
-			return false;
-		if($("form").valid()){
-			deleteHiddenSubledgerRow();
-			return true;
-		}else
-			return false;
-	}
+	} else {
+			if(!validateCutOffDate(button))
+				return false;
+			validate(button);
+			validateWorkflow(button);
+			
+			if(!$("form").valid())
+				return false;
+			if(validate()){
+				deleteHiddenSubledgerRow();
+				return true;
+			}else
+				return false;
+			
+		}
 	return false;
 });
 function deleteHiddenSubledgerRow(){
@@ -828,7 +821,7 @@ function calculateBillAmount(){
 
 function validateCutOffDate(name) {
 	 
-	if (button != null && button == 'Create And Approve') {
+	if (name != null && name == 'Create And Approve') {
 		return validateCutOff();
 	}else
 		return true;

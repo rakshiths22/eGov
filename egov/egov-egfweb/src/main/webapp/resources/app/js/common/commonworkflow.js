@@ -39,14 +39,14 @@
  */
 $(document).ready(function()
 {	
-	$('#approvalDepartment').change(function(){
+	$('#approverDepartmentId').change(function(){
 		$.ajax({
 			url: "/eis/ajaxWorkFlow-getDesignationsByObjectType",     
 			type: "GET",
 			data: {
-				approvalDepartment : $('#approvalDepartment').val(),
-				departmentRule : $('#approvalDepartment').find("option:selected").text(),
-				type : $('#stateType').val(),
+				approvalDepartment : $('#approverDepartmentId').val(),
+				departmentRule : $('#approverDepartmentId').find("option:selected").text(),
+				type : $('#businessKey').val(),
 				currentState : $('#currentState').val(),
 				amountRule : $('#amountRule').val(),
 				additionalRule : $('#additionalRule').val(),
@@ -55,13 +55,13 @@ $(document).ready(function()
 			dataType: "json",
 			success: function (response) {
 				console.log("success"+response);
-				$('#approvalDesignation').empty();
-				$('#approvalDesignation').append($("<option value=''>Select from below</option>"));
+				$('#approverDesignationId').empty();
+				$('#approverDesignationId').append($("<option value=''>Select from below</option>"));
 				$.each(response, function(index, value) {
-					$('#approvalDesignation').append($('<option>').text(value.name).attr('value', value.id));
+					$('#approverDesignationId').append($('<option>').text(value.name).attr('value', value.id));
 				});
-				$('#approvalDesignation').val($('#approvalDesignationValue').val());
-				$('#approvalDesignation').trigger('change');
+				//$('#approverDesignationId').val($('#approvalDesignationValue').val());
+				$('#approverDesignationId').trigger('change');
 			}, 
 			error: function (response) {
 				bootbox.alert('json fail');
@@ -70,23 +70,23 @@ $(document).ready(function()
 		});
 	});
 	
-	$('#approvalDesignation').change(function(){
+	$('#approverDesignationId').change(function(){
 		$.ajax({
 			url: "/eis/ajaxWorkFlow-positionsByDepartmentAndDesignation",     
 			type: "GET",
 			data: {
-				approvalDesignation : $('#approvalDesignation').val(),
-				approvalDepartment : $('#approvalDepartment').val()    
+				approvalDesignation : $('#approverDesignationId').val(),
+				approvalDepartment : $('#approverDepartmentId').val()    
 			},
 			dataType: "json",
 			success: function (response) {
 				console.log("success"+response);
-				$('#approvalPosition').empty();
-				$('#approvalPosition').append($("<option value=''>Select from below</option>"));
+				$('#approverPositionId').empty();
+				$('#approverPositionId').append($("<option value=''>Select from below</option>"));
 				$.each(response, function(index, value) {
-					$('#approvalPosition').append($('<option>').text(value.userName+'/'+value.positionName).attr('value', value.positionId));  
+					$('#approverPositionId').append($('<option>').text(value.userName+'/'+value.positionName).attr('value', value.positionId));  
 				});
-				$('#approvalPosition').val($('#approvalPositionValue').val());
+				//$('#approverPositionId').val($('#approvalPositionValue').val());
 			}, 
 			error: function (response) {
 				console.log("failed");
@@ -94,11 +94,11 @@ $(document).ready(function()
 		});
 	});
 	
-	$('#approvalDepartment').trigger('change');
+	$('#approverDepartmentId').trigger('change');
 });
 
 function callAlertForDepartment() {
-    var value=$('#approvalDepartment').val();
+    var value=$('#approverDepartmentId').val();
 	if(value=="" ||  value=="-1") {
 		bootbox.alert("Please select the Approver Department");
 		return false;
@@ -106,7 +106,7 @@ function callAlertForDepartment() {
 }
 
 function callAlertForDesignation() {
-	var value=$('#approvalDesignation').val();
+	var value=$('#approverDesignationId').val();
 	if(value=="" || value=="-1") {
 		bootbox.alert("Please select the approver designation");
 		return false;

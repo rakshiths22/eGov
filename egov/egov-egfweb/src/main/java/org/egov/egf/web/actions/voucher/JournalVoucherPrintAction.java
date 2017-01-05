@@ -60,6 +60,9 @@ import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.utils.DateUtils;
 import org.egov.infra.web.struts.actions.BaseFormAction;
 import org.egov.infra.workflow.entity.StateHistory;
+import org.egov.infra.workflow.multitenant.model.Task;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.model.bills.EgBillregistermis;
 import org.egov.services.bills.BillsService;
 import org.egov.services.budget.BudgetAppropriationService;
@@ -105,6 +108,8 @@ public class JournalVoucherPrintAction extends BaseFormAction {
     private static final String ACCDETAILTYPEQUERY = " from Accountdetailtype where id=?";
     private BudgetAppropriationService budgetAppropriationService;
     private @Autowired EgovCommon egovCommon;
+    @Autowired
+    private BaseWorkFlow baseWorkFlow;
 
     public void setBillsService(final BillsService billsManager) {
         this.billsManager = billsManager;
@@ -231,8 +236,8 @@ public class JournalVoucherPrintAction extends BaseFormAction {
         paramMap.put("voucherNumber", getVoucherNumber());
         paramMap.put("voucherDate", getVoucherDate());
         paramMap.put("voucherDescription", getVoucherDescription());
-        if (voucher != null && voucher.getCurrentTask() != null)
-          //  loadInboxHistoryData(voucher.getStateHistory());
+        if (voucher != null && voucher.getWorkflowId() != null)
+         loadInboxHistoryData();
         paramMap.put("workFlowHistory", inboxHistory);
         paramMap.put("workFlowJasper",
                 reportHelper.getClass().getResourceAsStream("/reports/templates/workFlowHistoryReport.jasper"));
@@ -296,17 +301,17 @@ public class JournalVoucherPrintAction extends BaseFormAction {
                 .getVoucherDate());
     }
 
-    private void loadInboxHistoryData(final List<StateHistory> stateHistory) throws ApplicationRuntimeException {
-        Collections.reverse(stateHistory);
+    private void loadInboxHistoryData() throws ApplicationRuntimeException {
+         
+        List<Task> workflowHistory = baseWorkFlow.getWorkflowHistory(voucher,new WorkflowBean());
         
-        
-        for (final StateHistory historyState : stateHistory) {
-            final String pos = historyState.getSenderName().concat(" / ").concat(historyState.getSenderName());
-            final String nextAction = historyState.getNextAction();
-            if (!"NEW".equalsIgnoreCase(historyState.getValue())) {
+        for (final Task task : workflowHistory) {
+            final String pos = task.getSender().concat(" / ").concat(task.getSender());
+            final String nextAction = "hello";//;.getNextAction();
+            if (!"NEW".equalsIgnoreCase(task.getStatus())) {
                 final WorkFlowHistoryItem inboxHistoryItem = new WorkFlowHistoryItem(getFormattedDate(
-                        historyState.getCreatedDate(), "dd/MM/yyyy hh:mm a"), pos, nextAction, historyState.getValue(),
-                        historyState.getComments() != null ? removeSpecialCharacters(historyState.getComments()) : "");
+                        task.getCreatedDate(), "dd/MM/yyyy hh:mm a"), pos, nextAction, task.getStatus(),
+                        task.getComments() != null ? removeSpecialCharacters(task.getComments()) : "");
                 inboxHistory.add(inboxHistoryItem);
             }
             

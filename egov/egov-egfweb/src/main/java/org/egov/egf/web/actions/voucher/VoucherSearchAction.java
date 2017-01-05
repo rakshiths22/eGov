@@ -302,14 +302,14 @@ public class VoucherSearchAction extends BaseFormAction
         } else
             for (final CVoucherHeader voucherheader : list)
             {
-                if (voucherheader.getCurrentTask() != null) {
+                if (voucherheader.getWorkflowId() != null) {
                     final EgBillregistermis billMis = (EgBillregistermis) persistenceService.find(
                             "from EgBillregistermis where voucherHeader.id=?", voucherheader.getId());
                     if (billMis != null) {
                         /*
                          * bill state will be null if created from create JV screen and voucher is in end state
                          */
-                        if (billMis.getEgBillregister().getCurrentTask() == null && voucherheader.getCurrentTask().getStatus().contains("END"))
+                        if (billMis.getEgBillregister().getWorkflowId() == null && voucherheader.getCurrentTask().getStatus().contains("END"))
                             ismodifyJv = true;
                         else
                             ismodifyJv = false;

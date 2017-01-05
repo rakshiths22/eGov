@@ -280,7 +280,7 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
         final EgBillregistermis billMis = (EgBillregistermis) persistenceService.find(
                 "from  EgBillregistermis  mis where voucherHeader.id=?", vhId);
 
-        if (billMis != null && billMis.getEgBillregister().getCurrentTask() == null) {
+        if (billMis != null && billMis.getEgBillregister().getWorkflowId() == null) {
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("....Cancelling Bill Associated with the Voucher....");
             billQuery.append(

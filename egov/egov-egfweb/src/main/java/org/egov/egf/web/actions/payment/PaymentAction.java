@@ -1065,12 +1065,9 @@ public class PaymentAction extends BasePaymentAction {
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("Starting view...");
         paymentheader = getPayment();
+ 
         prepareWorkflow(null, paymentheader, workflowBean);
-        /*
-         * if (paymentheader.getCurrentTask().getStatus() != null && !paymentheader.getCurrentTask().getStatus().isEmpty() &&
-         * paymentheader.getCurrentTask().getStatus().contains("Rejected")) { if (LOGGER.isDebugEnabled())
-         * LOGGER.debug("Completed view."); return modify(); }
-         */
+   
         miscBillList = paymentActionHelper.getPaymentBills(paymentheader);
         getChequeInfo(paymentheader);
         if (null != parameters.get("showMode") && parameters.get("showMode")[0].equalsIgnoreCase("view"))

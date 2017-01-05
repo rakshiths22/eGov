@@ -152,7 +152,7 @@ public class BudgetProposalStatusReportAction extends BaseFormAction {
             final BudgetDetail budgetDetail = (BudgetDetail) persistenceService
                     .find("from BudgetDetail where budget.financialYear.id=? and executingDepartment=? and budget.isbere='RE' and budget.state.value<>'END' and budgetGroup.accountType=?",
                             Long.valueOf(finYearId), dept, fundType + "_" + budgetType);
-            if (budgetDetail != null && budgetDetail.getBudget() != null && budgetDetail.getBudget().getCurrentTask() != null
+            if (budgetDetail != null && budgetDetail.getBudget() != null && budgetDetail.getBudget().getWorkflowId() != null
                     && budgetDetail.getBudget().getCurrentTask().getOwnerPosition() != null) {
                 final Assignment assignment = (Assignment) persistenceService.find(
                         "from Assignment where isPrimary=? and position=?",
@@ -195,7 +195,7 @@ public class BudgetProposalStatusReportAction extends BaseFormAction {
             final BudgetDetail budgetDetail = (BudgetDetail) persistenceService
                     .find("from BudgetDetail where budget.financialYear.id=? and executingDepartment.id=? and budget.isbere='RE' and budget.state.value<>'END' and state.value<>'END' and function=? and budgetGroup.accountType=?",
                             Long.valueOf(finYearId), department.getId(), func, fundType + "_" + budgetType);
-            if (budgetDetail != null && budgetDetail.getCurrentTask() != null && budgetDetail.getCurrentTask().getOwnerPosition() != null) {
+            if (budgetDetail != null && budgetDetail.getWorkflowId() != null && budgetDetail.getCurrentTask().getOwnerPosition() != null) {
                 final Assignment assignment = (Assignment) persistenceService.find(
                         "from Assignment where isPrimary=? and position=?",
                         'Y', budgetDetail.getCurrentTask().getOwnerPosition());

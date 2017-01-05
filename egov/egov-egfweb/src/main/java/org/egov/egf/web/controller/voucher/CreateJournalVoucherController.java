@@ -105,7 +105,6 @@ public class CreateJournalVoucherController extends BaseVoucherController {
         setDropDownValues(model);
         model.addAttribute(STATE_TYPE, voucherHeader.getClass().getSimpleName());
         prepareWorkflow(model, voucherHeader, null);
-        prepareValidActionListByCutOffDate(model);
         voucherHeader.setVoucherDate(new Date());
         model.addAttribute(VOUCHER_NUMBER_GENERATION_AUTO, isVoucherNumberGenerationAuto(voucherHeader));
         return JOURNALVOUCHER_FORM;
@@ -126,7 +125,7 @@ public class CreateJournalVoucherController extends BaseVoucherController {
             setDropDownValues(model);
             model.addAttribute(STATE_TYPE, voucherHeader.getClass().getSimpleName());
             prepareWorkflow(model, voucherHeader, null);
-            prepareValidActionListByCutOffDate(model);
+            
             voucherHeader.setVoucherDate(new Date());
             model.addAttribute(VOUCHER_NUMBER_GENERATION_AUTO, isVoucherNumberGenerationAuto(voucherHeader));
 
@@ -146,16 +145,15 @@ public class CreateJournalVoucherController extends BaseVoucherController {
                 setDropDownValues(model);
                 model.addAttribute(STATE_TYPE, voucherHeader.getClass().getSimpleName());
                 prepareWorkflow(model, voucherHeader, null);
-                prepareValidActionListByCutOffDate(model);
+              
                 voucherHeader.setVoucherDate(new Date());
                 model.addAttribute(VOUCHER_NUMBER_GENERATION_AUTO, isVoucherNumberGenerationAuto(voucherHeader));
                 resultBinder.reject("", e.getErrors().get(0).getMessage());
                 return JOURNALVOUCHER_FORM;
             }
 
-            final String approverDetails = null;/*//financialUtils.getApproverDetails(workFlowAction,
-                    savedVoucherHeader.getCurrentTask(), savedVoucherHeader.getId(), approvalPosition);
-*/
+            final String approverDetails = null; 
+ 
             return "redirect:/journalvoucher/success?approverDetails= " + approverDetails + "&voucherNumber="
                     + savedVoucherHeader.getVoucherNumber() + "&workFlowAction=" + workFlowAction;
 

@@ -79,6 +79,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping(value = "/expensebill")
 public class UpdateExpenseBillController extends BaseBillController {
 
+    private static final String EXPENSEBILL_UPDATE = "expensebill-update";
+
     private static final String NET_PAYABLE_AMOUNT = "netPayableAmount";
 
     private static final String APPROVAL_DESIGNATION = "approvalDesignation";
@@ -90,11 +92,12 @@ public class UpdateExpenseBillController extends BaseBillController {
     private static final String EXPENSEBILL_VIEW = "expensebill-view";
 
     private static final String NET_PAYABLE_ID = "netPayableId";
-    
+
+    private static final String EXPENSEBILL_VIEWWORKFLOW = "expensebill-viewworkflow";
+
     @Autowired
     @Qualifier("messageSource")
     private MessageSource messageSource;
-
 
     @Autowired
     private ExpenseBillService expenseBillService;
@@ -105,7 +108,7 @@ public class UpdateExpenseBillController extends BaseBillController {
 
     @Autowired
     private FinancialUtils financialUtils;
-    
+
     @Autowired
     private BaseWorkFlow baseWorkFlow;
 
@@ -124,109 +127,77 @@ public class UpdateExpenseBillController extends BaseBillController {
     @RequestMapping(value = "/update/{billId}", method = RequestMethod.GET)
     public String updateForm(final Model model, @PathVariable final String billId,
             final HttpServletRequest request) throws ApplicationException {
-       // populateWorkflowBean(request);
         final EgBillregister egBillregister = expenseBillService.getById(Long.parseLong(billId));
         setDropDownValues(model);
-        model.addAttribute("stateType", egBillregister.getClass().getSimpleName());
-        if (egBillregister.getCurrentTask() != null)
-            model.addAttribute("currentState", egBillregister.getCurrentTask().getStatus());
-       /* model.addAttribute("workflowHistory",
-                financialUtils.getHistory(egBillregister.getCurrentTask(), egBillregister.getStateHistory()));*/
         WorkflowBean workflowBean = new WorkflowBean();
         workflowBean.setBusinessKey(egBillregister.getClass().getSimpleName());
-        WorkflowBean prepareWorkflow = prepareWorkflow(model, egBillregister, workflowBean);
-        
-        model.addAttribute("workflowBean", prepareWorkflow);
+        workflowBean = prepareWorkflow(model, egBillregister, workflowBean);
+        model.addAttribute("workflowBean", workflowBean);
         egBillregister.getBillDetails().addAll(egBillregister.getEgBilldetailes());
         prepareBillDetailsForView(egBillregister);
         final List<CChartOfAccounts> expensePayableAccountList = chartOfAccountsService
                 .getNetPayableCodes();
-        for (final EgBilldetails details : egBillregister.getBillDetails())
+        for (final EgBilldetails details : egBillregister.getBillDetails()){
             if (expensePayableAccountList != null && !expensePayableAccountList.isEmpty()
                     && expensePayableAccountList.contains(details.getChartOfAccounts())) {
                 model.addAttribute(NET_PAYABLE_ID, details.getChartOfAccounts().getId());
                 model.addAttribute(NET_PAYABLE_AMOUNT, details.getCreditamount());
             }
+        }
         prepareCheckListForEdit(egBillregister, model);
         model.addAttribute(EG_BILLREGISTER, egBillregister);
-        if (egBillregister.getCurrentTask() != null
-                && (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(egBillregister.getCurrentTask().getStatus())
-                        )) {
+
+        if (egBillregister.getWorkflowId() != null && (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(workflowBean.getCurrentState()))) {
             model.addAttribute("mode", "edit");
-            return "expensebill-update";
+            return EXPENSEBILL_UPDATE;
         } else {
             model.addAttribute("mode", "view");
-            return EXPENSEBILL_VIEW;
+            return EXPENSEBILL_VIEWWORKFLOW;
         }
     }
 
-   
     @RequestMapping(value = "/update/{billId}", method = RequestMethod.POST)
-    public String update(@ModelAttribute(EG_BILLREGISTER) final EgBillregister egBillregister,
+    public String update(@ModelAttribute(EG_BILLREGISTER) EgBillregister egBillregister,
             final BindingResult resultBinder, final RedirectAttributes redirectAttributes, final Model model,
-            final HttpServletRequest request   )
+            final HttpServletRequest request)
             throws ApplicationException, IOException {
 
         String mode = "";
-        String message="";
+        String message = "";
         EgBillregister updatedEgBillregister = null;
         WorkflowBean workflowBean = baseWorkFlow.populateWorkflowBean(request);
-
-        if (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(workflowBean.getCurrentState())) {
-            populateBillDetails(egBillregister);
-            validateBillNumber(egBillregister, resultBinder);
-            validateLedgerAndSubledger(egBillregister, resultBinder);
-        }
-        if (resultBinder.hasErrors()) {
-            setDropDownValues(model);
-            model.addAttribute("stateType", egBillregister.getClass().getSimpleName());
-            prepareWorkflow(model,(WorkflowEntity) egBillregister, null);
-            model.addAttribute(APPROVAL_DESIGNATION, request.getParameter(APPROVAL_DESIGNATION));
-            model.addAttribute(APPROVAL_POSITION, request.getParameter(APPROVAL_POSITION));
-            model.addAttribute(NET_PAYABLE_ID, request.getParameter(NET_PAYABLE_ID));
-            model.addAttribute(NET_PAYABLE_AMOUNT, request.getParameter(NET_PAYABLE_AMOUNT));
-            model.addAttribute("designation", request.getParameter("designation"));
+        try {
             if (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(workflowBean.getCurrentState())) {
-                prepareValidActionListByCutOffDate(model);
-                model.addAttribute("mode", "edit");
-                return "expensebill-update";
-            } else {
-                model.addAttribute("mode", "view");
-                return EXPENSEBILL_VIEW;
+                populateBillDetails(egBillregister);
+                validateBillNumber(egBillregister, resultBinder);
+                validateLedgerAndSubledger(egBillregister, resultBinder);
+                mode = "edit";
             }
+            if (resultBinder.hasErrors()) 
+                return setUp(model, updatedEgBillregister, request, workflowBean);
+            
+            egBillregister = expenseBillService.update(egBillregister, mode, workflowBean);
+            message = generateMessage(updatedEgBillregister, workflowBean);
+            return "redirect:/expensebill/success?message=" + message;
+
+        } catch (final ValidationException e) {
+            return setUp(model, updatedEgBillregister, request, workflowBean);
+        }
+
+        
+
+    }
+
+    private String setUp(Model model, EgBillregister egBillregister, HttpServletRequest request, WorkflowBean workflowBean) {
+        setDropDownValues(model);
+        prepareWorkflow(model, (WorkflowEntity) egBillregister, null);
+        model.addAttribute(NET_PAYABLE_ID, request.getParameter(NET_PAYABLE_ID));
+        model.addAttribute(NET_PAYABLE_AMOUNT, request.getParameter(NET_PAYABLE_AMOUNT));
+        // model.addAttribute("designation", request.getParameter("designation"));
+        if (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(workflowBean.getCurrentState())) {
+            return EXPENSEBILL_UPDATE;
         } else {
-            try {
-                 
-                   updatedEgBillregister = expenseBillService.update(egBillregister, mode,workflowBean);
-               message=   generateMessage(updatedEgBillregister, workflowBean);
-                   
-            } catch (final ValidationException e) {
-                setDropDownValues(model);
-                model.addAttribute("stateType", egBillregister.getClass().getSimpleName());
-                prepareWorkflow(model, egBillregister,null);
-                model.addAttribute(APPROVAL_DESIGNATION, request.getParameter(APPROVAL_DESIGNATION));
-                model.addAttribute(APPROVAL_POSITION, request.getParameter(APPROVAL_POSITION));
-                model.addAttribute(NET_PAYABLE_ID, request.getParameter(NET_PAYABLE_ID));
-                model.addAttribute(NET_PAYABLE_AMOUNT, request.getParameter(NET_PAYABLE_AMOUNT));
-                model.addAttribute("designation", request.getParameter("designation"));
-                if (egBillregister.getCurrentTask() != null
-                        && (FinancialConstants.WORKFLOW_STATE_REJECTED.equals(egBillregister.getCurrentTask().getStatus())
-                                )) {
-                    prepareValidActionListByCutOffDate(model);
-                    model.addAttribute("mode", "edit");
-                    return "expensebill-update";
-                } else {
-                    model.addAttribute("mode", "view");
-                    return EXPENSEBILL_VIEW;
-                }
-            }
-
-          
-
-           
-
-            return "redirect:/expensebill/success?message="+message;
-                    
+            return EXPENSEBILL_VIEW;
         }
     }
 
@@ -272,31 +243,32 @@ public class UpdateExpenseBillController extends BaseBillController {
     protected void setDropDownValues(final Model model) {
         super.setDropDownValues(model);
     }
-    
-    
+
     private String generateMessage(EgBillregister egBillregister, WorkflowBean workflowBean) {
-        String message="";
-        switch(workflowBean.getWorkflowAction().toLowerCase())   
-        {
-        case  WorkflowConstants.ACTION_APPROVE :
-            message=messageSource.getMessage("msg.expense.bill.approved.success",
-                    new String[] {egBillregister.getBillnumber()},Locale.getDefault());
+        String message = "";
+        switch (workflowBean.getWorkflowAction().toLowerCase()) {
+        case WorkflowConstants.ACTION_APPROVE:
+            message = messageSource.getMessage("msg.expense.bill.approved.success",
+                    new String[] { egBillregister.getBillnumber() }, Locale.getDefault());
             break;
-        case  WorkflowConstants.ACTION_REJECT :
-            message=messageSource.getMessage("msg.expense.bill.reject", new String[] {egBillregister.getBillnumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()},null);
-            break;   
-        case  WorkflowConstants.ACTION_FORWARD :
-            message=messageSource.getMessage("msg.expense.bill.create.success",
-                    new String[] {egBillregister.getBillnumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()},null);
-            break;    
-        case  WorkflowConstants.ACTION_CANCEL :
-            message=messageSource.getMessage("msg.expense.bill.cancel",
-                    new String[] {egBillregister.getBillnumber()},Locale.getDefault());
-            break; 
-        case  WorkflowConstants.ACTION_SAVE :
-            message=messageSource.getMessage("msg.expense.bill.saved.success",
-                    new String[] {egBillregister.getBillnumber()},Locale.getDefault());
-            break;   
+        case WorkflowConstants.ACTION_REJECT:
+            message = messageSource.getMessage("msg.expense.bill.reject", new String[] { egBillregister.getBillnumber(),
+                    workflowBean.getApproverName(), workflowBean.getApproverDesignationName() }, null);
+            break;
+        case WorkflowConstants.ACTION_FORWARD:
+            message = messageSource.getMessage("msg.expense.bill.create.success",
+                    new String[] { egBillregister.getBillnumber(), workflowBean.getApproverName(),
+                            workflowBean.getApproverDesignationName() },
+                    null);
+            break;
+        case WorkflowConstants.ACTION_CANCEL:
+            message = messageSource.getMessage("msg.expense.bill.cancel",
+                    new String[] { egBillregister.getBillnumber() }, Locale.getDefault());
+            break;
+        case WorkflowConstants.ACTION_SAVE:
+            message = messageSource.getMessage("msg.expense.bill.saved.success",
+                    new String[] { egBillregister.getBillnumber() }, Locale.getDefault());
+            break;
 
         }
         return message;

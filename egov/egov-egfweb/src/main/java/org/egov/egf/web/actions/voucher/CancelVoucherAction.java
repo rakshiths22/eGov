@@ -343,9 +343,9 @@ public class CancelVoucherAction extends BaseFormAction {
                 query.setLong("vhId", selectedVhs[i]);
                 query.executeUpdate();
                 // for old vouchers when workflow was not implemented
-                if (voucherObj.getCurrentTask() == null && !voucherObj.getName().equals(FinancialConstants.JOURNALVOUCHER_NAME_GENERAL))
+                if (voucherObj.getWorkflowId() == null && !voucherObj.getName().equals(FinancialConstants.JOURNALVOUCHER_NAME_GENERAL))
                     cancelBill(selectedVhs[i]);
-                else if (voucherObj.getCurrentTask() != null
+                else if (voucherObj.getWorkflowId() != null
                         && !voucherObj.getName().equals(FinancialConstants.JOURNALVOUCHER_NAME_GENERAL))
                     cancelBill(selectedVhs[i]);
                 continue;
@@ -405,7 +405,7 @@ public class CancelVoucherAction extends BaseFormAction {
         final EgBillregistermis billMis = (EgBillregistermis) persistenceService.find(
                 "from  EgBillregistermis  mis where voucherHeader.id=?", vhId);
 
-        if (billMis != null && billMis.getEgBillregister().getCurrentTask() == null) {
+        if (billMis != null && billMis.getEgBillregister().getWorkflowId() == null) {
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("....Cancelling Bill Associated with the Voucher....");
             billQuery

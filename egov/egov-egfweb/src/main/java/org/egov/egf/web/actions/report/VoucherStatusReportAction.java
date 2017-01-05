@@ -457,6 +457,7 @@ public class VoucherStatusReportAction extends BaseFormAction
         return "";
     }
 
+    //fix here for workflow change
     private String getVoucherOwner(final CVoucherHeader voucherHeader)
     {
         final String dash = "-";
@@ -506,27 +507,6 @@ public class VoucherStatusReportAction extends BaseFormAction
             else
                 return getUserNameForPosition(voucherState.getOwnerPosition().getId().intValue());
         }
-        
-        //no need to find owner of receipt
-       /* else if (voucherType.equalsIgnoreCase(FinancialConstants.STANDARD_VOUCHER_TYPE_RECEIPT))
-        { 
-            final ReceiptVoucher receiptVoucher = (ReceiptVoucher) persistenceService.find(
-                    "from ReceiptVoucher rv where rv.voucherHeader=?", voucherHeader);
-            if (receiptVoucher == null || receiptVoucher.getCurrentTask() == null)
-            {
-                voucherState = voucherHeader.getCurrentTask();
-                if (voucherState == null)
-                    return dash;
-                else if (voucherState.getValue().equals("END"))
-                    return dash;
-                else
-                    return getUserNameForPosition(voucherState.getOwnerPosition().getId().intValue());
-            }
-            else if (voucherState.getValue().equals("END"))
-                return dash;
-            else
-                return getUserNameForPosition(receiptVoucher.getCurrentTask().getOwnerPosition().getId().intValue());
-        }*/
         else
             return dash;
     }

@@ -538,9 +538,7 @@ public class PreApprovedVoucherAction extends BaseWorkFlowAction {
                 }
             }
 
-        } catch (
-
-        final ValidationException e) {
+        } catch (final ValidationException e) {
             voucher();
             mode = "";
             if (e.getErrors().get(0).getMessage() != null && !e.getErrors().get(0).getMessage().equals(StringUtils.EMPTY))

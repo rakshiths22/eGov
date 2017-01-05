@@ -193,7 +193,7 @@ public class JournalVoucherActionHelper extends BaseWorkFlow {
     
     
 
-     
+    @Transactional 
     private  CVoucherHeader transitinWorkflow(CVoucherHeader vh,WorkflowBean workflowBean)
     {
         vh = (CVoucherHeader)baseWorkFlow.transitionWorkFlow(vh, workflowBean);

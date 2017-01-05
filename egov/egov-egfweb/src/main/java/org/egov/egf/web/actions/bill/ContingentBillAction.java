@@ -42,9 +42,12 @@
  */
 package org.egov.egf.web.actions.bill;
 
+import static org.egov.utils.FinancialConstants.CONTINGENCYBILL_APPROVED_STATUS;
+import static org.egov.utils.FinancialConstants.CONTINGENCYBILL_CANCELLED_STATUS;
+import static org.egov.utils.FinancialConstants.CONTINGENCYBILL_FIN;
+
 import java.math.BigDecimal;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,6 +78,7 @@ import org.egov.commons.CFunction;
 import org.egov.commons.EgwStatus;
 import org.egov.commons.utils.EntityType;
 import org.egov.egf.autonumber.ExpenseBillNumberGenerator;
+import org.egov.egf.utils.FinancialUtils;
 import org.egov.infra.admin.master.entity.AppConfigValues;
 import org.egov.infra.admin.master.entity.Department;
 import org.egov.infra.config.core.ApplicationThreadLocals;
@@ -86,9 +90,10 @@ import org.egov.infra.utils.autonumber.AutonumberServiceBeanResolver;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
-import org.egov.infra.workflow.entity.State;
-import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.infra.workflow.multitenant.model.WorkflowEntity;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.infstr.models.EgChecklists;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.infstr.utils.EgovMasterDataCaching;
@@ -98,8 +103,6 @@ import org.egov.model.bills.EgBilldetails;
 import org.egov.model.bills.EgBillregister;
 import org.egov.model.bills.EgBillregistermis;
 import org.egov.model.voucher.VoucherDetails;
-import org.egov.infra.workflow.multitenant.model.WorkflowBean;
-import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
 import org.egov.utils.CheckListHelper;
 import org.egov.utils.FinancialConstants;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -163,6 +166,9 @@ public class ContingentBillAction extends BaseBillAction {
 
     @Autowired
     private AutonumberServiceBeanResolver beanResolver;
+    private BaseWorkFlow baseWorkFlow;
+    
+    private FinancialUtils financialUtils;
 
     @Override
     public WorkflowEntity getModel() {
@@ -278,24 +284,9 @@ public class ContingentBillAction extends BaseBillAction {
                         "/EGF/bill/contingentBill!beforeView.action?billRegisterId=" + bill.getId());
             }
             
-            bill = egBillRegisterService.sendForApproval(bill, workflowBean);
-            if (FinancialConstants.BUTTONREJECT.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-                addActionMessage(getText("bill.rejected",
-                        new String[] { voucherService.getEmployeeNameForPositionId(bill.getCurrentTask()
-                                .getOwnerPosition()) }));
-            if (FinancialConstants.BUTTONFORWARD.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-                addActionMessage(getText("bill.forwarded",
-                        new String[] { voucherService.getEmployeeNameForPositionId(bill.getCurrentTask().getOwnerPosition()) }));
-            if (FinancialConstants.BUTTONCANCEL.equalsIgnoreCase(workflowBean.getWorkflowAction()))
-                addActionMessage(getText("cbill.cancellation.succesful"));
-            else if (FinancialConstants.BUTTONAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction())) {
-                if ("Closed".equals(bill.getCurrentTask().getStatus()))
-                    addActionMessage(getText("bill.final.approval", new String[] { "The File has been approved" }));
-                else
-                    addActionMessage(getText("bill.approved",
-                            new String[] { voucherService.getEmployeeNameForPositionId(bill.getCurrentTask()
-                                    .getOwnerPosition()) }));
-            }
+            bill=(EgBillregister)  transitionWorkflow(bill, workflowBean);
+          
+            
         } catch (final ValidationException e) {
             prepareWorkflow(null, bill, workflowBean);
 
@@ -312,6 +303,20 @@ public class ContingentBillAction extends BaseBillAction {
 
         return "messages";
     }
+    
+    private EgBillregister transitionWorkflow(EgBillregister savedEgBillregister, WorkflowBean workflowBean) {
+        savedEgBillregister=(EgBillregister)   baseWorkFlow.transitionWorkFlow(savedEgBillregister, workflowBean);
+        switch(workflowBean.getWorkflowAction().toLowerCase())   
+        {
+        case  WorkflowConstants.ACTION_APPROVE :
+            savedEgBillregister.setStatus(financialUtils.getStatusByModuleAndCode(CONTINGENCYBILL_FIN,CONTINGENCYBILL_APPROVED_STATUS));
+            break;
+        case  WorkflowConstants.ACTION_CANCEL :
+            savedEgBillregister.setStatus(financialUtils.getStatusByModuleAndCode(CONTINGENCYBILL_FIN,CONTINGENCYBILL_CANCELLED_STATUS));
+            break; 
+        }
+        return savedEgBillregister;
+}
 
     private void reset() {
         voucherHeader.reset();
@@ -330,12 +335,10 @@ public class ContingentBillAction extends BaseBillAction {
     }
 
     @Validations(requiredFields = { @RequiredFieldValidator(fieldName = "fundId", message = "", key = REQUIRED),
-            /* @RequiredFieldValidator(fieldName = "commonBean.billNumber", message = "", key = REQUIRED), */
             @RequiredFieldValidator(fieldName = "commonBean.billDate", message = "", key = REQUIRED),
             @RequiredFieldValidator(fieldName = "commonBean.billSubType", message = "", key = REQUIRED),
             @RequiredFieldValidator(fieldName = "commonBean.payto", message = "", key = REQUIRED)
-            // Commenting function to revert onefunction center mandatory option
-            // @RequiredFieldValidator(fieldName = "commonBean.functionName",message="",key=REQUIRED)
+             
     })
     @ValidationErrorPage(value = NEW)
     @Action(value = "/bill/contingentBill-create")
@@ -373,6 +376,7 @@ public class ContingentBillAction extends BaseBillAction {
             if(!workflowBean.getWorkflowAction().equalsIgnoreCase(WorkflowConstants.ACTION_CREATE_AND_APPROVE))
             {
                 bill=(EgBillregister)transitionWorkFlow(bill, workflowBean);
+                //change to message
                 addActionMessage(generateActionMessage(bill, workflowBean));
             }
             
@@ -411,22 +415,15 @@ public class ContingentBillAction extends BaseBillAction {
         else
             try {
                 cbill = (EgBillregister) persistenceService.find("from EgBillregister where id=?", billRegisterId);
-                if (cbill != null && cbill.getCurrentTask() != null)
+                if (cbill != null && cbill.getWorkflowId() != null)
                     
                 voucherHeader.setVoucherDate(commonBean.getBillDate());
                 voucherHeader.setVoucherNumber(commonBean.getBillNumber());
-                /*
-                 * should be removed when enabling single function centre if(commonBean.getFunctionId()!=null){ //CFunction
-                 * function=(CFunction) getPersistenceService().find(" from CFunction where id=?",
-                 * commonBean.getFunctionId().longValue()); CFunction function =
-                 * commonsService.getCFunctionById(commonBean.getFunctionId().longValue());
-                 * voucherHeader.getVouchermis().setFunction(function); }
-                 */
                 validateFields();
                 cbill = updateBill(cbill);
                 validateLedgerAndSubledger();
                 recreateCheckList(cbill);
-                forwardBill(cbill);
+            
 
             } catch (final ValidationException e) {
                 LOGGER.error("Inside catch block" + e.getMessage());
@@ -447,18 +444,15 @@ public class ContingentBillAction extends BaseBillAction {
 
         EgBillregister cbill = null;
         cbill = (EgBillregister) persistenceService.find("from Cbill where id=?", billRegisterId);
-        if (cbill != null && cbill.getCurrentTask() != null)
+        if (cbill != null && cbill.getWorkflowId() != null)
             
         if (parameters.get(ACTION_NAME)[0].contains("reject"))
             cbill.getCreatedBy().getId().intValue();
-        // billRegisterWorkflowService.transition(parameters.get(ACTION_NAME)[0]+"|"+userId, cbill,parameters.get("comments")[0]);
-       // cbill.transition(true).end().withOwner(getPosition()).withComments(parameters.get("comments")[0]);
         final String statusQury = "from EgwStatus where upper(moduletype)=upper('" + FinancialConstants.CONTINGENCYBILL_FIN
                 + "') and  upper(description)=upper('" + FinancialConstants.CONTINGENCYBILL_CANCELLED_STATUS + "')";
         final EgwStatus egwStatus = (EgwStatus) persistenceService.find(statusQury);
         cbill.setStatus(egwStatus);
         cbill.setBillstatus(FinancialConstants.CONTINGENCYBILL_CANCELLED_STATUS);
-        // persistenceService.setType(Cbill.class);
         persistenceService.persist(cbill);
         persistenceService.getSession().flush();
         addActionMessage(getText("cbill.cancellation.succesful"));
@@ -1188,9 +1182,7 @@ public class ContingentBillAction extends BaseBillAction {
 
     
 
-    public String getCurrentTask() {
-        return bill.getCurrentTask().getStatus();
-    }
+   
 
     public String getCutOffDate() {
         return cutOffDate;

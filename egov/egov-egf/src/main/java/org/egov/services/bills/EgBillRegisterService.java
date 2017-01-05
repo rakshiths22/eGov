@@ -100,7 +100,7 @@ public class EgBillRegisterService extends PersistenceService<EgBillregister, Lo
     public EgBillregister createBill(EgBillregister bill, WorkflowBean workflowBean, List<CheckListHelper> checkListsTable) {
         try {
             applyAuditing(bill);
-            if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction()) && bill.getCurrentTask() == null)
+            if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction()) && bill.getWorkflowId() == null)
             {
                 bill.setBillstatus("APPROVED");
                 EgwStatus egwStatus = egwStatusHibernateDAO.getStatusByModuleAndCode(FinancialConstants.CONTINGENCYBILL_FIN,

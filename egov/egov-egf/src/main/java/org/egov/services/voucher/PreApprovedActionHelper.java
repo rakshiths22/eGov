@@ -80,7 +80,7 @@ public class PreApprovedActionHelper {
             Long voucherHeaderId = createVoucher.createVoucherFromBill(billId.intValue(), null,
                     voucherNumber, voucherDate);
             voucherHeader = voucherService.findById(voucherHeaderId, false);
-            voucherHeader = sendForApproval(voucherHeader, workflowBean);
+            voucherHeader =(CVoucherHeader) journalVoucherActionHelper.transitionWorkFlow(voucherHeader, workflowBean);
         }catch (final ValidationException e) {
             if (e.getErrors().get(0).getMessage() != null && !e.getErrors().get(0).getMessage().equals(StringUtils.EMPTY))
                 throw new ValidationException(e.getErrors().get(0).getMessage(), e.getErrors().get(0).getMessage());
@@ -101,7 +101,7 @@ public class PreApprovedActionHelper {
     {
         try {
             if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction())
-                    && voucherHeader.getCurrentTask() == null)
+                    && voucherHeader.getWorkflowId() == null)
             {
                 voucherHeader.setStatus(FinancialConstants.CREATEDVOUCHERSTATUS);
             }

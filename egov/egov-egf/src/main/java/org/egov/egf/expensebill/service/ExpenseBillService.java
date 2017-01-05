@@ -296,27 +296,7 @@ public class ExpenseBillService {
         return updatedegBillregister;
     }
 
-    public void expenseBillRegisterStatusChange(final EgBillregister egBillregister, final String workFlowAction)
-            throws ValidationException {
-        if (null != egBillregister && null != egBillregister.getStatus()
-                && null != egBillregister.getStatus().getCode())
-            if (FinancialConstants.CONTINGENCYBILL_CREATED_STATUS.equals(egBillregister.getStatus().getCode())
-                    && egBillregister.getCurrentTask() != null && workFlowAction.equalsIgnoreCase(FinancialConstants.BUTTONAPPROVE))
-                egBillregister.setStatus(financialUtils.getStatusByModuleAndCode(FinancialConstants.CONTINGENCYBILL_FIN,
-                        FinancialConstants.CONTINGENCYBILL_APPROVED_STATUS));
-            else if (workFlowAction.equals(FinancialConstants.BUTTONREJECT))
-                egBillregister.setStatus(financialUtils.getStatusByModuleAndCode(FinancialConstants.CONTINGENCYBILL_FIN,
-                        FinancialConstants.CONTINGENCYBILL_REJECTED_STATUS));
-            else if (FinancialConstants.CONTINGENCYBILL_REJECTED_STATUS.equals(egBillregister.getStatus().getCode())
-                    && workFlowAction.equals(FinancialConstants.BUTTONCANCEL))
-                egBillregister.setStatus(financialUtils.getStatusByModuleAndCode(FinancialConstants.CONTINGENCYBILL_FIN,
-                        FinancialConstants.CONTINGENCYBILL_CANCELLED_STATUS));
-            else if (FinancialConstants.CONTINGENCYBILL_REJECTED_STATUS.equals(egBillregister.getStatus().getCode())
-                    && workFlowAction.equals(FinancialConstants.BUTTONFORWARD))
-                egBillregister.setStatus(financialUtils.getStatusByModuleAndCode(FinancialConstants.CONTINGENCYBILL_FIN,
-                        FinancialConstants.CONTINGENCYBILL_CREATED_STATUS));
-
-    }
+   
 
     @Transactional(readOnly = true)
     public boolean isBillNumberGenerationAuto() {
@@ -332,30 +312,8 @@ public class ExpenseBillService {
         final ExpenseBillNumberGenerator b = beanResolver.getAutoNumberServiceFor(ExpenseBillNumberGenerator.class);
         return b.getNextNumber(bill);
     }
-
-    public void createExpenseBillRegisterWorkflowTransition(final EgBillregister egBillregister,
-            final Long approvalPosition, final String approvalComent, final String additionalRule,
-            final String workFlowAction) {
-        if (LOG.isDebugEnabled())
-            LOG.debug(" Create WorkFlow Transition Started  ...");
-        final User user = securityUtils.getCurrentUser();
-        final DateTime currentDate = new DateTime();
-        Position pos = null;
-        Assignment wfInitiator = null;
-        final String currState = "";
-       
-        if (LOG.isDebugEnabled())
-            LOG.debug(" WorkFlow Transition Completed  ...");
-    }
-
-    public Long getApprovalPositionByMatrixDesignation(final EgBillregister egBillregister,
-            final String additionalRule, final String mode, final String workFlowAction) {
-        Long approvalPosition = null;
-      
-
-        return approvalPosition;
-    }
-
+ 
+   
     public boolean isBillNumUnique(final String billnumber) {
         final EgBillregister bill = getByBillnumber(billnumber);
         return bill == null;

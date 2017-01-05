@@ -57,38 +57,47 @@
 	</table>
 </div>
 <script>
-function validate(name) {
-	 document.getElementById("workFlowAction").value = name;
-	var approverPosId = document.getElementById("approvalPosition");
-	var button = document.getElementById("workFlowAction").value;
+function validateWorkflow(button) {
+	console.log('Inside Validate Workflow for '+button);
+	document.getElementById("workflowAction").value = button;
+	var e = document.getElementById("approverDesignationId");
+	document.getElementById('approverDesignationName').value=e.options[e.selectedIndex].text;
+	console.log(document.getElementById('approverDesignationName').value +"---"+e.options[e.selectedIndex].text);
+	var approverPosId = document.getElementById("approverPositionId");
+	if(approverPosId) {
+		var approver = approverPosId.options[approverPosId.selectedIndex].text; 
+		document.getElementById("approverName").value= approver.split('/')[0];
+	} 
+	 
 	if (button != null && button == 'Submit') {
-		$('#approvalDepartment').attr('required', 'required');
-		$('#approvalDesignation').attr('required', 'required');
-		$('#approvalPosition').attr('required', 'required');
+		$('#approverDepartmentId').attr('required', 'required');
+		$('#approverDesignationId').attr('required', 'required');
+		$('#approverPositionId').attr('required', 'required');
 		$('#workflowComments').removeAttr('required');
 	}
 	if (button != null && button == 'Reject') {
-		$('#approvalDepartment').removeAttr('required');
-		$('#approvalDesignation').removeAttr('required');
-		$('#approvalPosition').removeAttr('required');
+		$('#approverDepartmentId').removeAttr('required');
+		$('#approverDesignationId').removeAttr('required');
+		$('#approverPositionId').removeAttr('required');
 		$('#workflowComments').attr('required', 'required');
 	}
 	if (button != null && button == 'Cancel') {
-		$('#approvalDepartment').removeAttr('required');
-		$('#approvalDesignation').removeAttr('required');
-		$('#approvalPosition').removeAttr('required');
+		$('#approverDepartmentId').removeAttr('required');
+		$('#approverDesignationId').removeAttr('required');
+		$('#approverPositionId').removeAttr('required');
 		}
 	if (button != null && button == 'Forward') {
-		$('#approvalDepartment').attr('required', 'required');
-		$('#approvalDesignation').attr('required', 'required');
-		$('#approvalPosition').attr('required', 'required');
+		$('#approverDepartmentId').attr('required', 'required');
+		$('#approverDesignationId').attr('required', 'required');
+		$('#approverPositionId').attr('required', 'required');
 		$('#workflowComments').removeAttr('required');
 	}
 	if (button != null && button == 'Approve') {
 		$('#workflowComments').removeAttr('required');
 	} 
- 
-	 
+	console.log('Completed Validate Workflow for '+button);
+	console.log('approverName '+document.getElementById("approverName").value);
+	 return false;
 }
 
 </script>

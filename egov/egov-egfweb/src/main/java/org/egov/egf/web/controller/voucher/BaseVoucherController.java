@@ -137,23 +137,7 @@ public abstract class BaseVoucherController extends BaseWorkFlow {
         model.addAttribute("mandatoryFields", mandatoryFields);
     }
 
-    protected void prepareValidActionListByCutOffDate(final Model model) {
-        final List<AppConfigValues> cutOffDateconfigValue = appConfigValuesService
-                .getConfigValuesByModuleAndKey(FinancialConstants.MODULE_NAME_APPCONFIG,
-                        FinancialConstants.KEY_DATAENTRYCUTOFFDATE);
-
-        if (!cutOffDateconfigValue.isEmpty()) {
-            final DateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
-            model.addAttribute("validActionList",
-                    Arrays.asList(FinancialConstants.BUTTONFORWARD, FinancialConstants.CREATEANDAPPROVE));
-            try {
-                model.addAttribute("cutOffDate",
-                        DateUtils.getDefaultFormattedDate(df.parse(cutOffDateconfigValue.get(0).getValue())));
-            } catch (final ParseException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+   
 
     protected Boolean isVoucherNumberGenerationAuto(final CVoucherHeader voucherHeader) {
         String vNumGenMode;

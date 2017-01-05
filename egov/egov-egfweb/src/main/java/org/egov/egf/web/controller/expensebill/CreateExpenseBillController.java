@@ -127,7 +127,7 @@ public class CreateExpenseBillController extends BaseBillController {
         WorkflowBean workflowBean=new WorkflowBean();
         workflowBean.setBusinessKey(egBillregister.getClass().getSimpleName());
         prepareWorkflow(model, egBillregister, workflowBean);
-        prepareValidActionListByCutOffDate(model);
+       
         egBillregister.setBilldate(new Date());
         return EXPENSEBILL_FORM;  
     }
@@ -199,7 +199,6 @@ public class CreateExpenseBillController extends BaseBillController {
         model.addAttribute(DESIGNATION, request.getParameter(DESIGNATION));
         egBillregister.getBillPayeedetails().clear();
         prepareBillDetailsForView(egBillregister);
-        prepareValidActionListByCutOffDate(model);
     }
 
     @RequestMapping(value = "/success", method = RequestMethod.GET)

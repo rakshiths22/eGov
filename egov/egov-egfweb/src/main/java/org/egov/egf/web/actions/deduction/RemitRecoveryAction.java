@@ -583,11 +583,6 @@ public class RemitRecoveryAction extends BasePaymentAction {
     @Action(value = "/deduction/remitRecovery-viewInboxItem")
     public String viewInboxItem() {
         paymentheader = paymentService.find("from Paymentheader where id=?", Long.valueOf(paymentid));
-        /*
-         * if (paymentheader.getCurrentTask().getStatus() != null && !paymentheader.getCurrentTask().getStatus().isEmpty() &&
-         * paymentheader.getCurrentTask().getStatus().contains("Reject")) {
-         * voucherHeader.setId(paymentheader.getVoucherheader().getId()); showCancel = true; return beforeEdit(); }
-         */
         showApprove = true;
         voucherHeader.setId(paymentheader.getVoucherheader().getId());
         prepareForViewModifyReverse();

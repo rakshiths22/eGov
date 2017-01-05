@@ -39,7 +39,6 @@
  */
 package org.egov.egf.web.actions.report;
 
-
 import net.sf.jasperreports.engine.JRException;
 
 import org.apache.commons.lang.StringUtils;
@@ -60,6 +59,10 @@ import org.egov.infra.utils.DateUtils;
 import org.egov.infra.utils.NumberToWord;
 import org.egov.infra.web.struts.actions.BaseFormAction;
 import org.egov.infra.workflow.entity.StateHistory;
+import org.egov.infra.workflow.multitenant.model.Task;
+import org.egov.infra.workflow.multitenant.model.WorkflowBean;
+import org.egov.infra.workflow.multitenant.model.WorkflowConstants;
+import org.egov.infra.workflow.multitenant.service.BaseWorkFlow;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.model.bills.EgBillPayeedetails;
 import org.egov.model.bills.EgBillregistermis;
@@ -79,16 +82,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 @Results(value = {
-		
-		@Result(name = ExpenseJournalVoucherPrintAction.PRINT ,location="expenseJournalVoucherPrint-print.jsp"),
+
+        @Result(name = ExpenseJournalVoucherPrintAction.PRINT, location = "expenseJournalVoucherPrint-print.jsp"),
         @Result(name = "PDF", type = "stream", location = "inputStream", params = { "inputName", "inputStream", "contentType",
                 "application/pdf", "contentDisposition", "no-cache;filename=ExpenseJournalVoucherReport.pdf" }),
-                @Result(name = "XLS", type = "stream", location = "inputStream", params = { "inputName", "inputStream", "contentType",
-                        "application/xls", "contentDisposition", "no-cache;filename=ExpenseJournalVoucherReport.xls" }),
-                        @Result(name = "HTML", type = "stream", location = "inputStream", params = { "inputName", "inputStream", "contentType",
-                        "text/html" })
+        @Result(name = "XLS", type = "stream", location = "inputStream", params = { "inputName", "inputStream", "contentType",
+                "application/xls", "contentDisposition", "no-cache;filename=ExpenseJournalVoucherReport.xls" }),
+        @Result(name = "HTML", type = "stream", location = "inputStream", params = { "inputName", "inputStream", "contentType",
+                "text/html" })
 })
 
 @ParentPackage("egov")
@@ -104,12 +106,14 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
     EgBillregistermis billRegistermis;
     List<EgBillPayeedetails> billPayeeDetails = new ArrayList<EgBillPayeedetails>();
     private static final String ACCDETAILTYPEQUERY = " from Accountdetailtype where id=?";
-   
- @Autowired
- @Qualifier("persistenceService")
- private PersistenceService persistenceService;
- @Autowired
+
+    @Autowired
+    @Qualifier("persistenceService")
+    private PersistenceService persistenceService;
+    @Autowired
     private EgovCommon egovCommon;
+    @Autowired
+    private BaseWorkFlow baseWorkFlow;
 
     public Long getId() {
         return id;
@@ -167,7 +171,7 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
                 if (billRegistermis != null)
                     billPayeeDetails = persistenceService.findAllBy(
                             "from EgBillPayeedetails where egBilldetailsId.egBillregister.id=?", billRegistermis
-                            .getEgBillregister().getId());
+                                    .getEgBillregister().getId());
                 generateVoucherReportList();
             }
         }
@@ -176,7 +180,7 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
     private void generateVoucherReportList() {
         if (voucher != null) {
             for (final CGeneralLedger vd : voucher.getGeneralledger())
-                if (BigDecimal.ZERO.compareTo(BigDecimal.valueOf(vd.getCreditAmount()))==0) {
+                if (BigDecimal.ZERO.compareTo(BigDecimal.valueOf(vd.getCreditAmount())) == 0) {
                     final VoucherReport voucherReport = new VoucherReport(persistenceService, Integer.valueOf(voucher.getId()
                             .toString()), vd, egovCommon);
                     if (billRegistermis != null)
@@ -184,7 +188,7 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
                     voucherReportList.add(voucherReport);
                 }
             for (final CGeneralLedger vd : voucher.getGeneralledger())
-                if (BigDecimal.ZERO.compareTo(BigDecimal.valueOf(vd.getDebitAmount()))==0) {
+                if (BigDecimal.ZERO.compareTo(BigDecimal.valueOf(vd.getDebitAmount())) == 0) {
                     final VoucherReport voucherReport = new VoucherReport(persistenceService, Integer.valueOf(voucher.getId()
                             .toString()), vd, egovCommon);
                     if (billRegistermis != null)
@@ -225,22 +229,22 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
         paramMap.put("voucherNumber", getVoucherNumber());
         paramMap.put("voucherDate", getVoucherDate());
         paramMap.put("voucherDescription", getVoucherDescription());
-      /*  if (voucher != null && voucher.getCurrentTask() != null)
-            loadInboxHistoryData(voucher.getStateHistory(), paramMap);*/
-        if (billRegistermis != null) {
-            paramMap.put("billDate", Constants.DDMMYYYYFORMAT2.format(billRegistermis.getEgBillregister().getBilldate()));
-            paramMap.put("partyBillNumber", billRegistermis.getPartyBillNumber());
-            paramMap.put("serviceOrder", billRegistermis.getNarration());
-            paramMap.put("partyName", billRegistermis.getPayto());
-            paramMap.put("billNumber", billRegistermis.getEgBillregister().getBillnumber());
-            final BigDecimal billamount = billRegistermis.getEgBillregister().getBillamount();
-            final String amountInFigures = billamount == null ? " " : billamount.setScale(2).toPlainString();
-            final String amountInWords = billamount == null ? " " : NumberToWord.convertToWord(billamount.toPlainString());
-            paramMap.put("certificate", getText("ejv.report.text", new String[] { amountInFigures, amountInWords }));
-        }
-        paramMap.put("ulbName", ReportUtil.getCityName());
+        if (voucher != null && voucher.getWorkflowId() != null)
+            loadInboxHistoryData(baseWorkFlow.getWorkflowHistory(voucher,new WorkflowBean()), paramMap);
+            if (billRegistermis != null) {
+                paramMap.put("billDate", Constants.DDMMYYYYFORMAT2.format(billRegistermis.getEgBillregister().getBilldate()));
+                paramMap.put("partyBillNumber", billRegistermis.getPartyBillNumber());
+                paramMap.put("serviceOrder", billRegistermis.getNarration());
+                paramMap.put("partyName", billRegistermis.getPayto());
+                paramMap.put("billNumber", billRegistermis.getEgBillregister().getBillnumber());
+                final BigDecimal billamount = billRegistermis.getEgBillregister().getBillamount();
+                final String amountInFigures = billamount == null ? " " : billamount.setScale(2).toPlainString();
+                final String amountInWords = billamount == null ? " " : NumberToWord.convertToWord(billamount.toPlainString());
+                paramMap.put("certificate", getText("ejv.report.text", new String[] { amountInFigures, amountInWords }));
+            }
+            paramMap.put("ulbName", ReportUtil.getCityName());
 
-        return paramMap;
+            return paramMap;
     }
 
     public Map<String, Object> getAccountDetails(final Integer detailtypeid, final Integer detailkeyid,
@@ -269,18 +273,31 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
                 .getVoucherDate());
     }
 
-   /* void loadInboxHistoryData(final List<StateHistory> stateHistory, final Map<String, Object> paramMap) throws ApplicationRuntimeException {
+    void loadInboxHistoryData(List<Task> taskHistory,
+            final Map<String, Object> paramMap)
+            throws ApplicationRuntimeException {
         final List<String> history = new ArrayList<String>();
         final List<String> workFlowDate = new ArrayList<String>();
-        for (final StateHistory historyState : stateHistory)
-            if (!"NEW".equalsIgnoreCase(historyState.getValue())) {
-                history.add(historyState.getSenderName());
-                workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(historyState.getLastModifiedDate()));
+
+        if (taskHistory != null) {
+            for (final Task task : taskHistory) {
+                if (!"NEW".equalsIgnoreCase(task.getStatus())) {
+                    history.add(task.getSender());
+                    workFlowDate.add(Constants.DDMMYYYYFORMAT2
+                            .format(task.getCreatedDate()));
+                    if (task.getStatus().equalsIgnoreCase(WorkflowConstants.STATUS_REJECTED)) {
+                        history.clear();
+                        workFlowDate.clear();
+                    }
+                }
             }
+
+        }
+
         for (int i = 0; i < history.size(); i++) {
             paramMap.put("workFlow_" + i, history.get(i));
             paramMap.put("workFlowDate_" + i, workFlowDate.get(i));
         }
-    }*/
 
+    }
 }

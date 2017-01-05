@@ -96,6 +96,11 @@
 			<div class="tab-pane fade" id="checklist">
 				<jsp:include page="expensebill-view-checklist.jsp"/>
 			</div>
+				<jsp:include page="../common/commonworkflowhistory-view.jsp"></jsp:include>
+				<jsp:include page="../common/commonworkflowmatrix.jsp"/>
+				<div class="buttonbottom" align="center">
+					<jsp:include page="../common/commonworkflowmatrix-button.jsp" />
+				</div>
 				<div class="row">
 					<div class="col-sm-12 text-center">
 						<input type="submit" name="closeButton"	id="closeButton" value="Close" Class="btn btn-default" onclick="window.close();" />

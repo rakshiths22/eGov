@@ -73,7 +73,7 @@ public class DishonorChequeService extends PersistenceService<DishonorCheque, Lo
     {
         // Get cheque creator details
 
-        if (null == dishonorCheque.getCurrentTask()) {
+        if (null == dishonorCheque.getWorkflowId()) {
             final Position pos = eisService.getPrimaryPositionForUser(dishonorCheque.getPayinSlipCreator().longValue(),
                     new Date());
             if (LOGGER.isDebugEnabled())
@@ -94,7 +94,7 @@ public class DishonorChequeService extends PersistenceService<DishonorCheque, Lo
            // dishonorChqWorkflowService.transition(workFlowAction.toLowerCase(), dishonorCheque, comments);
         }
         if (LOGGER.isDebugEnabled())
-            LOGGER.error("---------" + dishonorCheque.getCurrentTask().getId());
+            LOGGER.error("---------" + dishonorCheque.getWorkflowId());
 
     }
 
