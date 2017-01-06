@@ -224,6 +224,9 @@
 			}
 	function onSubmit()
 	{
+		if(!validateCutOff())
+			return false;
+		
 		if(validateJV()){
 			document.jvcreateform.action='/EGF/voucher/journalVoucher-create.action';
 	    	return true;
@@ -231,26 +234,28 @@
 		}else{
 			return false;
 		}
+ 
 	}
 
 	function validateCutOff()
 	{
-	var cutOffDatePart=document.getElementById("cutOffDate").value.split("/");
-    var voucherDatePart=document.getElementById("voucherDate").value.split("/");
-    var cutOffDate = new Date(cutOffDatePart[1] + "/" + cutOffDatePart[0] + "/"
-			+ cutOffDatePart[2]);
-    var voucherDate = new Date(voucherDatePart[1] + "/" + voucherDatePart[0] + "/"
-			+ voucherDatePart[2]);
-	if(voucherDate<=cutOffDate)
-	{
-		return true;
-	}
-	else{
+		console.log("validate cutt off3");
+		if(document.getElementById("workflowAction").value.trim()=='Create And Approve')
+		{
+ 	   var cutOffDate=document.getElementById('cutOffDate').value;
+ 	   	  var voucherDate=document.getElementById('voucherDate').value;
+
+		if(!validateCreateAndApprove(cutOffDate,voucherDate))
+		{
 		var msg1='<s:text name="wf.vouchercutoffdate.message"/>';
 		var msg2='<s:text name="wf.cutoffdate.msg"/>';
 		bootbox.alert(msg1+" "+document.getElementById("cutOffDate").value+" "+msg2);
 			return false;
 		}
+
+		} 
+		return true;
+	
 	}
 	
 	function validateJV()
@@ -434,6 +439,11 @@ function onloadtask(){
 		populateslDropDown(); // to load the subledger detils when page loads, required when validation fails.
 	if(document.getElementById('approverDepartment'))
 		document.getElementById('approverDepartment').value = "-1";
+		
+		   if(document.getElementById('cutOffDate').value=="")
+			{
+			document.getElementById('Create And Approve').style.display="none";
+			}
   }
 function showMessage(message){
 	var buttonValue = '<s:property value="buttonValue"/>';

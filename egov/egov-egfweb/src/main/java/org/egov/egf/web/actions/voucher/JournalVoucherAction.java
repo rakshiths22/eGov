@@ -79,329 +79,320 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Results({ @Result(name = JournalVoucherAction.NEW, location = "journalVoucher-new.jsp") })
 public class JournalVoucherAction extends BaseVoucherAction
 {
-    private static final Logger LOGGER = Logger.getLogger(JournalVoucherAction.class);
-    private static final long serialVersionUID = 1L;
-    private List<VoucherDetails> billDetailslist;
-    private List<VoucherDetails> subLedgerlist;
-    private String target;
-    protected String showMode;
-    @Autowired
-    @Qualifier("voucherService")
-    private VoucherService voucherService;
-    @Autowired
-    @Qualifier("journalVoucherActionHelper")
-    private JournalVoucherActionHelper journalVoucherActionHelper;
-    private VoucherTypeBean voucherTypeBean;
-    private String buttonValue;
-    private String message = "";
-    private Integer departmentId;
-    private String wfitemstate;
-    private VoucherHelper voucherHelper;
-    private static final String VOUCHERQUERY = " from CVoucherHeader where id=?";
-    private static final String ACTIONNAME = "actionName";
-    private static final String VHID = "vhid";
-    protected EisCommonService eisCommonService;
-    @Autowired
-    protected AppConfigValueService appConfigValuesService;
-    private String cutOffDate;
-    protected DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
-    DateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
-    DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-    SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd");
-    Date date;
-    @Autowired
-    private BudgetControlTypeService budgetCheckConfigService;
+	private static final Logger LOGGER = Logger.getLogger(JournalVoucherAction.class);
+	private static final long serialVersionUID = 1L;
+	private List<VoucherDetails> billDetailslist;
+	private List<VoucherDetails> subLedgerlist;
+	private String target;
+	protected String showMode;
+	@Autowired
+	@Qualifier("voucherService")
+	private VoucherService voucherService;
+	@Autowired
+	@Qualifier("journalVoucherActionHelper")
+	private JournalVoucherActionHelper journalVoucherActionHelper;
+	private VoucherTypeBean voucherTypeBean;
+	private String buttonValue;
+	private String message = "";
+	private Integer departmentId;
+	private String wfitemstate;
+	private VoucherHelper voucherHelper;
+	private static final String VOUCHERQUERY = " from CVoucherHeader where id=?";
+	private static final String ACTIONNAME = "actionName";
+	private static final String VHID = "vhid";
+	protected EisCommonService eisCommonService;
+	@Autowired
+	protected AppConfigValueService appConfigValuesService;
+	protected DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+	DateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
+	DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+	SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd");
+	Date date;
+	@Autowired
+	private BudgetControlTypeService budgetCheckConfigService;
 
-    @Autowired
-    private ScriptService scriptService;
+	@Autowired
+	private ScriptService scriptService;
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void prepare() {
-        super.prepare();
-        
-        addDropdownData("approvaldepartmentList", Collections.EMPTY_LIST);
-        addDropdownData("designationList", Collections.EMPTY_LIST);
-        addDropdownData("userList", Collections.EMPTY_LIST);
-        workflowBean.setBusinessKey(voucherHeader.getClass().getSimpleName());
-        prepareWorkflow(null, getModel(),workflowBean); 
-        
-    }
-    
+	@SuppressWarnings("unchecked")
+	@Override
+	public void prepare() {
+		super.prepare();
 
-    @SkipValidation
-    @Action(value = "/voucher/journalVoucher-newForm")
-    public String newForm()
-    {
-        List<AppConfigValues> cutOffDateconfigValue = appConfigValuesService.getConfigValuesByModuleAndKey("EGF",
-                "DataEntryCutOffDate");
-        if (cutOffDateconfigValue != null && !cutOffDateconfigValue.isEmpty())
-        {
-            try {
-                date = df.parse(cutOffDateconfigValue.get(0).getValue());
-                cutOffDate = formatter.format(date);
-            } catch (ParseException e) {
+		addDropdownData("approvaldepartmentList", Collections.EMPTY_LIST);
+		addDropdownData("designationList", Collections.EMPTY_LIST);
+		addDropdownData("userList", Collections.EMPTY_LIST);
+		workflowBean.setBusinessKey(voucherHeader.getClass().getSimpleName());
+		prepareWorkflow(null, getModel(),workflowBean); 
 
-            }
-        }
-        billDetailslist = new ArrayList<VoucherDetails>();
-        subLedgerlist = new ArrayList<VoucherDetails>();
-        billDetailslist.add(new VoucherDetails());
-        billDetailslist.add(new VoucherDetails());
-        subLedgerlist.add(new VoucherDetails());
-        // setting the typa as default for reusing billvoucher.nextdesg workflow
-        showMode = NEW;
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("JournalVoucherAction | new | End");
-        return NEW;
-    }
+	}
 
-    @SkipValidation
-    public String viewform()
-    {
-        showMode = "view";
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("JournalVoucherAction | view | End");
-        return NEW;
-    }
 
-    @Override
-    public WorkflowEntity getModel() {
-        voucherHeader = (CVoucherHeader) super.getModel();
-        voucherHeader.setType(FinancialConstants.STANDARD_VOUCHER_TYPE_JOURNAL);
-        return voucherHeader; 
+	@SkipValidation
+	@Action(value = "/voucher/journalVoucher-newForm")
+	public String newForm()
+	{
+		prepareNewform();
+		billDetailslist = new ArrayList<VoucherDetails>();
+		subLedgerlist = new ArrayList<VoucherDetails>();
+		billDetailslist.add(new VoucherDetails());
+		billDetailslist.add(new VoucherDetails());
+		subLedgerlist.add(new VoucherDetails());
+		// setting the typa as default for reusing billvoucher.nextdesg workflow
+		showMode = NEW;
+		if (LOGGER.isDebugEnabled())
+			LOGGER.debug("JournalVoucherAction | new | End");
+		return NEW;
+	}
 
-    };
+	@SkipValidation
+	public String viewform()
+	{
+		showMode = "view";
+		if (LOGGER.isDebugEnabled())
+			LOGGER.debug("JournalVoucherAction | view | End");
+		return NEW;
+	}
 
-    /**
-     *
-     * @return
-     * @throws Exception
-     */
-    @SkipValidation
-    @Action(value = "/voucher/journalVoucher-create")
-    public String create() throws Exception {
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("VoucherAction | create Method | Start");
-        String voucherDate = formatter1.format(voucherHeader.getVoucherDate());
-        String cutOffDate1 = null;
-        removeEmptyRowsAccoutDetail(billDetailslist);
-        removeEmptyRowsSubledger(subLedgerlist);
-        target = "";
-    
-        final String voucherNumber = voucherHeader.getVoucherNumber();
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("Bill details List size  : " + billDetailslist.size());
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("Sub ledger details List size  : " + subLedgerlist.size());
-        loadSchemeSubscheme();
-        validateFields();
-        if (!validateData(billDetailslist, subLedgerlist))
-            try {
-                if (!"JVGeneral".equalsIgnoreCase(voucherTypeBean.getVoucherName())) {
-                    voucherTypeBean.setTotalAmount(parameters.get("totaldbamount")[0]);
-                }
-                voucherHeader = journalVoucherActionHelper.createVoucher(billDetailslist, subLedgerlist, voucherHeader,
-                        voucherTypeBean, workflowBean);
-                
-                message=  generateMessage(voucherHeader,workflowBean);
-             
-                if (LOGGER.isDebugEnabled())
-                    LOGGER.debug("JournalVoucherAction | create  | Success | message === " + message);
+	@Override
+	public WorkflowEntity getModel() {
+		voucherHeader = (CVoucherHeader) super.getModel();
+		voucherHeader.setType(FinancialConstants.STANDARD_VOUCHER_TYPE_JOURNAL);
+		return voucherHeader; 
 
-                return viewform();
-            }
+	};
 
-            catch (final ValidationException e) {
-                // clearMessages();
-                if (subLedgerlist.size() == 0)
-                    subLedgerlist.add(new VoucherDetails());
-                voucherHeader.setVoucherNumber(voucherNumber);
-                final List<ValidationError> errors = new ArrayList<ValidationError>();
-                errors.add(new ValidationError("exp", e.getErrors().get(0).getMessage()));
-                if (e.getErrors().get(0).getMessage() != null && e.getErrors().get(0).getMessage() != "")
-                    throw new ValidationException(e.getErrors().get(0).getMessage(), e.getErrors().get(0).getMessage());
-                else
-                    throw new ValidationException("Voucher creation failed", "Voucher creation failed");
+	/**
+	 *
+	 * @return
+	 * @throws Exception
+	 */
+	@SkipValidation
+	@Action(value = "/voucher/journalVoucher-create")
+	public String create() throws Exception {
+		if (LOGGER.isDebugEnabled())
+			LOGGER.debug("VoucherAction | create Method | Start");
+		String voucherDate = formatter1.format(voucherHeader.getVoucherDate());
+		String cutOffDate1 = null;
+		removeEmptyRowsAccoutDetail(billDetailslist);
+		removeEmptyRowsSubledger(subLedgerlist);
+		target = "";
 
-            } catch (final Exception e) {
+		final String voucherNumber = voucherHeader.getVoucherNumber();
+		if (LOGGER.isDebugEnabled())
+			LOGGER.debug("Bill details List size  : " + billDetailslist.size());
+		if (LOGGER.isDebugEnabled())
+			LOGGER.debug("Sub ledger details List size  : " + subLedgerlist.size());
+		loadSchemeSubscheme();
+		validateCutOffDate(voucherHeader.getVoucherDate());
+		validateFields();
+		if (!validateData(billDetailslist, subLedgerlist))
+			try {
+				if (!"JVGeneral".equalsIgnoreCase(voucherTypeBean.getVoucherName())) {
+					voucherTypeBean.setTotalAmount(parameters.get("totaldbamount")[0]);
+				}
+				voucherHeader = journalVoucherActionHelper.createVoucher(billDetailslist, subLedgerlist, voucherHeader,
+						voucherTypeBean, workflowBean);
 
-                clearMessages();
-                if (subLedgerlist.size() == 0)
-                    subLedgerlist.add(new VoucherDetails());
-                voucherHeader.setVoucherNumber(voucherNumber);
-                final List<ValidationError> errors = new ArrayList<ValidationError>();
-                errors.add(new ValidationError("exp", e.getMessage()));
-                throw new ValidationException(errors);
-            } finally {
-            }
-        else if (subLedgerlist.size() == 0)
-            subLedgerlist.add(new VoucherDetails());
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("VoucherAction | create Method | End");
-        return NEW;
-    }
+				message=  generateMessage(voucherHeader,workflowBean);
 
-    
+				if (LOGGER.isDebugEnabled())
+					LOGGER.debug("JournalVoucherAction | create  | Success | message === " + message);
 
-    
+				return viewform();
+			}
 
-    public List<VoucherDetails> getBillDetailslist() {
-        return billDetailslist;
-    }
+		catch (final ValidationException e) {
+			// clearMessages();
+			if (subLedgerlist.size() == 0)
+				subLedgerlist.add(new VoucherDetails());
+			voucherHeader.setVoucherNumber(voucherNumber);
 
-    public void setBillDetailslist(final List<VoucherDetails> billDetailslist) {
-        this.billDetailslist = billDetailslist;
-    }
+			if (e.getErrors().get(0).getMessage() != null && e.getErrors().get(0).getMessage() != "")
+			{
+				final List<ValidationError> errors = new ArrayList<ValidationError>();
+				errors.add(new ValidationError("exp", e.getErrors().get(0).getMessage()));
+				throw new ValidationException(e.getErrors().get(0).getMessage(), e.getErrors().get(0).getMessage());
+			}
+			else
+				throw new ValidationException("Voucher creation failed", "Voucher creation failed");
 
-    public List<VoucherDetails> getSubLedgerlist() {
-        return subLedgerlist;
-    }
+		} catch (final Exception e) {
 
-    public void setSubLedgerlist(final List<VoucherDetails> subLedgerlist) {
-        this.subLedgerlist = subLedgerlist;
-    }
+			clearMessages();
+			if (subLedgerlist.size() == 0)
+				subLedgerlist.add(new VoucherDetails());
+			voucherHeader.setVoucherNumber(voucherNumber);
+			final List<ValidationError> errors = new ArrayList<ValidationError>();
+			errors.add(new ValidationError("exp", e.getMessage()));
+			throw new ValidationException(errors);
+		} finally {
+		}
+		else if (subLedgerlist.size() == 0)
+			subLedgerlist.add(new VoucherDetails());
+		if (LOGGER.isDebugEnabled())
+			LOGGER.debug("VoucherAction | create Method | End");
+		return NEW;
+	}
 
-    public String getTarget() {
-        return target;
-    }
 
-    public void setTarget(final String target) {
-        this.target = target;
-    }
 
-    public VoucherTypeBean getVoucherTypeBean() {
-        return voucherTypeBean;
-    }
 
-    public void setVoucherTypeBean(final VoucherTypeBean voucherTypeBean) {
-        this.voucherTypeBean = voucherTypeBean;
-    }
 
-    @ValidationErrorPage(value = "new")
-    public String saveAndView() throws Exception {
-        try {
-            buttonValue = "view";
-            return create();
-        } catch (final ValidationException e) {
-            throw e;
-        }
-    }
+	public List<VoucherDetails> getBillDetailslist() {
+		return billDetailslist;
+	}
 
-    @ValidationErrorPage(value = "new")
-    public String saveAndPrint() throws Exception {
-        try {
-            buttonValue = "print";
-            return create();
-        } catch (final ValidationException e) {
-            throw e;
-        }
-    }
+	public void setBillDetailslist(final List<VoucherDetails> billDetailslist) {
+		this.billDetailslist = billDetailslist;
+	}
 
-    @ValidationErrorPage(value = "new")
-    public String saveAndNew() throws Exception {
-        try {
-            buttonValue = "new";
-            return create();
-        } catch (final ValidationException e) {
-            throw e;
-        }
-    }
+	public List<VoucherDetails> getSubLedgerlist() {
+		return subLedgerlist;
+	}
 
-    @ValidationErrorPage(value = "new")
-    public String saveAndClose() throws Exception {
-        buttonValue = "close";
-        return create();
-    }
+	public void setSubLedgerlist(final List<VoucherDetails> subLedgerlist) {
+		this.subLedgerlist = subLedgerlist;
+	}
 
-    public String getMessage() {
-        return message;
-    }
+	public String getTarget() {
+		return target;
+	}
 
-    public String getButtonValue() {
-        return buttonValue;
-    }
+	public void setTarget(final String target) {
+		this.target = target;
+	}
 
-    public void setButtonValue(final String buttonValue) {
-        this.buttonValue = buttonValue;
-    }
+	public VoucherTypeBean getVoucherTypeBean() {
+		return voucherTypeBean;
+	}
 
-    public String getWfitemstate() {
-        return wfitemstate;
-    }
+	public void setVoucherTypeBean(final VoucherTypeBean voucherTypeBean) {
+		this.voucherTypeBean = voucherTypeBean;
+	}
 
-    public void setWfitemstate(final String wfitemstate) {
-        this.wfitemstate = wfitemstate;
-    }
+	@ValidationErrorPage(value = "new")
+	public String saveAndView() throws Exception {
+		try {
+			buttonValue = "view";
+			return create();
+		} catch (final ValidationException e) {
+			throw e;
+		}
+	}
 
-    public VoucherHelper getVoucherHelper() {
-        return voucherHelper;
-    }
+	@ValidationErrorPage(value = "new")
+	public String saveAndPrint() throws Exception {
+		try {
+			buttonValue = "print";
+			return create();
+		} catch (final ValidationException e) {
+			throw e;
+		}
+	}
 
-    public void setVoucherHelper(final VoucherHelper voucherHelper) {
-        this.voucherHelper = voucherHelper;
-    }
+	@ValidationErrorPage(value = "new")
+	public String saveAndNew() throws Exception {
+		try {
+			buttonValue = "new";
+			return create();
+		} catch (final ValidationException e) {
+			throw e;
+		}
+	}
 
-    
-    public EisCommonService getEisCommonService() {
-        return eisCommonService;
-    }
+	@ValidationErrorPage(value = "new")
+	public String saveAndClose() throws Exception {
+		buttonValue = "close";
+		return create();
+	}
 
-    public void setEisCommonService(final EisCommonService eisCommonService) {
-        this.eisCommonService = eisCommonService;
-    }
+	public String getMessage() {
+		return message;
+	}
 
-    public String getShowMode() {
-        return showMode;
-    }
+	public String getButtonValue() {
+		return buttonValue;
+	}
 
-    public void setShowMode(final String showMode) {
-        this.showMode = showMode;
-    }
+	public void setButtonValue(final String buttonValue) {
+		this.buttonValue = buttonValue;
+	}
 
-    public String getCutOffDate() {
-        return cutOffDate;
-    }
+	public String getWfitemstate() {
+		return wfitemstate;
+	}
 
-    public void setCutOffDate(String cutOffDate) {
-        this.cutOffDate = cutOffDate;
-    }
+	public void setWfitemstate(final String wfitemstate) {
+		this.wfitemstate = wfitemstate;
+	}
 
-    public String generateMessage(CVoucherHeader voucherHeader, WorkflowBean workflowBean) {
-        String message="";
-        switch(workflowBean.getWorkflowAction().toLowerCase())   
-        {
-        case  WorkflowConstants.ACTION_APPROVE :
-            message=getText("voucher.approved.success", new String[] {voucherHeader.getVoucherNumber()});
-            break;
-        case  WorkflowConstants.ACTION_REJECT :
-            message=getText("voucher.reject", new String[] {voucherHeader.getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
-            break;   
-        case  WorkflowConstants.ACTION_FORWARD :
-            if(voucherHeader.getVouchermis().getBudgetaryAppnumber()!=null)
-            {
-            message=getText("voucher.create.success.with.budgetappropriation",
-                    new String[] {voucherHeader.getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName(),voucherHeader.getVouchermis().getBudgetaryAppnumber()});
-            }else
-            {
-                message=getText("voucher.create.success",
-                        new String[] {voucherHeader.getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});  
-            }
-            break;    
-        case  WorkflowConstants.ACTION_CANCEL :
-            message=getText("voucher.cancel",
-                    new String[] {voucherHeader.getVoucherNumber()});
-            break; 
-        case  WorkflowConstants.ACTION_SAVE :
-            message=getText("voucher.saved.success",
-                    new String[] {voucherHeader.getVoucherNumber()});
-            break;   
+	public VoucherHelper getVoucherHelper() {
+		return voucherHelper;
+	}
 
-        }
-        return message;
-    }
-    
-    
-    
+	public void setVoucherHelper(final VoucherHelper voucherHelper) {
+		this.voucherHelper = voucherHelper;
+	}
+
+
+	public EisCommonService getEisCommonService() {
+		return eisCommonService;
+	}
+
+	public void setEisCommonService(final EisCommonService eisCommonService) {
+		this.eisCommonService = eisCommonService;
+	}
+
+	public String getShowMode() {
+		return showMode;
+	}
+
+	public void setShowMode(final String showMode) {
+		this.showMode = showMode;
+	}
+
+
+	public String generateMessage(CVoucherHeader voucherHeader, WorkflowBean workflowBean) {
+		String message="";
+		switch(workflowBean.getWorkflowAction().toLowerCase())   
+		{
+		case  WorkflowConstants.ACTION_APPROVE :
+			message=getText("voucher.approved.success", new String[] {voucherHeader.getVoucherNumber()});
+			break;
+			
+		case  WorkflowConstants.ACTION_REJECT :
+			message=getText("voucher.reject", new String[] {voucherHeader.getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
+			break;   
+			
+		case  WorkflowConstants.ACTION_FORWARD :
+			message=getText("voucher.create.success",
+					new String[] {voucherHeader.getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
+			if(voucherHeader.getVouchermis().getBudgetaryAppnumber()!=null)
+
+				message=message+getText("budget.appr.number.success", new String[] {voucherHeader.getVouchermis().getBudgetaryAppnumber()});
+
+			break;    
+		case  WorkflowConstants.ACTION_CANCEL :
+			message=getText("voucher.cancel",
+					new String[] {voucherHeader.getVoucherNumber()});
+			break; 
+		case  WorkflowConstants.ACTION_SAVE :
+			message=getText("voucher.saved.success",
+					new String[] {voucherHeader.getVoucherNumber()});
+			break;   
+		case WorkflowConstants.ACTION_CREATE_AND_APPROVE:
+		 		message=getText("voucher.approved.success", new String[] {voucherHeader.getVoucherNumber()});
+				if(voucherHeader.getVouchermis().getBudgetaryAppnumber()!=null)
+					message=message+getText("budget.appr.number.success", new String[] {voucherHeader.getVouchermis().getBudgetaryAppnumber()});
+			 
+			break;
+
+		}
+		return message;
+	}
+
+
+
 
 }

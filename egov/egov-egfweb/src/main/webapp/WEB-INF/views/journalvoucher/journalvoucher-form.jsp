@@ -73,6 +73,7 @@
 	   </spring:hasBindErrors>
    </div>
     <form:hidden path="" id="cutOffDate" value="${cutOffDate}"/>
+    <s:hidden id="voucherDate" name="voucherDate" />
     <form:hidden path="" id="mode" value="${mode}"/>
 	<form:hidden path="" id="voucheramount" class ="voucheramount" value="${voucheramount}"/>
 	<div class="panel-title text-center" style="color: green;">

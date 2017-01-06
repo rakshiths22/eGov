@@ -118,7 +118,7 @@ public class JournalVoucherActionHelper extends BaseWorkFlow {
                 voucherService.createBillForVoucherSubType(billDetailslist, subLedgerlist, voucherHeader, voucherTypeBean,
                         new BigDecimal(voucherTypeBean.getTotalAmount()));
             }
-            if (FinancialConstants.CREATEANDAPPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction()))
+            if (WorkflowConstants.ACTION_CREATE_AND_APPROVE.equalsIgnoreCase(workflowBean.getWorkflowAction()))
             {
                 voucherHeader.setStatus(FinancialConstants.CREATEDVOUCHERSTATUS);
             }
