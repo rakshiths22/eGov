@@ -351,7 +351,7 @@
 
 					</br>
 				</table>
-				<s:hidden name="cutOffDate" id="cutOffDate" />
+				<s:hidden id="cutOffDate" name="cutOffDate" />
 				<%@ include file='../workflow/commonworkflow.jsp'%>
 			</div>
 			<div align="center">
@@ -426,6 +426,9 @@ function populateAccNum(branch){
 function onSubmit()
 {
 	enableAll();
+ 	 if(!validateCutOff())
+		return false; 
+	
 	if (!validateForm_directBankPayment()) {
 		undoLoadingMask();
 		return false;
@@ -448,26 +451,27 @@ function onSubmit()
 		}
 }
 
-function validateCutOff()
+ function validateCutOff()
 {
-var cutOffDatePart=document.getElementById("cutOffDate").value.split("/");
-var voucherDatePart=document.getElementById("voucherDate").value.split("/");
-var cutOffDate = new Date(cutOffDatePart[1] + "/" + cutOffDatePart[0] + "/"
-		+ cutOffDatePart[2]);
-var voucherDate = new Date(voucherDatePart[1] + "/" + voucherDatePart[0] + "/"
-		+ voucherDatePart[2]);
-if(voucherDate<=cutOffDate)
-{
-	return true;
-}
-else{
+ ;
+	if(document.getElementById("workflowAction").value.trim()=='Create And Approve')
+	{
+    var cutOffDate=document.getElementById('cutOffDate').value;
+    	  var voucherDate=document.getElementById('voucherDate').value;
+
+	if(!validateCreateAndApprove(cutOffDate,voucherDate))
+	{
 	var msg1='<s:text name="wf.vouchercutoffdate.message"/>';
 	var msg2='<s:text name="wf.cutoffdate.msg"/>';
 	bootbox.alert(msg1+" "+document.getElementById("cutOffDate").value+" "+msg2);
 		return false;
 	}
+ 
+	} 
+	return true;
+
 }
 
-</SCRIPT>
+ </SCRIPT>
 </body>
 </html>
