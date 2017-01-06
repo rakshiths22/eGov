@@ -54,6 +54,8 @@
 <link rel="stylesheet"
 	href="/EGF/resources/css/tabber.css?rnd=${app_release_no}"
 	TYPE="text/css">
+	<script type="text/javascript"
+	src="${pageContext.request.contextPath}/resources/javascript/voucherHelper.js?rnd=${app_release_no}"></script>
 <script type="text/javascript"
 	src="/EGF/resources/javascript/tabber.js?rnd=${app_release_no}"></script>
 <script type="text/javascript"
@@ -216,6 +218,8 @@ function onLoad(){
 }
 function onSubmit()
 {
+	 if(!validateCutOff())
+			return false; 
 	if(validate()){
 		 var myform = jQuery('#remittanceForm');
 		// re-disabled the set of inputs that you previously
@@ -241,23 +245,27 @@ function onSubmit()
 }
 function validateCutOff()
 {
-var cutOffDatePart=document.getElementById("cutOffDate").value.split("/");
-var voucherDatePart=document.getElementById("voucherDate").value.split("/");
-var cutOffDate = new Date(cutOffDatePart[1] + "/" + cutOffDatePart[0] + "/"
-		+ cutOffDatePart[2]);
-var voucherDate = new Date(voucherDatePart[1] + "/" + voucherDatePart[0] + "/"
-		+ voucherDatePart[2]);
-if(voucherDate<=cutOffDate)
-{
-	return true;
-}
-else{
+ 	if(document.getElementById("workflowAction").value.trim()=='Create And Approve')
+	{
+   /*  var cutOffDate1= jQuery('#cutOffDate').val(); */
+   var cutOffDate=document.getElementById('cutOffDate').value;
+   /*  var voucherDate1= jQuery('#voucherDate').val(); */
+   	  var voucherDate=document.getElementById('voucherDate').value;
+
+	if(!validateCreateAndApprove(cutOffDate,voucherDate))
+	{
 	var msg1='<s:text name="wf.vouchercutoffdate.message"/>';
 	var msg2='<s:text name="wf.cutoffdate.msg"/>';
 	bootbox.alert(msg1+" "+document.getElementById("cutOffDate").value+" "+msg2);
 		return false;
 	}
+	console.log("validate cutt off4");
+
+	} 
+	return true;
+
 }
+
 </script>
 </head>
 <body onload="return onLoad();">

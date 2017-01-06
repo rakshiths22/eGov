@@ -185,8 +185,7 @@ public class RemitRecoveryAction extends BasePaymentAction {
     private String remittedTo = "";
     private final boolean remit = false;
     private List<InstrumentHeader> instrumentHeaderList = new ArrayList<InstrumentHeader>();
-    private String cutOffDate;
-    private final SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Constants.LOCALE);
+     private final SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Constants.LOCALE);
     DateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
     DateFormat sdf1 = new SimpleDateFormat("dd/MM/yyyy");
     private final SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd");
@@ -282,6 +281,12 @@ public class RemitRecoveryAction extends BasePaymentAction {
 
         return NEW;
     }
+    public void prepareNewform()
+    {
+    	  cutOffDate = getCutoffDateConfigValue();
+        
+    }
+    
 
     public void prepareRemit()
     {
@@ -294,17 +299,7 @@ public class RemitRecoveryAction extends BasePaymentAction {
     public String remit() {
         
         prepareListRemitBean(selectedRows);
-        List<AppConfigValues> cutOffDateconfigValue = appConfigValuesService.getConfigValuesByModuleAndKey("EGF",
-                "DataEntryCutOffDate");
-        if (cutOffDateconfigValue != null && !cutOffDateconfigValue.isEmpty())
-        {
-            try {
-                date = df.parse(cutOffDateconfigValue.get(0).getValue());
-                setCutOffDate(formatter.format(date));
-            } catch (ParseException e) {
-
-            }
-        }
+        prepareNewform();
          workflowBean.setBusinessKey(paymentheader.getClass().getSimpleName());
         prepareWorkflow(null, paymentheader, workflowBean);
         
@@ -397,10 +392,12 @@ public class RemitRecoveryAction extends BasePaymentAction {
         case  WorkflowConstants.ACTION_REJECT :
             message=getText("payment.reject", new String[] {paymentheader.getVoucherheader().getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
             break;   
-        case  WorkflowConstants.ACTION_FORWARD :
+        case  WorkflowConstants.ACTION_FORWARD :  
             message=getText("payment.create.success",
-                    new String[] {paymentheader.getVoucherheader().getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
-            break;    
+					new String[] {paymentheader.getVoucherheader().getVoucherNumber(),workflowBean.getApproverName(),workflowBean.getApproverDesignationName()});
+			if(paymentheader.getVoucherheader().getVouchermis().getBudgetaryAppnumber()!=null)
+				message=message+getText("budget.appr.number.success", new String[] {paymentheader.getVoucherheader().getVouchermis().getBudgetaryAppnumber()});
+			break;
         case  WorkflowConstants.ACTION_CANCEL :
             message=getText("payment.cancel",
                     new String[] {paymentheader.getVoucherheader().getVoucherNumber()});
@@ -409,6 +406,11 @@ public class RemitRecoveryAction extends BasePaymentAction {
             message=getText("payment.saved.success",
                     new String[] {paymentheader.getVoucherheader().getVoucherNumber()});
             break;   
+        case WorkflowConstants.ACTION_CREATE_AND_APPROVE:
+			message = getText("payment.approved.success",
+					new String[] { paymentheader.getVoucherheader().getVoucherNumber() });
+			if(paymentheader.getVoucherheader().getVouchermis().getBudgetaryAppnumber()!=null)
+				message=message+getText("budget.appr.number.success", new String[] {paymentheader.getVoucherheader().getVouchermis().getBudgetaryAppnumber()});
 
         }
         return message;
@@ -1050,19 +1052,6 @@ public class RemitRecoveryAction extends BasePaymentAction {
     public void setChartOfAccounts(ChartOfAccounts chartOfAccounts) {
         this.chartOfAccounts = chartOfAccounts;
     }
-
-   
-
-    
-
-    public String getCutOffDate() {
-        return cutOffDate;
-    }
-
-    public void setCutOffDate(String cutOffDate) {
-        this.cutOffDate = cutOffDate;
-    }
-
     public String getSelectedRows() {
         return selectedRows;
     }
