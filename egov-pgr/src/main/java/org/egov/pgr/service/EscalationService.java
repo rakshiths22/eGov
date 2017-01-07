@@ -44,9 +44,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.lang.time.DateUtils;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.egov.commons.ObjectType;
 import org.egov.commons.service.ObjectTypeService;
 import org.egov.eis.entity.Assignment;
@@ -64,6 +68,9 @@ import org.egov.pgr.config.properties.PgrApplicationProperties;
 import org.egov.pgr.entity.Complaint;
 import org.egov.pgr.entity.ComplaintType;
 import org.egov.pgr.entity.Escalation;
+import org.egov.pgr.model.EmailRequest;
+import org.egov.pgr.model.RequestInfo;
+import org.egov.pgr.model.SMSRequest;
 import org.egov.pgr.repository.ComplaintRepository;
 import org.egov.pgr.repository.EscalationRepository;
 import org.egov.pgr.service.es.ComplaintIndexService;
@@ -79,6 +86,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.google.gson.Gson;
 
 @Service
 @Transactional(readOnly = true)
@@ -234,6 +243,7 @@ public class EscalationService {
                             : previousOwner.getName() + " has been escalated to you. ");
             messagingService.sendEmail(superiorUser.getEmailId(), emailSubject.toString(), emailBody.toString());
             messagingService.sendSMS(superiorUser.getMobileNumber(), smsBody.toString());
+            sendMessage(complaint, emailSubject);
         }
         // update complaint index values
         complaintIndexService.updateComplaintEscalationIndexValues(complaint);
@@ -301,5 +311,41 @@ public class EscalationService {
 
     public Escalation getEscalationBycomplaintTypeAndDesignation(final Long complaintTypeId, final Long designationId) {
         return escalationRepository.findByDesignationAndComplaintType(designationId, complaintTypeId);
+    }
+    
+    private void sendMessage(Complaint complaint,StringBuffer emailSubject){
+    	Properties props = new Properties();
+		props.put("bootstrap.servers", "172.16.2.231:9092");
+		props.put("acks", "all");
+		props.put("retries", 0);
+		props.put("batch.size", 1);
+		props.put("linger.ms", 1);
+		props.put("buffer.memory", 33554432);
+		props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+		props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+
+		Producer producer = new KafkaProducer<>(props);
+    	
+    	EmailRequest emailRequest = new EmailRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setAction("POST");
+        requestInfo.setApiId("org.egov.pgr");
+        requestInfo.setAuthToken("aggaidgqiwgudiqwud");
+        requestInfo.setDid("eewfwefwefwef");
+        
+        emailRequest.setEmail(complaint.getComplainant().getEmail());
+        emailRequest.setBody(emailSubject.toString());
+        emailRequest.setSender("sumanth@egov.com");
+        emailRequest.setRequestInfo(requestInfo);
+        Gson gson = new Gson();
+        
+        SMSRequest smsRequest = new SMSRequest();
+        smsRequest.setRequestInfo(requestInfo);
+        smsRequest.setMobileNo(complaint.getComplainant().getMobile());
+        smsRequest.setMessage("Test message for SRN [" + complaint.getCrn() + "]");
+        
+        producer.send(new ProducerRecord<String, String>("egov-notification-sms-test", "seva.new", gson.toJson(smsRequest)));
+        producer.send(new ProducerRecord<String, String>("egov-notification-email-test", "seva.new", gson.toJson(emailRequest)));
+        producer.close();
     }
 }

@@ -50,7 +50,7 @@
     <groupId>org.egov</groupId>
     <name>e-governments pgr</name>
     <artifactId>egov-pgr</artifactId>
-    <version>2.1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
 
 <repositories>
         <repository>
@@ -104,15 +104,100 @@
             <version>2.1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
+			<groupId>org.egov</groupId>
+			<artifactId>egov-config</artifactId>
+			<version>2.1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
             <groupId>org.egov</groupId>
             <artifactId>egov-eis</artifactId>
             <version>2.1.0-SNAPSHOT</version>
         </dependency>
+		<!-- <dependency>
+			<groupId>org.egov</groupId>
+			<artifactId>egov-commons</artifactId>
+			<version>2.1.0-SNAPSHOT</version>
+		</dependency>
         <dependency>
             <groupId>org.egov</groupId>
-            <artifactId>egov-config</artifactId>
+            <artifactId>egov-demand</artifactId>
+            <version>2.1.0-SNAPSHOT</version>
+            <exclusions>
+            	<exclusion>
+            		<groupId>org.egov</groupId>
+            		<artifactId>egov-collection</artifactId>
+            	</exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.egov</groupId>
+            <artifactId>egov-eis</artifactId>
             <version>2.1.0-SNAPSHOT</version>
         </dependency>
+        
+        <dependency>
+			<groupId>org.egov</groupId>
+			<artifactId>egov-egf</artifactId>
+			<version>2.1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.egov</groupId>
+			<artifactId>egov-lcms</artifactId>
+			<version>2.1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.egov</groupId>
+			<artifactId>egov-assets</artifactId>
+			<version>2.1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency> 
+			<groupId>org.egov</groupId> 
+			<artifactId>egov-works</artifactId> 
+			<version>2.1.0-SNAPSHOT</version> 
+		</dependency>
+		
+		<dependency>
+			<groupId>org.egov</groupId>
+			<artifactId>egov-collection</artifactId>
+			<version>2.1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.egov</groupId>
+			<artifactId>egov-ptis</artifactId>
+			<version>2.1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.egov</groupId>
+			<artifactId>egov-wtms</artifactId>
+			<version>2.1.0-SNAPSHOT</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.egov</groupId>
+			<artifactId>egov-adtax</artifactId>
+			<version>2.1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.egov</groupId>
+			<artifactId>egov-tl</artifactId>
+			<version>2.1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.egov</groupId>
+			<artifactId>egov-council</artifactId>
+			<version>2.1.0-SNAPSHOT</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.egov</groupId>
+			<artifactId>egov-stms</artifactId>
+			<version>2.1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.egov</groupId>
+			<artifactId>egov-mrs</artifactId>
+			<version>2.1.0-SNAPSHOT</version>
+		</dependency> -->
 
         <dependency>
             <groupId>org.egov</groupId>
@@ -143,6 +228,12 @@
             <artifactId>egov-portal</artifactId>
             <version>2.1.0-SNAPSHOT</version>
         </dependency>
+        
+        <dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>kafka-clients</artifactId>
+			<version>0.10.1.0</version>
+		</dependency>
 
         <dependency>
             <groupId>org.hibernate</groupId>
